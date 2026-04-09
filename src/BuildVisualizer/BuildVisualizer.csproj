@@ -47,6 +47,7 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="Commands\RelayCommand.cs" />
+    <Compile Include="Layout\GraphLayoutEngine.cs" />
     <Compile Include="Models\BuildStatus.cs" />
     <Compile Include="Models\ProjectInfo.cs" />
     <Compile Include="Models\ProjectStatusChangedEventArgs.cs" />
@@ -62,8 +63,12 @@
       <DependentUpon>BuildVisualizerToolWindowControl.xaml</DependentUpon>
     </Compile>
     <Compile Include="ViewModels\BuildVisualizerViewModel.cs" />
+    <Compile Include="ViewModels\DependencyLineViewModel.cs" />
     <Compile Include="ViewModels\ProjectNodeViewModel.cs" />
     <Compile Include="ViewModels\ViewModelBase.cs" />
+    <Compile Include="Views\ProjectNodeControl.xaml.cs">
+      <DependentUpon>ProjectNodeControl.xaml</DependentUpon>
+    </Compile>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\..\IMPLEMENTATION_PLAN.md">
@@ -94,6 +99,9 @@
   <ItemGroup>
     <Page Include="ToolWindow\BuildVisualizerToolWindowControl.xaml">
       <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Views\ProjectNodeControl.xaml">
       <Generator>MSBuild:Compile</Generator>
     </Page>
   </ItemGroup>

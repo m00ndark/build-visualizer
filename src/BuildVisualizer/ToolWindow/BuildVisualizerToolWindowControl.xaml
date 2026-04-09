@@ -5,6 +5,7 @@
 			 xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
 			 xmlns:vsshell="clr-namespace:Microsoft.VisualStudio.Shell;assembly=Microsoft.VisualStudio.Shell.15.0"
 			 xmlns:vm="clr-namespace:BuildVisualizer.ViewModels"
+			 xmlns:views="clr-namespace:BuildVisualizer.Views"
 			 Background="{DynamicResource {x:Static vsshell:VsBrushes.WindowKey}}"
 			 Foreground="{DynamicResource {x:Static vsshell:VsBrushes.WindowTextKey}}"
 			 mc:Ignorable="d"
@@ -60,6 +61,53 @@
 						</HierarchicalDataTemplate>
 					</TreeView.ItemTemplate>
 				</TreeView>
+			</TabItem>
+
+			<!-- Graph View Tab -->
+			<TabItem Header="Graph">
+				<ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto">
+					<Canvas Width="{Binding CanvasWidth}" Height="{Binding CanvasHeight}" Background="White">
+						<!-- Dependency Lines Layer -->
+						<ItemsControl ItemsSource="{Binding DependencyLines}">
+							<ItemsControl.ItemsPanel>
+								<ItemsPanelTemplate>
+									<Canvas/>
+								</ItemsPanelTemplate>
+							</ItemsControl.ItemsPanel>
+							<ItemsControl.ItemTemplate>
+								<DataTemplate>
+									<Line X1="{Binding X1}" Y1="{Binding Y1}" 
+										  X2="{Binding X2}" Y2="{Binding Y2}" 
+										  Stroke="Gray" StrokeThickness="2">
+										<Line.RenderTransform>
+											<TranslateTransform X="0" Y="0"/>
+										</Line.RenderTransform>
+									</Line>
+								</DataTemplate>
+							</ItemsControl.ItemTemplate>
+						</ItemsControl>
+
+						<!-- Project Nodes Layer -->
+						<ItemsControl ItemsSource="{Binding GraphNodes}">
+							<ItemsControl.ItemsPanel>
+								<ItemsPanelTemplate>
+									<Canvas/>
+								</ItemsPanelTemplate>
+							</ItemsControl.ItemsPanel>
+							<ItemsControl.ItemContainerStyle>
+								<Style TargetType="ContentPresenter">
+									<Setter Property="Canvas.Left" Value="{Binding X}"/>
+									<Setter Property="Canvas.Top" Value="{Binding Y}"/>
+								</Style>
+							</ItemsControl.ItemContainerStyle>
+							<ItemsControl.ItemTemplate>
+								<DataTemplate>
+									<views:ProjectNodeControl/>
+								</DataTemplate>
+							</ItemsControl.ItemTemplate>
+						</ItemsControl>
+					</Canvas>
+				</ScrollViewer>
 			</TabItem>
 		</TabControl>
 	</Grid>

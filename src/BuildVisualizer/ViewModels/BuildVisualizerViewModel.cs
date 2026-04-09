@@ -1,7 +1,9 @@
 using BuildVisualizer.Commands;
+using BuildVisualizer.Layout;
 using BuildVisualizer.Models;
 using BuildVisualizer.Services;
 using Microsoft.VisualStudio.Shell;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Threading.Tasks;
@@ -14,10 +16,29 @@ namespace BuildVisualizer.ViewModels
 		private readonly SolutionService _solutionService;
 		private readonly BuildEventService _buildEventService;
 		private readonly DependencyGraphBuilder _graphBuilder;
+		private readonly GraphLayoutEngine _layoutEngine;
+		private double _canvasWidth;
+		private double _canvasHeight;
 
 		public ObservableCollection<ProjectInfo> Projects { get; set; }
 
 		public ObservableCollection<ProjectNodeViewModel> ProjectTree { get; set; }
+
+		public ObservableCollection<ProjectNodeViewModel> GraphNodes { get; set; }
+
+		public ObservableCollection<DependencyLineViewModel> DependencyLines { get; set; }
+
+		public double CanvasWidth
+		{
+			get => _canvasWidth;
+			set => SetProperty(ref _canvasWidth, value);
+		}
+
+		public double CanvasHeight
+		{
+			get => _canvasHeight;
+			set => SetProperty(ref _canvasHeight, value);
+		}
 
 		public ICommand RefreshCommand { get; }
 
@@ -26,8 +47,11 @@ namespace BuildVisualizer.ViewModels
 			_solutionService = solutionService;
 			_buildEventService = buildEventService;
 			_graphBuilder = new DependencyGraphBuilder();
+			_layoutEngine = new GraphLayoutEngine();
 			Projects = new ObservableCollection<ProjectInfo>();
 			ProjectTree = new ObservableCollection<ProjectNodeViewModel>();
+			GraphNodes = new ObservableCollection<ProjectNodeViewModel>();
+			DependencyLines = new ObservableCollection<DependencyLineViewModel>();
 			RefreshCommand = new RelayCommand(_ => ThreadHelper.JoinableTaskFactory.Run(LoadProjectsAsync));
 
 			// Subscribe to build events
@@ -109,6 +133,80 @@ namespace BuildVisualizer.ViewModels
 			foreach (var node in treeNodes)
 			{
 				ProjectTree.Add(node);
+			}
+
+			// Build graph layout
+			BuildGraphLayout();
+		}
+
+		private void BuildGraphLayout()
+		{
+			GraphNodes.Clear();
+			DependencyLines.Clear();
+
+			if (ProjectTree.Count == 0)
+			{
+				CanvasWidth = 800;
+				CanvasHeight = 200;
+				return;
+			}
+
+			// Create a mapping from project name to node
+			var nodeMap = new Dictionary<string, ProjectNodeViewModel>();
+
+			// Flatten the tree into a list of all nodes
+			var allNodes = new List<ProjectNodeViewModel>();
+			FlattenTree(ProjectTree, allNodes);
+
+			foreach (var node in allNodes)
+			{
+				nodeMap[node.Name] = node;
+			}
+
+			// Populate DependencyNodes for each node (resolve string names to node references)
+			foreach (var node in allNodes)
+			{
+				node.DependencyNodes.Clear();
+				foreach (var depName in node.ProjectData.Dependencies)
+				{
+					if (nodeMap.ContainsKey(depName))
+					{
+						node.DependencyNodes.Add(nodeMap[depName]);
+					}
+				}
+			}
+
+			// Add nodes to GraphNodes collection
+			foreach (var node in allNodes)
+			{
+				GraphNodes.Add(node);
+			}
+
+			// Calculate layout
+			var (width, height) = _layoutEngine.CalculateLayout(allNodes);
+			CanvasWidth = width;
+			CanvasHeight = height;
+
+			// Build dependency lines
+			foreach (var node in allNodes)
+			{
+				foreach (var depNode in node.DependencyNodes)
+				{
+					var line = new DependencyLineViewModel(node, depNode);
+					DependencyLines.Add(line);
+				}
+			}
+		}
+
+		private void FlattenTree(ObservableCollection<ProjectNodeViewModel> nodes, List<ProjectNodeViewModel> result)
+		{
+			foreach (var node in nodes)
+			{
+				result.Add(node);
+				if (node.Children.Count > 0)
+				{
+					FlattenTree(node.Children, result);
+				}
 			}
 		}
 	}

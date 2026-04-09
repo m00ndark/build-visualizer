@@ -310,7 +310,7 @@ Each increment is **runnable and testable** - you can verify functionality at ev
 **Verification:** See boxes representing projects connected by arrows
 
 ### Tasks
-- [ ] Create `Layout/GraphLayoutEngine.cs`:
+- [x] Create `Layout/GraphLayoutEngine.cs`:
   - Method: `void CalculateLayout(List<ProjectNodeViewModel> nodes, double canvasWidth = 800)`
   - Implement simple layered layout algorithm:
     - Perform topological sort to assign layers (projects with no dependencies = layer 0)
@@ -319,28 +319,28 @@ Each increment is **runnable and testable** - you can verify functionality at ev
   - Directly set X, Y properties on ProjectNodeViewModel instances
   - Return required canvas dimensions (width, height)
 
-- [ ] Update `ViewModels/ProjectNodeViewModel.cs`:
+- [x] Update `ViewModels/ProjectNodeViewModel.cs`:
   - Add property: `double X { get; set; }` - use SetProperty
   - Add property: `double Y { get; set; }` - use SetProperty
   - Add property: `double Width { get; set; } = 120` - node width
   - Add property: `double Height { get; set; } = 60` - node height
   - Add property: `ObservableCollection<ProjectNodeViewModel> DependencyNodes { get; set; }` - references to actual dependency node objects (not just names)
 
-- [ ] Create `ViewModels/DependencyLineViewModel.cs`:
+- [x] Create `ViewModels/DependencyLineViewModel.cs`:
   - Inherit from `ViewModelBase`
   - Property: `double X1 { get; set; }`, `double Y1 { get; set; }`, `double X2 { get; set; }`, `double Y2 { get; set; }`
   - Constructor: Accept `ProjectNodeViewModel source`, `ProjectNodeViewModel target`
   - Calculate line endpoints from node positions (center of source to center of target)
   - Subscribe to source/target PropertyChanged for X, Y to recalculate line endpoints
 
-- [ ] Create `Views/ProjectNodeControl.xaml` + `.xaml.cs`:
+- [x] Create `Views/ProjectNodeControl.xaml` + `.xaml.cs`:
   - UserControl with `Border` as root:
     - `Background="{Binding StatusColor}"`
     - `BorderBrush="Black"`, `BorderThickness="2"`, `CornerRadius="5"`
     - `Width="{Binding Width}"`, `Height="{Binding Height}"`
   - Inside Border: `TextBlock` with `Text="{Binding Name}"`, centered, white foreground
 
-- [ ] Update `ViewModels/BuildVisualizerViewModel.cs`:
+- [x] Update `ViewModels/BuildVisualizerViewModel.cs`:
   - Add property: `ObservableCollection<ProjectNodeViewModel> GraphNodes { get; set; }` - flat list of all nodes with positions
   - Add property: `ObservableCollection<DependencyLineViewModel> DependencyLines { get; set; }`
   - Add property: `double CanvasWidth { get; set; }`, `double CanvasHeight { get; set; }`
@@ -353,7 +353,7 @@ Each increment is **runnable and testable** - you can verify functionality at ev
     - Update CanvasWidth and CanvasHeight
   - Call `BuildGraphLayout()` after building ProjectTree
 
-- [ ] Update `ToolWindow/BuildVisualizerToolWindowControl.xaml`:
+- [x] Update `ToolWindow/BuildVisualizerToolWindowControl.xaml`:
   - Add `TabControl` with tabs: "List", "Tree", "Graph"
   - Graph tab content:
     - `ScrollViewer` with `HorizontalScrollBarVisibility="Auto"`, `VerticalScrollBarVisibility="Auto"`
@@ -551,7 +551,7 @@ Track your progress through the increments:
 - [x] Increment 3: Build Status with Colors ✓ Runnable
 - [x] Increment 4: Show Dependencies ✓ Runnable
 - [x] Increment 5: Tree/Hierarchy View ✓ Runnable
-- [ ] Increment 6: Graph Canvas Visualization ✓ Runnable
+- [x] Increment 6: Graph Canvas Visualization ✓ Runnable
 - [ ] Increment 7: Improved Layout ✓ Runnable
 - [ ] Increment 8: User Interactions ✓ Runnable
 - [ ] Increment 9: Polish & Reactive Updates ✓ Runnable
