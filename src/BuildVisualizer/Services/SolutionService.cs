@@ -10,6 +10,12 @@ namespace BuildVisualizer.Services
 {
 	public class SolutionService
 	{
+		private static readonly string[] _solutionFolderKinds =
+			{
+				"{66A26720-8FB5-11D2-AA7E-00C04F688DDE}", // solution folder for web projects
+				"{66A2671D-8FB5-11D2-AA7E-00C04F688DDE}", // generic solution folder
+			};
+
 		private readonly DTE2 _dte;
 
 		public SolutionService(DTE2 dte)
@@ -30,14 +36,49 @@ namespace BuildVisualizer.Services
 
 			foreach (Project project in _dte.Solution.Projects)
 			{
-				if (project != null)
+				GetProjectsRecursive(project, projects);
+			}
+
+			return projects;
+		}
+
+		private void GetProjectsRecursive(Project project, List<ProjectInfo> projects)
+		{
+			ThreadHelper.ThrowIfNotOnUIThread();
+
+			if (project == null)
+			{
+				return;
+			}
+
+			try
+			{
+				// Check if this is a solution folder
+				if (_solutionFolderKinds.Contains(project.Kind))
 				{
+					// Recursively process items in the solution folder
+					if (project.ProjectItems != null)
+					{
+						foreach (ProjectItem item in project.ProjectItems)
+						{
+							if (item.SubProject != null)
+							{
+								GetProjectsRecursive(item.SubProject, projects);
+							}
+						}
+					}
+				}
+				else
+				{
+					// This is a real project, add it
 					var projectInfo = new ProjectInfo(project.Name, project.UniqueName);
 					projects.Add(projectInfo);
 				}
 			}
-
-			return projects;
+			catch (Exception)
+			{
+				// Skip projects that can't be accessed
+			}
 		}
 
 		public void ParseProjectDependencies(List<ProjectInfo> projects)
@@ -49,22 +90,56 @@ namespace BuildVisualizer.Services
 				return;
 			}
 
-			// Create a dictionary for fast lookup
-			var projectDict = new Dictionary<string, ProjectInfo>(StringComparer.OrdinalIgnoreCase);
+			// Create dictionaries for fast lookup by both UniqueName and Name
+			var projectDictByUniqueName = new Dictionary<string, ProjectInfo>(StringComparer.OrdinalIgnoreCase);
+			var projectDictByName = new Dictionary<string, ProjectInfo>(StringComparer.OrdinalIgnoreCase);
+
 			foreach (var proj in projects)
 			{
-				projectDict[proj.UniqueName] = proj;
+				projectDictByUniqueName[proj.UniqueName] = proj;
+				projectDictByName[proj.Name] = proj;
 			}
 
-			// Iterate through all projects in the solution
+			// Iterate through all real projects in the solution
 			foreach (Project project in _dte.Solution.Projects)
 			{
-				if (project == null)
-					continue;
+				ParseProjectDependenciesRecursive(project, projectDictByUniqueName, projectDictByName);
+			}
+		}
+
+		private void ParseProjectDependenciesRecursive(Project project, 
+			Dictionary<string, ProjectInfo> projectDictByUniqueName,
+			Dictionary<string, ProjectInfo> projectDictByName)
+		{
+			ThreadHelper.ThrowIfNotOnUIThread();
+
+			if (project == null)
+			{
+				return;
+			}
+
+			try
+			{
+				// Check if this is a solution folder
+				if (_solutionFolderKinds.Contains(project.Kind))
+				{
+					// Recursively process items in the solution folder
+					if (project.ProjectItems != null)
+					{
+						foreach (ProjectItem item in project.ProjectItems)
+						{
+							if (item.SubProject != null)
+							{
+								ParseProjectDependenciesRecursive(item.SubProject, projectDictByUniqueName, projectDictByName);
+							}
+						}
+					}
+					return;
+				}
 
 				// Find corresponding ProjectInfo
-				if (!projectDict.TryGetValue(project.UniqueName, out var projectInfo))
-					continue;
+				if (!projectDictByUniqueName.TryGetValue(project.UniqueName, out var projectInfo))
+					return;
 
 				try
 				{
@@ -89,10 +164,7 @@ namespace BuildVisualizer.Services
 									}
 
 									// Find the referenced project and add current project to its dependents
-									var referencedProject = projectDict.Values
-										.FirstOrDefault(p => string.Equals(p.Name, referencedProjectName, StringComparison.OrdinalIgnoreCase));
-
-									if (referencedProject != null)
+									if (projectDictByName.TryGetValue(referencedProjectName, out var referencedProject))
 									{
 										if (!referencedProject.Dependents.Contains(projectInfo.Name))
 										{
@@ -110,8 +182,12 @@ namespace BuildVisualizer.Services
 				}
 				catch (Exception)
 				{
-					// Skip projects that can't be cast to VSProject (e.g., C++ projects, solution folders)
+					// Skip projects that can't be cast to VSProject (e.g., C++ projects)
 				}
+			}
+			catch (Exception)
+			{
+				// Skip projects that can't be accessed
 			}
 		}
 	}
