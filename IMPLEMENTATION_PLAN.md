@@ -219,13 +219,13 @@ Each increment is **runnable and testable** - you can verify functionality at ev
 **Verification:** See "ProjectA → depends on → ProjectB, ProjectC" in the UI
 
 ### Tasks
-- [ ] Update `Models/ProjectInfo.cs`:
+- [x] Update `Models/ProjectInfo.cs`:
   - Add property: `ObservableCollection<string> Dependencies { get; set; }` (initialize in constructor)
   - Add property: `ObservableCollection<string> Dependents { get; set; }` (initialize in constructor)
   - Add computed property: `string DependenciesText { get; }` - returns formatted string like "→ Dep1, Dep2" or "No dependencies" if empty
   - Raise PropertyChanged for DependenciesText when Dependencies collection changes
 
-- [ ] Update `Services/SolutionService.cs`:
+- [x] Update `Services/SolutionService.cs`:
   - Add method: `void ParseProjectDependencies(List<ProjectInfo> projects)`
   - For each project:
     - Get `Project` from DTE by UniqueName
@@ -236,11 +236,11 @@ Each increment is **runnable and testable** - you can verify functionality at ev
       - Add current project name to referenced project's `Dependents`
   - Handle exceptions for projects that can't be cast to VSProject
 
-- [ ] Update `ViewModels/BuildVisualizerViewModel.cs`:
+- [x] Update `ViewModels/BuildVisualizerViewModel.cs`:
   - In `LoadProjectsAsync()`: After getting projects, call `_solutionService.ParseProjectDependencies(projects)`
   - Ensure ObservableCollection updates trigger UI refresh
 
-- [ ] Update `ToolWindow/BuildVisualizerToolWindowControl.xaml`:
+- [x] Update `ToolWindow/BuildVisualizerToolWindowControl.xaml`:
   - Update `ListBox.ItemTemplate`:
     - Add second `TextBlock` below project name
     - Bind to `DependenciesText` with smaller font and gray foreground
@@ -549,7 +549,7 @@ Track your progress through the increments:
 - [x] Increment 2: Display Project List ✓ Runnable
 - [x] Increment 2.5: Refactor to MVVM ✓ Runnable
 - [x] Increment 3: Build Status with Colors ✓ Runnable
-- [ ] Increment 4: Show Dependencies ✓ Runnable
+- [x] Increment 4: Show Dependencies ✓ Runnable
 - [ ] Increment 5: Tree/Hierarchy View ✓ Runnable
 - [ ] Increment 6: Graph Canvas Visualization ✓ Runnable
 - [ ] Increment 7: Improved Layout ✓ Runnable

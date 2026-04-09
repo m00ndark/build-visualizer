@@ -14,6 +14,8 @@ namespace BuildVisualizer.Services
 		private bool _disposed;
 
 		public event EventHandler<ProjectStatusChangedEventArgs> ProjectStatusChanged;
+		public event EventHandler AllProjectsStatusReset;
+		public event EventHandler<ProjectStatusChangedEventArgs> ProjectStatusReset;
 
 		public BuildEventService(DTE2 dte)
 		{
@@ -31,15 +33,24 @@ namespace BuildVisualizer.Services
 		private void OnBuildBegin(vsBuildScope scope, vsBuildAction action)
 		{
 			ThreadHelper.ThrowIfNotOnUIThread();
-			// Build is starting - we'll handle individual projects in OnBuildProjConfigBegin
+
+			// Reset all project statuses when a solution build starts
+			if (scope == vsBuildScope.vsBuildScopeSolution)
+			{
+				AllProjectsStatusReset?.Invoke(this, EventArgs.Empty);
+			}
 		}
 
 		private void OnBuildProjConfigBegin(string project, string projectConfig, string platform, string solutionConfig)
 		{
 			ThreadHelper.ThrowIfNotOnUIThread();
-			
+
 			if (!string.IsNullOrEmpty(project))
 			{
+				// Reset this specific project's status first
+				ProjectStatusReset?.Invoke(this, new ProjectStatusChangedEventArgs(project, BuildStatus.NotBuilt));
+
+				// Then set it to Building
 				ProjectStatusChanged?.Invoke(this, new ProjectStatusChangedEventArgs(project, BuildStatus.Building));
 			}
 		}

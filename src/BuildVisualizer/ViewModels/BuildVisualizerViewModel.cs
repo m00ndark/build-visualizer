@@ -27,12 +27,43 @@ namespace BuildVisualizer.ViewModels
 
 			// Subscribe to build events
 			_buildEventService.ProjectStatusChanged += OnProjectStatusChanged;
+			_buildEventService.AllProjectsStatusReset += OnAllProjectsStatusReset;
+			_buildEventService.ProjectStatusReset += OnProjectStatusReset;
 
 			// Fire and forget - load projects asynchronously without blocking constructor
 #pragma warning disable VSSDK007 // Avoid fire-and-forget in analyzers (intentional for async initialization)
 			var loadTask = ThreadHelper.JoinableTaskFactory.RunAsync(LoadProjectsAsync);
 #pragma warning restore VSSDK007
 			loadTask.Task.FileAndForget("BuildVisualizer/LoadProjects");
+		}
+
+		private void OnAllProjectsStatusReset(object sender, System.EventArgs e)
+		{
+			// Reset all projects to NotBuilt status when solution build starts
+			ThreadHelper.JoinableTaskFactory.Run(async () =>
+			{
+				await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
+
+				foreach (var project in Projects)
+				{
+					project.Status = BuildStatus.NotBuilt;
+				}
+			});
+		}
+
+		private void OnProjectStatusReset(object sender, ProjectStatusChangedEventArgs e)
+		{
+			// Reset specific project status when individual project build starts
+			ThreadHelper.JoinableTaskFactory.Run(async () =>
+			{
+				await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
+
+				var project = Projects.FirstOrDefault(p => p.UniqueName == e.ProjectUniqueName);
+				if (project != null)
+				{
+					project.Status = BuildStatus.NotBuilt;
+				}
+			});
 		}
 
 		private void OnProjectStatusChanged(object sender, ProjectStatusChangedEventArgs e)
@@ -58,6 +89,9 @@ namespace BuildVisualizer.ViewModels
 			Projects.Clear();
 
 			var projects = _solutionService.GetProjects();
+
+			// Parse dependencies
+			_solutionService.ParseProjectDependencies(projects);
 
 			foreach (var project in projects)
 			{

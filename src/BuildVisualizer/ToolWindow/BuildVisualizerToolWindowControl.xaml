@@ -26,10 +26,13 @@
 		<ListBox Grid.Row="2" ItemsSource="{Binding Projects}" Margin="10,0,10,10">
 			<ListBox.ItemTemplate>
 				<DataTemplate>
-					<StackPanel Orientation="Horizontal">
-						<Border Width="16" Height="16" Background="{Binding StatusColor}" Margin="0,0,5,0"/>
-						<TextBlock Text="{Binding Name}" VerticalAlignment="Center"/>
-						<TextBlock Text="{Binding Status}" Margin="5,0,0,0" FontSize="10" Foreground="Gray" VerticalAlignment="Center"/>
+					<StackPanel Orientation="Vertical" Margin="0,5,0,5">
+						<StackPanel Orientation="Horizontal">
+							<Border Width="16" Height="16" Background="{Binding StatusColor}" Margin="0,0,5,0"/>
+							<TextBlock Text="{Binding Name}" VerticalAlignment="Center"/>
+							<TextBlock Text="{Binding Status}" Margin="5,0,0,0" FontSize="10" Foreground="Gray" VerticalAlignment="Center"/>
+						</StackPanel>
+						<TextBlock Text="{Binding DependenciesText}" FontSize="10" Foreground="Gray" Margin="20,2,0,0"/>
 					</StackPanel>
 				</DataTemplate>
 			</ListBox.ItemTemplate>
