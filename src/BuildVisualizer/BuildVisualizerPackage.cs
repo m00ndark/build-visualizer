@@ -1,4 +1,6 @@
-﻿using Microsoft.VisualStudio.Shell;
+﻿using BuildVisualizer.Services;
+using EnvDTE80;
+using Microsoft.VisualStudio.Shell;
 using System;
 using System.Runtime.InteropServices;
 using System.Threading;
@@ -34,7 +36,12 @@ namespace BuildVisualizer
 		/// </summary>
 		public const string PackageGuidString = "6cb9de7d-b7e0-4471-8b66-df6dd4bda1a4";
 
-		#region Package Members
+		private BuildEventService _buildEventService;
+
+		/// <summary>
+		/// Gets the BuildEventService instance for this package.
+		/// </summary>
+		public static BuildEventService BuildEventService { get; private set; }
 
 		/// <summary>
 		/// Initialization of the package; this method is called right after the package is sited, so this is the place
@@ -48,9 +55,27 @@ namespace BuildVisualizer
 			// When initialized asynchronously, the current thread may be a background thread at this point.
 			// Do any initialization that requires the UI thread after switching to the UI thread.
 			await this.JoinableTaskFactory.SwitchToMainThreadAsync(cancellationToken);
-		    await BuildVisualizer.ToolWindow.BuildVisualizerToolWindowCommand.InitializeAsync(this);
+
+			// Get DTE2 service and create BuildEventService
+			var dte = await GetServiceAsync(typeof(EnvDTE.DTE)) as DTE2;
+			if (dte != null)
+			{
+				_buildEventService = new BuildEventService(dte);
+				BuildEventService = _buildEventService;
+			}
+
+			await BuildVisualizer.ToolWindow.BuildVisualizerToolWindowCommand.InitializeAsync(this);
 		}
 
-		#endregion
+		protected override void Dispose(bool disposing)
+		{
+			ThreadHelper.ThrowIfNotOnUIThread();
+
+			if (disposing)
+			{
+				_buildEventService?.Dispose();
+			}
+			base.Dispose(disposing);
+		}
 	}
 }

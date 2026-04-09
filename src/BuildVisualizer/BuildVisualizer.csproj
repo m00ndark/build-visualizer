@@ -49,8 +49,11 @@
     <Compile Include="Commands\RelayCommand.cs" />
     <Compile Include="Models\BuildStatus.cs" />
     <Compile Include="Models\ProjectInfo.cs" />
+    <Compile Include="Models\ProjectStatusChangedEventArgs.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="BuildVisualizerPackage.cs" />
+    <Compile Include="Resources\Colors.cs" />
+    <Compile Include="Services\BuildEventService.cs" />
     <Compile Include="Services\SolutionService.cs" />
     <Compile Include="ToolWindow\BuildVisualizerToolWindow.cs" />
     <Compile Include="ToolWindow\BuildVisualizerToolWindowCommand.cs" />

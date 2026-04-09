@@ -157,7 +157,7 @@ Each increment is **runnable and testable** - you can verify functionality at ev
 **Verification:** Open tool window, start a build, watch projects turn yellow → green/red
 
 ### Tasks
-- [ ] Create `Resources/Colors.cs`:
+- [x] Create `Resources/Colors.cs`:
   - Static class with readonly `SolidColorBrush` properties:
     - `NotBuiltBrush` - `new SolidColorBrush(Color.FromRgb(128, 128, 128))` - Gray
     - `BuildingBrush` - `new SolidColorBrush(Color.FromRgb(255, 165, 0))` - Orange/Yellow
@@ -166,12 +166,12 @@ Each increment is **runnable and testable** - you can verify functionality at ev
     - `SkippedBrush` - `new SolidColorBrush(Color.FromRgb(33, 150, 243))` - Blue
   - Freeze all brushes for performance
 
-- [ ] Update `Models/ProjectInfo.cs`:
+- [x] Update `Models/ProjectInfo.cs`:
   - Add computed property: `SolidColorBrush StatusColor { get; }` (no setter)
   - In getter: Return appropriate brush from `Colors.cs` based on `Status` value
   - Override `OnPropertyChanged`: When "Status" changes, also call `OnPropertyChanged("StatusColor")`
 
-- [ ] Create `Services/BuildEventService.cs`:
+- [x] Create `Services/BuildEventService.cs`:
   - Private field: `DTE2 _dte`, `BuildEvents _buildEvents`
   - Public event: `EventHandler<ProjectStatusChangedEventArgs> ProjectStatusChanged`
   - Constructor: Accept `DTE2`, subscribe to `_dte.Events.BuildEvents`:
@@ -181,29 +181,29 @@ Each increment is **runnable and testable** - you can verify functionality at ev
   - Implement `IDisposable`: Unsubscribe from events
   - Use `ThreadHelper.ThrowIfNotOnUIThread()` appropriately
 
-- [ ] Create `Models/ProjectStatusChangedEventArgs.cs`:
+- [x] Create `Models/ProjectStatusChangedEventArgs.cs`:
   - Inherit from `EventArgs`
   - Properties: `string ProjectUniqueName { get; }`, `BuildStatus NewStatus { get; }`
   - Constructor: Accept and assign both properties
 
-- [ ] Update `ViewModels/BuildVisualizerViewModel.cs`:
+- [x] Update `ViewModels/BuildVisualizerViewModel.cs`:
   - Add private field: `BuildEventService _buildEventService`
   - Update constructor: Accept `BuildEventService` parameter
   - In constructor: Subscribe to `_buildEventService.ProjectStatusChanged`
   - Event handler: Find matching project in `Projects` collection by UniqueName, update its `Status` property
   - Use `ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync()` if needed for UI thread
 
-- [ ] Update `ToolWindow/BuildVisualizerToolWindowControl.xaml`:
+- [x] Update `ToolWindow/BuildVisualizerToolWindowControl.xaml`:
   - Update `ListBox.ItemTemplate`:
     - Add `Border` with `Background="{Binding StatusColor}"`, `Width="16"`, `Height="16"`, `Margin="0,0,5,0"`
     - Add `StackPanel` with `Orientation="Horizontal"`
     - Show project name and status: `<TextBlock Text="{Binding Name}"/>` and `<TextBlock Text="{Binding Status}" Margin="5,0,0,0" FontSize="10" Foreground="Gray"/>`
 
-- [ ] Update `ToolWindow/BuildVisualizerToolWindow.cs`:
+- [x] Update `ToolWindow/BuildVisualizerToolWindow.cs`:
   - In `BuildVisualizerToolWindow` constructor, get `BuildEventService` instance
   - Pass to `BuildVisualizerToolWindowControl` constructor or create in control
 
-- [ ] Update `BuildVisualizerPackage.cs`:
+- [x] Update `BuildVisualizerPackage.cs`:
   - Create `BuildEventService` instance in `InitializeAsync()`
   - Store as package-level field for reuse
   - Ensure proper disposal
@@ -548,7 +548,7 @@ Track your progress through the increments:
 - [x] Increment 1: Basic Tool Window ✓ Runnable
 - [x] Increment 2: Display Project List ✓ Runnable
 - [x] Increment 2.5: Refactor to MVVM ✓ Runnable
-- [ ] Increment 3: Build Status with Colors ✓ Runnable
+- [x] Increment 3: Build Status with Colors ✓ Runnable
 - [ ] Increment 4: Show Dependencies ✓ Runnable
 - [ ] Increment 5: Tree/Hierarchy View ✓ Runnable
 - [ ] Increment 6: Graph Canvas Visualization ✓ Runnable
