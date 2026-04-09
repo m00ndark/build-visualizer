@@ -46,8 +46,11 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="Models\BuildStatus.cs" />
+    <Compile Include="Models\ProjectInfo.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="BuildVisualizerPackage.cs" />
+    <Compile Include="Services\SolutionService.cs" />
     <Compile Include="ToolWindow\BuildVisualizerToolWindow.cs" />
     <Compile Include="ToolWindow\BuildVisualizerToolWindowCommand.cs" />
     <Compile Include="ToolWindow\BuildVisualizerToolWindowControl.xaml.cs">

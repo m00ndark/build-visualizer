@@ -1,4 +1,7 @@
-﻿using System.Diagnostics.CodeAnalysis;
+﻿using BuildVisualizer.Services;
+using EnvDTE80;
+using Microsoft.VisualStudio.Shell;
+using System.Diagnostics.CodeAnalysis;
 using System.Windows;
 using System.Windows.Controls;
 
@@ -9,26 +12,39 @@ namespace BuildVisualizer.ToolWindow
 	/// </summary>
 	public partial class BuildVisualizerToolWindowControl : UserControl
 	{
+		private readonly DTE2 _dte;
+
 		/// <summary>
 		/// Initializes a new instance of the <see cref="BuildVisualizerToolWindowControl"/> class.
 		/// </summary>
-		public BuildVisualizerToolWindowControl()
+		public BuildVisualizerToolWindowControl(DTE2 dte)
 		{
+			ThreadHelper.ThrowIfNotOnUIThread();
+
+			_dte = dte;
 			this.InitializeComponent();
+			LoadProjects();
 		}
 
-		/// <summary>
-		/// Handles click on the button by displaying a message box.
-		/// </summary>
-		/// <param name="sender">The event sender.</param>
-		/// <param name="e">The event args.</param>
-		[SuppressMessage("Microsoft.Globalization", "CA1300:SpecifyMessageBoxOptions", Justification = "Sample code")]
-		[SuppressMessage("StyleCop.CSharp.NamingRules", "SA1300:ElementMustBeginWithUpperCaseLetter", Justification = "Default event handler naming pattern")]
-		private void button1_Click(object sender, RoutedEventArgs e)
+		private void RefreshButton_Click(object sender, RoutedEventArgs e)
 		{
-			MessageBox.Show(
-				string.Format(System.Globalization.CultureInfo.CurrentUICulture, "Invoked '{0}'", this.ToString()),
-				"BuildVisualizerToolWindow");
+			ThreadHelper.ThrowIfNotOnUIThread();
+			LoadProjects();
+		}
+
+		private void LoadProjects()
+		{
+			ThreadHelper.ThrowIfNotOnUIThread();
+
+			if (_dte == null)
+			{
+				return;
+			}
+
+			var solutionService = new SolutionService(_dte);
+			var projects = solutionService.GetProjects();
+
+			ProjectListBox.ItemsSource = projects;
 		}
 	}
 }

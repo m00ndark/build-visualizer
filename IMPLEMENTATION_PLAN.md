@@ -70,27 +70,27 @@ Each increment is **runnable and testable** - you can verify functionality at ev
 **Verification:** Open a solution with multiple projects, see them listed in the tool window
 
 ### Tasks
-- [ ] Create `Models/BuildStatus.cs`:
+- [x] Create `Models/BuildStatus.cs`:
   - Enum: `NotBuilt`, `Building`, `Success`, `Failed`, `Skipped`
 
-- [ ] Create `Models/ProjectInfo.cs`:
+- [x] Create `Models/ProjectInfo.cs`:
   - Properties: Name, UniqueName, Status
   - Simple class (no dependencies yet)
 
-- [ ] Create `Services/SolutionService.cs`:
+- [x] Create `Services/SolutionService.cs`:
   - Get `DTE2` service
   - Method `GetProjects()` - return list of project names
   - No dependency parsing yet
 
-- [ ] Update `ToolWindow/BuildVisualizerControl.xaml`:
+- [x] Update `ToolWindow/BuildVisualizerControl.xaml`:
   - Add `ListBox` to display projects
   - ItemTemplate showing project name
 
-- [ ] Update `ToolWindow/BuildVisualizerControl.xaml.cs`:
+- [x] Update `ToolWindow/BuildVisualizerControl.xaml.cs`:
   - Constructor: call SolutionService, populate ListBox
   - Simple data binding or Items.Add()
 
-- [ ] Update `BuildVisualizerPackage.cs`:
+- [x] Update `BuildVisualizerPackage.cs`:
   - Pass DTE2 to tool window if needed
 
 **✓ Checkpoint:** Open a solution, open the tool window, see all project names listed!
