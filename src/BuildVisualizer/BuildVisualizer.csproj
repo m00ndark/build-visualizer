@@ -46,6 +46,7 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="Commands\RelayCommand.cs" />
     <Compile Include="Models\BuildStatus.cs" />
     <Compile Include="Models\ProjectInfo.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
@@ -56,6 +57,8 @@
     <Compile Include="ToolWindow\BuildVisualizerToolWindowControl.xaml.cs">
       <DependentUpon>BuildVisualizerToolWindowControl.xaml</DependentUpon>
     </Compile>
+    <Compile Include="ViewModels\BuildVisualizerViewModel.cs" />
+    <Compile Include="ViewModels\ViewModelBase.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\..\IMPLEMENTATION_PLAN.md">

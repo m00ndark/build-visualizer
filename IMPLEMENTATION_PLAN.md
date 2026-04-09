@@ -104,23 +104,23 @@ Each increment is **runnable and testable** - you can verify functionality at ev
 **Verification:** Tool window works exactly as before, but now using MVVM (check code structure)
 
 ### Tasks
-- [ ] Create `ViewModels/ViewModelBase.cs`:
+- [x] Create `ViewModels/ViewModelBase.cs`:
   - Implement `INotifyPropertyChanged`
   - Protected method `OnPropertyChanged(string propertyName)`
   - Protected method `SetProperty<T>(ref T field, T value, string propertyName)` that returns bool
 
-- [ ] Create `Commands/RelayCommand.cs`:
+- [x] Create `Commands/RelayCommand.cs`:
   - Implement `ICommand` interface
   - Constructor: `Action<object> execute`, `Func<object, bool> canExecute = null`
   - Handle `CanExecuteChanged` event
   - Public method `RaiseCanExecuteChanged()`
 
-- [ ] Update `Models/ProjectInfo.cs`:
+- [x] Update `Models/ProjectInfo.cs`:
   - Inherit from `ViewModelBase`
   - Make `Name`, `UniqueName`, `Status` properties use `SetProperty` pattern
   - Ensure PropertyChanged events fire correctly
 
-- [ ] Create `ViewModels/BuildVisualizerViewModel.cs`:
+- [x] Create `ViewModels/BuildVisualizerViewModel.cs`:
   - Inherit from `ViewModelBase`
   - Property: `ObservableCollection<ProjectInfo> Projects { get; set; }`
   - Property: `ICommand RefreshCommand { get; }`
@@ -129,19 +129,19 @@ Each increment is **runnable and testable** - you can verify functionality at ev
   - Private async method: `LoadProjectsAsync()` - call `_solutionService.GetProjects()`, populate Projects
   - Call `LoadProjectsAsync()` in constructor
 
-- [ ] Update `ToolWindow/BuildVisualizerToolWindowControl.xaml`:
+- [x] Update `ToolWindow/BuildVisualizerToolWindowControl.xaml`:
   - Remove `x:Name` attributes from Button and ListBox
   - Change Button: Remove `Click` attribute, add `Command="{Binding RefreshCommand}"`
   - Change ListBox: Remove `Name` attribute, add `ItemsSource="{Binding Projects}"`
   - Add design-time DataContext: `xmlns:vm="clr-namespace:BuildVisualizer.ViewModels"` and `d:DataContext="{d:DesignInstance Type=vm:BuildVisualizerViewModel}"`
 
-- [ ] Update `ToolWindow/BuildVisualizerToolWindowControl.xaml.cs`:
+- [x] Update `ToolWindow/BuildVisualizerToolWindowControl.xaml.cs`:
   - Remove `LoadProjects()` method
   - Remove `RefreshButton_Click` event handler
   - In constructor, after `InitializeComponent()`, set: `DataContext = new BuildVisualizerViewModel(new SolutionService(_dte))`
   - Keep only minimal code: constructor with DTE parameter and DataContext assignment
 
-- [ ] Verify functionality:
+- [x] Verify functionality:
   - Press F5, open tool window, see projects listed
   - Click Refresh button, verify it reloads projects
   - Ensure no code-behind logic remains except DataContext setup
@@ -547,7 +547,7 @@ Track your progress through the increments:
 
 - [x] Increment 1: Basic Tool Window ✓ Runnable
 - [x] Increment 2: Display Project List ✓ Runnable
-- [ ] Increment 2.5: Refactor to MVVM ✓ Runnable **← START HERE**
+- [x] Increment 2.5: Refactor to MVVM ✓ Runnable
 - [ ] Increment 3: Build Status with Colors ✓ Runnable
 - [ ] Increment 4: Show Dependencies ✓ Runnable
 - [ ] Increment 5: Tree/Hierarchy View ✓ Runnable
