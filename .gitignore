@@ -1,0 +1,7 @@
+﻿# Build dependencies and output folder
+bin/
+obj/
+
+# Visual Studio generated files and folders
+.vs/
+*.user

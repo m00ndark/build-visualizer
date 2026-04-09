@@ -1,0 +1,11 @@
+<Solution>
+  <Configurations>
+    <Platform Name="Any CPU" />
+    <Platform Name="arm64" />
+    <Platform Name="x86" />
+  </Configurations>
+  <Project Path="src\BuildVisualizer\BuildVisualizer.csproj" Id="3bbb5923-54ac-4157-9d75-e371ffd4b6a9">
+    <Platform Solution="*|arm64" Project="arm64" />
+    <Platform Solution="*|x86" Project="x86" />
+  </Project>
+</Solution>
