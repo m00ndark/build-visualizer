@@ -13,8 +13,11 @@ namespace BuildVisualizer.ViewModels
 	{
 		private readonly SolutionService _solutionService;
 		private readonly BuildEventService _buildEventService;
+		private readonly DependencyGraphBuilder _graphBuilder;
 
 		public ObservableCollection<ProjectInfo> Projects { get; set; }
+
+		public ObservableCollection<ProjectNodeViewModel> ProjectTree { get; set; }
 
 		public ICommand RefreshCommand { get; }
 
@@ -22,7 +25,9 @@ namespace BuildVisualizer.ViewModels
 		{
 			_solutionService = solutionService;
 			_buildEventService = buildEventService;
+			_graphBuilder = new DependencyGraphBuilder();
 			Projects = new ObservableCollection<ProjectInfo>();
+			ProjectTree = new ObservableCollection<ProjectNodeViewModel>();
 			RefreshCommand = new RelayCommand(_ => ThreadHelper.JoinableTaskFactory.Run(LoadProjectsAsync));
 
 			// Subscribe to build events
@@ -87,6 +92,7 @@ namespace BuildVisualizer.ViewModels
 			await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
 
 			Projects.Clear();
+			ProjectTree.Clear();
 
 			var projects = _solutionService.GetProjects();
 
@@ -96,6 +102,13 @@ namespace BuildVisualizer.ViewModels
 			foreach (var project in projects)
 			{
 				Projects.Add(project);
+			}
+
+			// Build the project hierarchy tree
+			var treeNodes = _graphBuilder.BuildHierarchy(projects);
+			foreach (var node in treeNodes)
+			{
+				ProjectTree.Add(node);
 			}
 		}
 	}

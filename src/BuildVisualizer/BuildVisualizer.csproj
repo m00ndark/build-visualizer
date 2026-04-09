@@ -54,6 +54,7 @@
     <Compile Include="BuildVisualizerPackage.cs" />
     <Compile Include="Resources\Colors.cs" />
     <Compile Include="Services\BuildEventService.cs" />
+    <Compile Include="Services\DependencyGraphBuilder.cs" />
     <Compile Include="Services\SolutionService.cs" />
     <Compile Include="ToolWindow\BuildVisualizerToolWindow.cs" />
     <Compile Include="ToolWindow\BuildVisualizerToolWindowCommand.cs" />
@@ -61,6 +62,7 @@
       <DependentUpon>BuildVisualizerToolWindowControl.xaml</DependentUpon>
     </Compile>
     <Compile Include="ViewModels\BuildVisualizerViewModel.cs" />
+    <Compile Include="ViewModels\ProjectNodeViewModel.cs" />
     <Compile Include="ViewModels\ViewModelBase.cs" />
   </ItemGroup>
   <ItemGroup>

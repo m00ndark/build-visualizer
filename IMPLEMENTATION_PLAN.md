@@ -257,7 +257,7 @@ Each increment is **runnable and testable** - you can verify functionality at ev
 **Verification:** See collapsible tree showing dependency relationships
 
 ### Tasks
-- [ ] Create `ViewModels/ProjectNodeViewModel.cs`:
+- [x] Create `ViewModels/ProjectNodeViewModel.cs`:
   - Inherit from `ViewModelBase`
   - Property: `ProjectInfo ProjectData { get; }` - wrapped model (readonly, set in constructor)
   - Property: `ObservableCollection<ProjectNodeViewModel> Children { get; set; }` - child nodes
@@ -266,7 +266,7 @@ Each increment is **runnable and testable** - you can verify functionality at ev
   - Subscribe to ProjectData.PropertyChanged: When Status changes, raise PropertyChanged for Status and StatusColor
   - Constructor: Accept ProjectInfo, initialize Children collection
 
-- [ ] Create `Services/DependencyGraphBuilder.cs`:
+- [x] Create `Services/DependencyGraphBuilder.cs`:
   - Method: `ObservableCollection<ProjectNodeViewModel> BuildHierarchy(List<ProjectInfo> projects)`
   - Algorithm:
     - Create dictionary mapping project names to ProjectNodeViewModel instances
@@ -275,14 +275,14 @@ Each increment is **runnable and testable** - you can verify functionality at ev
     - Return collection of root nodes only (nodes that are not children of any other node)
   - Handle circular dependencies: Track visited nodes to prevent infinite recursion
 
-- [ ] Update `ViewModels/BuildVisualizerViewModel.cs`:
+- [x] Update `ViewModels/BuildVisualizerViewModel.cs`:
   - Add property: `ObservableCollection<ProjectNodeViewModel> ProjectTree { get; set; }`
   - Add private field: `DependencyGraphBuilder _graphBuilder`
   - Update constructor: Initialize `_graphBuilder = new DependencyGraphBuilder()`
   - In `LoadProjectsAsync()`: After parsing dependencies, call `ProjectTree = _graphBuilder.BuildHierarchy(projects.ToList())`
   - Keep `Projects` collection for backwards compatibility or remove if not needed
 
-- [ ] Update `ToolWindow/BuildVisualizerToolWindowControl.xaml`:
+- [x] Update `ToolWindow/BuildVisualizerToolWindowControl.xaml`:
   - Add `Grid.Row` or `TabControl` to switch between List and Tree views
   - Add `TreeView`:
     - Bind `ItemsSource="{Binding ProjectTree}"`
@@ -550,7 +550,7 @@ Track your progress through the increments:
 - [x] Increment 2.5: Refactor to MVVM ✓ Runnable
 - [x] Increment 3: Build Status with Colors ✓ Runnable
 - [x] Increment 4: Show Dependencies ✓ Runnable
-- [ ] Increment 5: Tree/Hierarchy View ✓ Runnable
+- [x] Increment 5: Tree/Hierarchy View ✓ Runnable
 - [ ] Increment 6: Graph Canvas Visualization ✓ Runnable
 - [ ] Increment 7: Improved Layout ✓ Runnable
 - [ ] Increment 8: User Interactions ✓ Runnable
