@@ -76,13 +76,26 @@
 							</ItemsControl.ItemsPanel>
 							<ItemsControl.ItemTemplate>
 								<DataTemplate>
-									<Line X1="{Binding X1}" Y1="{Binding Y1}" 
-										  X2="{Binding X2}" Y2="{Binding Y2}" 
-										  Stroke="Gray" StrokeThickness="2">
-										<Line.RenderTransform>
+									<Path Data="{Binding PathData}" Fill="Transparent"
+										  MouseEnter="DependencyLine_MouseEnter"
+										  MouseLeave="DependencyLine_MouseLeave">
+										<Path.Style>
+											<Style TargetType="Path">
+												<Setter Property="Stroke" Value="Gray"/>
+												<Setter Property="StrokeThickness" Value="2"/>
+												<Setter Property="Cursor" Value="Hand"/>
+												<Style.Triggers>
+													<DataTrigger Binding="{Binding IsHighlighted}" Value="True">
+														<Setter Property="Stroke" Value="#FF4CAF50"/>
+														<Setter Property="StrokeThickness" Value="3"/>
+													</DataTrigger>
+												</Style.Triggers>
+											</Style>
+										</Path.Style>
+										<Path.RenderTransform>
 											<TranslateTransform X="0" Y="0"/>
-										</Line.RenderTransform>
-									</Line>
+										</Path.RenderTransform>
+									</Path>
 								</DataTemplate>
 							</ItemsControl.ItemTemplate>
 						</ItemsControl>

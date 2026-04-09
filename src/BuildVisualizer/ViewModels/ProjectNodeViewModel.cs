@@ -7,6 +7,7 @@ namespace BuildVisualizer.ViewModels
 	public class ProjectNodeViewModel : ViewModelBase
 	{
 		private bool _isExpanded;
+		private bool _isHighlighted;
 		private double _x;
 		private double _y;
 		private double _width = 120;
@@ -22,6 +23,12 @@ namespace BuildVisualizer.ViewModels
 		{
 			get => _isExpanded;
 			set => SetProperty(ref _isExpanded, value);
+		}
+
+		public bool IsHighlighted
+		{
+			get => _isHighlighted;
+			set => SetProperty(ref _isHighlighted, value);
 		}
 
 		// Layout properties

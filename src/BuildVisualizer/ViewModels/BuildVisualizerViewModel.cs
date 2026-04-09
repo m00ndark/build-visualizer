@@ -192,7 +192,7 @@ namespace BuildVisualizer.ViewModels
 			{
 				foreach (var depNode in node.DependencyNodes)
 				{
-					var line = new DependencyLineViewModel(node, depNode);
+					var line = new DependencyLineViewModel(node, depNode, allNodes);
 					DependencyLines.Add(line);
 				}
 			}

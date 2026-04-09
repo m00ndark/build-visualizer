@@ -377,7 +377,7 @@ Each increment is **runnable and testable** - you can verify functionality at ev
 **Verification:** Cleaner graph layout, especially for complex dependency graphs
 
 ### Tasks
-- [ ] Update `Layout/GraphLayoutEngine.cs`:
+- [x] Update `Layout/GraphLayoutEngine.cs`:
   - Implement proper layered graph layout (Sugiyama framework):
     - **Phase 1 - Layer assignment**: Topological sort with longest path layer assignment
     - **Phase 2 - Crossing reduction**: Barycenter heuristic to reorder nodes within layers
@@ -389,7 +389,7 @@ Each increment is **runnable and testable** - you can verify functionality at ev
   - Add method: `void MinimizeCrossings(Dictionary<int, List<ProjectNodeViewModel>> layers)` - reorders nodes
   - Add method: `void AssignCoordinates(Dictionary<int, List<ProjectNodeViewModel>> layers)` - calculates X, Y
 
-- [ ] Update `ViewModels/BuildVisualizerViewModel.cs`:
+- [x] Update `ViewModels/BuildVisualizerViewModel.cs`:
   - Update `BuildGraphLayout()` to use enhanced layout algorithm
   - Update CanvasWidth and CanvasHeight based on layout engine return values
   - Add padding/margins (e.g., 50px on all sides)
@@ -552,7 +552,7 @@ Track your progress through the increments:
 - [x] Increment 4: Show Dependencies ✓ Runnable
 - [x] Increment 5: Tree/Hierarchy View ✓ Runnable
 - [x] Increment 6: Graph Canvas Visualization ✓ Runnable
-- [ ] Increment 7: Improved Layout ✓ Runnable
+- [x] Increment 7: Improved Layout ✓ Runnable
 - [ ] Increment 8: User Interactions ✓ Runnable
 - [ ] Increment 9: Polish & Reactive Updates ✓ Runnable
 - [ ] Increment 10: Documentation & Testing ✓ Ready to Ship!
