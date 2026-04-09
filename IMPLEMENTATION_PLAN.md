@@ -25,38 +25,38 @@ Each increment is **runnable and testable** - you can verify functionality at ev
 **Verification:** Open VS, go to View → Other Windows → Build Visualizer, see the window appear
 
 ### Tasks
-- [ ] Add required NuGet packages to `BuildVisualizer.csproj`:
+- [x] Add required NuGet packages to `BuildVisualizer.csproj`:
   - `Microsoft.VisualStudio.SDK` (or specific assemblies)
   - `Microsoft.VSSDK.BuildTools`
   - `Microsoft.VisualStudio.Shell.15.0`
   - `Microsoft.VisualStudio.Shell.Interop`
 
-- [ ] Create `Commands/ShowToolWindowCommand.cs`:
+- [x] Create `Commands/ShowToolWindowCommand.cs`:
   - Command ID and GUID
   - Execute method to show tool window
   - Register with command service
 
-- [ ] Create `ToolWindow/BuildVisualizerToolWindow.cs`:
+- [x] Create `ToolWindow/BuildVisualizerToolWindow.cs`:
   - Inherit from `ToolWindowPane`
   - Set window title and content
 
-- [ ] Create `ToolWindow/BuildVisualizerControl.xaml`:
+- [x] Create `ToolWindow/BuildVisualizerControl.xaml`:
   - Simple TextBlock with "Hello Build Visualizer"
 
-- [ ] Create `ToolWindow/BuildVisualizerControl.xaml.cs`:
+- [x] Create `ToolWindow/BuildVisualizerControl.xaml.cs`:
   - Code-behind (can be empty for now)
 
-- [ ] Update `BuildVisualizerPackage.cs`:
+- [x] Update `BuildVisualizerPackage.cs`:
   - Add `[ProvideToolWindow]` attribute
   - Add `[ProvideMenuResource]` attribute
   - Register command in `InitializeAsync()`
 
-- [ ] Create `VSCommandTable.vsct`:
+- [x] Create `BuildVisualizerPackage.vsct`:
   - Define menu group under View → Other Windows
   - Define command button
 
-- [ ] Update `source.extension.vsixmanifest`:
-  - Add VSCommandTable asset if needed
+- [x] Update `source.extension.vsixmanifest`:
+  - Add BuildVisualizerPackage asset if needed
   - Verify package asset is registered
 
 **✓ Checkpoint:** Press F5, see the tool window in the View menu, open it and see your message!
@@ -379,7 +379,7 @@ Each increment is **runnable and testable** - you can verify functionality at ev
 
 Track your progress through the increments:
 
-- [ ] Increment 1: Basic Tool Window ✓ Runnable
+- [x] Increment 1: Basic Tool Window ✓ Runnable
 - [ ] Increment 2: Display Project List ✓ Runnable
 - [ ] Increment 3: Build Status with Colors ✓ Runnable
 - [ ] Increment 4: Show Dependencies ✓ Runnable
@@ -399,7 +399,6 @@ src/BuildVisualizer/
 ├── BuildVisualizerPackage.cs          # Main package entry point
 ├── source.extension.vsixmanifest      # VSIX manifest
 ├── BuildVisualizer.csproj             # Project file
-├── VSCommandTable.vsct                # Command definitions
 │
 ├── Commands/
 │   └── ShowToolWindowCommand.cs       # Menu command to show tool window
@@ -407,7 +406,8 @@ src/BuildVisualizer/
 ├── ToolWindow/
 │   ├── BuildVisualizerToolWindow.cs   # Tool window host (ToolWindowPane)
 │   ├── BuildVisualizerControl.xaml    # Main UI (Canvas-based graph)
-│   └── BuildVisualizerControl.xaml.cs # Code-behind with event handling
+│   ├── BuildVisualizerControl.xaml.cs # Code-behind with event handling
+│   └── BuildVisualizerPackage.vsct    # Command definitions
 │
 ├── Models/
 │   ├── ProjectInfo.cs                 # Project data model
