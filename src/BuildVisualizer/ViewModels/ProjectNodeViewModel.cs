@@ -8,18 +8,20 @@ namespace BuildVisualizer.ViewModels
 {
 	public class ProjectNodeViewModel : ViewModelBase
 	{
-		private const double NodePadding = 24.0; // 8px text margin + 2px border, per side
+		private const double NormalBorderThicknessValue = 2.0;
+		private const double HighlightedBorderThicknessValue = 4.0;
+		private const double NodePadding = (8.0 + HighlightedBorderThicknessValue) * 2; // 8px text margin + border thickness, per side
 		private const double NodeHeight = 28.0;
 		private const double FontSize = 12.0;
 		private static readonly Typeface NodeTypeface = new Typeface(
 			new FontFamily("Segoe UI"), FontStyles.Normal, FontWeights.Bold, FontStretches.Normal);
 
-		private bool _isExpanded;
-		private bool _isHighlighted;
 		private double _x;
 		private double _y;
 		private double _width;
 		private double _height = NodeHeight;
+		private Thickness _normalBorderThickness = new Thickness(NormalBorderThicknessValue);
+		private Thickness _highlightedBorderThickness = new Thickness(HighlightedBorderThicknessValue);
 
 		public ProjectInfo ProjectInfo { get; }
 
@@ -27,16 +29,16 @@ namespace BuildVisualizer.ViewModels
 
 		public ObservableCollection<ProjectNodeViewModel> DependencyNodes { get; set; }
 
-		public bool IsExpanded
+		public Thickness NormalBorderThickness
 		{
-			get => _isExpanded;
-			set => SetProperty(ref _isExpanded, value);
+			get => _normalBorderThickness;
+			set => SetProperty(ref _normalBorderThickness, value);
 		}
 
-		public bool IsHighlighted
+		public Thickness HighlightedBorderThickness
 		{
-			get => _isHighlighted;
-			set => SetProperty(ref _isHighlighted, value);
+			get => _highlightedBorderThickness;
+			set => SetProperty(ref _highlightedBorderThickness, value);
 		}
 
 		// Layout properties
@@ -78,7 +80,6 @@ namespace BuildVisualizer.ViewModels
 			ProjectInfo = projectInfo;
 			Children = new ObservableCollection<ProjectNodeViewModel>();
 			DependencyNodes = new ObservableCollection<ProjectNodeViewModel>();
-			_isExpanded = false;
 			_width = MeasureTextWidth(projectInfo.Name) + NodePadding;
 
 			// Subscribe to ProjectInfo property changes to relay them
@@ -94,15 +95,14 @@ namespace BuildVisualizer.ViewModels
 
 		private static double MeasureTextWidth(string text)
 		{
-			var formattedText = new FormattedText(
+			return new FormattedText(
 				text,
 				CultureInfo.CurrentCulture,
 				FlowDirection.LeftToRight,
 				NodeTypeface,
 				FontSize,
 				Brushes.Black,
-				1.0);
-			return formattedText.Width;
+				1.0).Width;
 		}
 	}
 }

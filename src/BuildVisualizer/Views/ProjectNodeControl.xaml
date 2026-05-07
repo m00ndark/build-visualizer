@@ -13,12 +13,12 @@
         <Border.Style>
             <Style TargetType="Border">
                 <Setter Property="BorderBrush" Value="Black"/>
-                <Setter Property="BorderThickness" Value="2"/>
+                <Setter Property="BorderThickness" Value="{Binding NormalBorderThickness}"/>
                 <Style.Triggers>
-                    <DataTrigger Binding="{Binding IsHighlighted}" Value="True">
+                    <Trigger Property="IsMouseOver" Value="True">
                         <Setter Property="BorderBrush" Value="#FF4CAF50"/>
-                        <Setter Property="BorderThickness" Value="4"/>
-                    </DataTrigger>
+                        <Setter Property="BorderThickness" Value="{Binding HighlightedBorderThickness}"/>
+                    </Trigger>
                 </Style.Triggers>
             </Style>
         </Border.Style>
