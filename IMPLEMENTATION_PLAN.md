@@ -45,27 +45,27 @@ Improve solution/project lifecycle management and remove the tree tab view.
 Remove visual dependency lines and adjust node sizing to fit content properly.
 
 ### Tasks
-- [ ] Remove dependency line rendering
-  - [ ] Remove line drawing logic from graph view
-  - [ ] Remove line-related properties from graph ViewModel
-  - [ ] Keep the dependency calculation logic (needed for grouping)
-  - [ ] Clean up unused visual elements related to lines
+- [x] Remove dependency line rendering
+  - [x] Remove line drawing logic from graph view
+  - [x] Remove line-related properties from graph ViewModel
+  - [x] Keep the dependency calculation logic (needed for grouping)
+  - [x] Clean up unused visual elements related to lines
 
-- [ ] Implement dynamic node sizing
-  - [ ] Calculate node width based on project name text length
-  - [ ] Set fixed node height for consistency
-  - [ ] Add thin padding around text (e.g., 8-12 pixels)
-  - [ ] Ensure text is never broken/truncated
-  - [ ] Update node template to use dynamic sizing
-  - [ ] Test with short and long project names
+- [x] Implement dynamic node sizing
+  - [x] Calculate node width based on project name text length
+  - [x] Set fixed node height for consistency
+  - [x] Add thin padding around text (e.g., 8-12 pixels)
+  - [x] Ensure text is never broken/truncated
+  - [x] Update node template to use dynamic sizing
+  - [x] Test with short and long project names
 
 ### Testing Criteria
-- [ ] No dependency lines are visible in graph view
-- [ ] Node width adjusts to fit project name without text wrapping
-- [ ] All nodes have consistent height
-- [ ] Padding around text looks balanced
-- [ ] Long project names display correctly without truncation
-- [ ] Nodes from dependency groups still organized in rows
+- [x] No dependency lines are visible in graph view
+- [x] Node width adjusts to fit project name without text wrapping
+- [x] All nodes have consistent height
+- [x] Padding around text looks balanced
+- [x] Long project names display correctly without truncation
+- [x] Nodes from dependency groups still organized in rows
 
 ---
 
@@ -294,13 +294,13 @@ Add ability to switch between row-based and column-based layout in graph view.
 
 **Overall Progress:**
 - [x] Increment 1: Solution Event Handling & UI Cleanup
-- [ ] Increment 2: Graph View - Node Sizing & Remove Dependency Lines
+- [x] Increment 2: Graph View - Node Sizing & Remove Dependency Lines
 - [ ] Increment 3: Graph View - Responsive Layout with Row Grouping
 - [ ] Increment 4: Context Menu - Build Operations
 - [ ] Increment 5: Context Menu - Solution Explorer Integration
 - [ ] Increment 6: Visual Studio Theme Support
 - [ ] Increment 7: Column-Based Layout Option
 
-**Current Increment:** Increment 1 - Completed
+**Current Increment:** Increment 2 - Completed
 
 **Last Updated:** 2024

@@ -7,10 +7,8 @@ namespace BuildVisualizer.Layout
 {
 	public class GraphLayoutEngine
 	{
-		private const double NodeHorizontalSpacing = 150;
-		private const double NodeVerticalSpacing = 120;
-		private const double NodeWidth = 120;
-		private const double NodeHeight = 60;
+		private const double NodeGap = 20;
+		private const double NodeVerticalSpacing = 80;
 
 		public (double Width, double Height) CalculateLayout(List<ProjectNodeViewModel> nodes, double canvasWidth = 800)
 		{
@@ -29,8 +27,8 @@ namespace BuildVisualizer.Layout
 			AssignCoordinates(layers);
 
 			// Calculate required canvas size
-			double maxX = nodes.Max(n => n.X + NodeWidth);
-			double maxY = nodes.Max(n => n.Y + NodeHeight);
+			double maxX = nodes.Max(n => n.X + n.Width);
+			double maxY = nodes.Max(n => n.Y + n.Height);
 
 			return (maxX + 50, maxY + 50); // Add padding
 		}
@@ -215,8 +213,8 @@ namespace BuildVisualizer.Layout
 
 					if (layer == 0)
 					{
-						// Root nodes: evenly spaced
-						xPosition = i * NodeHorizontalSpacing;
+						// Root nodes: evenly spaced using cumulative widths
+						xPosition = i == 0 ? 0 : nodesInLayer[i - 1].X + nodesInLayer[i - 1].Width + NodeGap;
 					}
 					else
 					{
@@ -232,14 +230,14 @@ namespace BuildVisualizer.Layout
 							// Adjust to avoid overlapping with neighbors
 							if (i > 0)
 							{
-								double minX = nodesInLayer[i - 1].X + NodeHorizontalSpacing;
+								double minX = nodesInLayer[i - 1].X + nodesInLayer[i - 1].Width + NodeGap;
 								xPosition = Math.Max(xPosition, minX);
 							}
 						}
 						else
 						{
-							// No dependencies in previous layers, use spacing
-							xPosition = i * NodeHorizontalSpacing;
+							// No dependencies in previous layers, use cumulative spacing
+							xPosition = i == 0 ? 0 : nodesInLayer[i - 1].X + nodesInLayer[i - 1].Width + NodeGap;
 						}
 					}
 
@@ -263,7 +261,7 @@ namespace BuildVisualizer.Layout
 				var prevNode = nodesInLayer[i - 1];
 				var currNode = nodesInLayer[i];
 
-				double minDistance = NodeHorizontalSpacing * 0.8; // Allow some compression
+				double minDistance = prevNode.Width + NodeGap;
 				double currentDistance = currNode.X - prevNode.X;
 
 				if (currentDistance < minDistance)

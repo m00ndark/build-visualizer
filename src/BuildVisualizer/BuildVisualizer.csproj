@@ -72,7 +72,6 @@
       <DependentUpon>BuildVisualizerToolWindowControl.xaml</DependentUpon>
     </Compile>
     <Compile Include="ViewModels\BuildVisualizerViewModel.cs" />
-    <Compile Include="ViewModels\DependencyLineViewModel.cs" />
     <Compile Include="ViewModels\ProjectNodeViewModel.cs" />
     <Compile Include="ViewModels\ViewModelBase.cs" />
     <Compile Include="Views\ProjectNodeControl.xaml.cs">

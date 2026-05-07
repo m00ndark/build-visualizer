@@ -1,17 +1,25 @@
 using BuildVisualizer.Models;
 using System.Collections.ObjectModel;
+using System.Globalization;
+using System.Windows;
 using System.Windows.Media;
 
 namespace BuildVisualizer.ViewModels
 {
 	public class ProjectNodeViewModel : ViewModelBase
 	{
+		private const double NodePadding = 24.0; // 8px text margin + 2px border, per side
+		private const double NodeHeight = 28.0;
+		private const double FontSize = 12.0;
+		private static readonly Typeface NodeTypeface = new Typeface(
+			new FontFamily("Segoe UI"), FontStyles.Normal, FontWeights.Bold, FontStretches.Normal);
+
 		private bool _isExpanded;
 		private bool _isHighlighted;
 		private double _x;
 		private double _y;
-		private double _width = 120;
-		private double _height = 60;
+		private double _width;
+		private double _height = NodeHeight;
 
 		public ProjectInfo ProjectInfo { get; }
 
@@ -71,6 +79,7 @@ namespace BuildVisualizer.ViewModels
 			Children = new ObservableCollection<ProjectNodeViewModel>();
 			DependencyNodes = new ObservableCollection<ProjectNodeViewModel>();
 			_isExpanded = false;
+			_width = MeasureTextWidth(projectInfo.Name) + NodePadding;
 
 			// Subscribe to ProjectInfo property changes to relay them
 			ProjectInfo.PropertyChanged += (sender, e) =>
@@ -81,6 +90,19 @@ namespace BuildVisualizer.ViewModels
 					OnPropertyChanged(nameof(StatusColor));
 				}
 			};
+		}
+
+		private static double MeasureTextWidth(string text)
+		{
+			var formattedText = new FormattedText(
+				text,
+				CultureInfo.CurrentCulture,
+				FlowDirection.LeftToRight,
+				NodeTypeface,
+				FontSize,
+				Brushes.Black,
+				1.0);
+			return formattedText.Width;
 		}
 	}
 }

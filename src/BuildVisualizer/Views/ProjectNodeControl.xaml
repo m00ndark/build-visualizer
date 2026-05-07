@@ -27,8 +27,6 @@
                    VerticalAlignment="Center"
                    Foreground="White"
                    FontWeight="Bold"
-                   TextWrapping="Wrap"
-                   TextAlignment="Center"
-                   Margin="5"/>
+                   Margin="8,0"/>
     </Border>
 </UserControl>

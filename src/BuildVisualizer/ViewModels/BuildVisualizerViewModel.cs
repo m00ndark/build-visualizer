@@ -26,8 +26,6 @@ namespace BuildVisualizer.ViewModels
 
 		public ObservableCollection<ProjectNodeViewModel> GraphNodes { get; set; }
 
-		public ObservableCollection<DependencyLineViewModel> DependencyLines { get; set; }
-
 		public double CanvasWidth
 		{
 			get => _canvasWidth;
@@ -51,7 +49,6 @@ namespace BuildVisualizer.ViewModels
 			_layoutEngine = new GraphLayoutEngine();
 			Projects = new ObservableCollection<ProjectInfo>();
 			GraphNodes = new ObservableCollection<ProjectNodeViewModel>();
-			DependencyLines = new ObservableCollection<DependencyLineViewModel>();
 			RefreshCommand = new RelayCommand(_ => ThreadHelper.JoinableTaskFactory.Run(LoadProjectsAsync));
 
 			// Subscribe to build events
@@ -146,7 +143,6 @@ namespace BuildVisualizer.ViewModels
 		private void BuildGraphLayout()
 		{
 			GraphNodes.Clear();
-			DependencyLines.Clear();
 
 			if (Projects.Count == 0)
 			{
@@ -190,16 +186,6 @@ namespace BuildVisualizer.ViewModels
 			(double width, double height) = _layoutEngine.CalculateLayout(allNodes);
 			CanvasWidth = width;
 			CanvasHeight = height;
-
-			// Build dependency lines
-			foreach (ProjectNodeViewModel node in allNodes)
-			{
-				foreach (ProjectNodeViewModel depNode in node.DependencyNodes)
-				{
-					DependencyLineViewModel line = new DependencyLineViewModel(node, depNode, allNodes);
-					DependencyLines.Add(line);
-				}
-			}
 		}
 
 		private void OnSolutionFullyLoaded(IReadOnlyList<ProjectReferences> projectReferences)
@@ -219,7 +205,6 @@ namespace BuildVisualizer.ViewModels
 
 				Projects.Clear();
 				GraphNodes.Clear();
-				DependencyLines.Clear();
 				CanvasWidth = 800;
 				CanvasHeight = 200;
 			});
