@@ -47,6 +47,8 @@ namespace BuildVisualizer.Models
 				if (SetProperty(ref _status, value))
 				{
 					OnPropertyChanged(nameof(StatusColor));
+					OnPropertyChanged(nameof(StatusHighlightColor));
+					OnPropertyChanged(nameof(StatusTextColor));
 				}
 			}
 		}
@@ -57,18 +59,44 @@ namespace BuildVisualizer.Models
 			{
 				switch (Status)
 				{
-					case BuildStatus.NotBuilt:
-						return Resources.Colors.NotBuiltBrush;
-					case BuildStatus.Building:
-						return Resources.Colors.BuildingBrush;
-					case BuildStatus.Success:
-						return Resources.Colors.SuccessBrush;
-					case BuildStatus.Failed:
-						return Resources.Colors.FailedBrush;
-					case BuildStatus.Skipped:
-						return Resources.Colors.SkippedBrush;
-					default:
-						return Resources.Colors.NotBuiltBrush;
+					case BuildStatus.NotBuilt:  return Resources.Colors.NotBuiltBrush;
+					case BuildStatus.Building:  return Resources.Colors.BuildingBrush;
+					case BuildStatus.Success:   return Resources.Colors.SuccessBrush;
+					case BuildStatus.Failed:    return Resources.Colors.FailedBrush;
+					case BuildStatus.Skipped:   return Resources.Colors.SkippedBrush;
+					default:                    return Resources.Colors.NotBuiltBrush;
+				}
+			}
+		}
+
+		public SolidColorBrush StatusHighlightColor
+		{
+			get
+			{
+				switch (Status)
+				{
+					case BuildStatus.NotBuilt:  return Resources.Colors.NotBuiltHighlightBrush;
+					case BuildStatus.Building:  return Resources.Colors.BuildingHighlightBrush;
+					case BuildStatus.Success:   return Resources.Colors.SuccessHighlightBrush;
+					case BuildStatus.Failed:    return Resources.Colors.FailedHighlightBrush;
+					case BuildStatus.Skipped:   return Resources.Colors.SkippedHighlightBrush;
+					default:                    return Resources.Colors.NotBuiltHighlightBrush;
+				}
+			}
+		}
+
+		public SolidColorBrush StatusTextColor
+		{
+			get
+			{
+				switch (Status)
+				{
+					case BuildStatus.NotBuilt:  return Resources.Colors.NotBuiltTextBrush;
+					case BuildStatus.Building:  return Resources.Colors.BuildingTextBrush;
+					case BuildStatus.Success:   return Resources.Colors.SuccessTextBrush;
+					case BuildStatus.Failed:    return Resources.Colors.FailedTextBrush;
+					case BuildStatus.Skipped:   return Resources.Colors.SkippedTextBrush;
+					default:                    return Resources.Colors.NotBuiltTextBrush;
 				}
 			}
 		}

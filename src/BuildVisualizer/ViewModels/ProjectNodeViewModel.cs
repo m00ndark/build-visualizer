@@ -8,8 +8,8 @@ namespace BuildVisualizer.ViewModels
 {
 	public class ProjectNodeViewModel : ViewModelBase
 	{
-		private const double NormalBorderThicknessValue = 2.0;
-		private const double HighlightedBorderThicknessValue = 4.0;
+		private const double NormalBorderThicknessValue = 1.0;
+		private const double HighlightedBorderThicknessValue = 2.0;
 		private const double NodePadding = (8.0 + HighlightedBorderThicknessValue) * 2; // 8px text margin + border thickness, per side
 		private const double NodeHeight = 28.0;
 		private const double FontSize = 12.0;
@@ -75,6 +75,10 @@ namespace BuildVisualizer.ViewModels
 
 		public SolidColorBrush StatusColor => ProjectInfo.StatusColor;
 
+		public SolidColorBrush HighlightBorderColor => ProjectInfo.StatusHighlightColor;
+
+		public SolidColorBrush TextColor => ProjectInfo.StatusTextColor;
+
 		public ProjectNodeViewModel(ProjectInfo projectInfo)
 		{
 			ProjectInfo = projectInfo;
@@ -89,6 +93,8 @@ namespace BuildVisualizer.ViewModels
 				{
 					OnPropertyChanged(nameof(Status));
 					OnPropertyChanged(nameof(StatusColor));
+					OnPropertyChanged(nameof(HighlightBorderColor));
+					OnPropertyChanged(nameof(TextColor));
 				}
 			};
 		}
