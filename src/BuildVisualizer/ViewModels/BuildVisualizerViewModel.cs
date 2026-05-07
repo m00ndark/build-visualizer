@@ -19,24 +19,11 @@ namespace BuildVisualizer.ViewModels
 		private readonly SolutionEventsService _solutionEventsService;
 		private readonly DependencyGraphBuilder _graphBuilder;
 		private readonly GraphLayoutEngine _layoutEngine;
-		private double _canvasWidth;
-		private double _canvasHeight;
-
 		public ObservableCollection<ProjectInfo> Projects { get; set; }
 
 		public ObservableCollection<ProjectNodeViewModel> GraphNodes { get; set; }
 
-		public double CanvasWidth
-		{
-			get => _canvasWidth;
-			set => SetProperty(ref _canvasWidth, value);
-		}
-
-		public double CanvasHeight
-		{
-			get => _canvasHeight;
-			set => SetProperty(ref _canvasHeight, value);
-		}
+		public ObservableCollection<GraphRowGroupViewModel> GraphRowGroups { get; set; }
 
 		public ICommand RefreshCommand { get; }
 
@@ -49,6 +36,7 @@ namespace BuildVisualizer.ViewModels
 			_layoutEngine = new GraphLayoutEngine();
 			Projects = new ObservableCollection<ProjectInfo>();
 			GraphNodes = new ObservableCollection<ProjectNodeViewModel>();
+			GraphRowGroups = new ObservableCollection<GraphRowGroupViewModel>();
 			RefreshCommand = new RelayCommand(_ => ThreadHelper.JoinableTaskFactory.Run(LoadProjectsAsync));
 
 			// Subscribe to build events
@@ -143,15 +131,12 @@ namespace BuildVisualizer.ViewModels
 		private void BuildGraphLayout()
 		{
 			GraphNodes.Clear();
+			GraphRowGroups.Clear();
 
 			if (Projects.Count == 0)
-			{
-				CanvasWidth = 800;
-				CanvasHeight = 200;
 				return;
-			}
 
-			// Create a mapping from project name to node
+			// Create a mapping from project path to node
 			Dictionary<string, ProjectNodeViewModel> nodeMap = new Dictionary<string, ProjectNodeViewModel>();
 
 			// Create nodes directly from Projects
@@ -182,10 +167,22 @@ namespace BuildVisualizer.ViewModels
 				GraphNodes.Add(node);
 			}
 
-			// Calculate layout
-			(double width, double height) = _layoutEngine.CalculateLayout(allNodes);
-			CanvasWidth = width;
-			CanvasHeight = height;
+			// Build ordered layer groups for the responsive row layout
+			Dictionary<int, List<ProjectNodeViewModel>> layers = _layoutEngine.GetOrderedLayers(allNodes);
+
+			int maxLayer = layers.Count > 0 ? layers.Keys.Max() : 0;
+			for (int layer = 0; layer <= maxLayer; layer++)
+			{
+				if (!layers.ContainsKey(layer))
+					continue;
+
+				GraphRowGroupViewModel group = new GraphRowGroupViewModel(layer, maxLayer + 1);
+				foreach (ProjectNodeViewModel node in layers[layer])
+				{
+					group.Nodes.Add(node);
+				}
+				GraphRowGroups.Add(group);
+			}
 		}
 
 		private void OnSolutionFullyLoaded(IReadOnlyList<ProjectReferences> projectReferences)
@@ -205,8 +202,7 @@ namespace BuildVisualizer.ViewModels
 
 				Projects.Clear();
 				GraphNodes.Clear();
-				CanvasWidth = 800;
-				CanvasHeight = 200;
+				GraphRowGroups.Clear();
 			});
 		}
 

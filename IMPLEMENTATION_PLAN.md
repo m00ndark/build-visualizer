@@ -75,35 +75,35 @@ Remove visual dependency lines and adjust node sizing to fit content properly.
 Implement responsive layout with row wrapping and visual grouping indicators.
 
 ### Tasks
-- [ ] Implement responsive row layout
-  - [ ] Calculate available width in graph view panel
-  - [ ] Implement logic to determine when to break a row
-  - [ ] Maintain consistent spacing between nodes in a row
-  - [ ] Keep nodes left-aligned within each row
-  - [ ] Wrap rows when there's insufficient space
-  - [ ] Ensure wrapped row segments continue underneath
+- [x] Implement responsive row layout
+  - [x] Calculate available width in graph view panel
+  - [x] Implement logic to determine when to break a row
+  - [x] Maintain consistent spacing between nodes in a row
+  - [x] Keep nodes left-aligned within each row
+  - [x] Wrap rows when there's insufficient space
+  - [x] Ensure wrapped row segments continue underneath
 
-- [ ] Add visual grouping for dependency rows
-  - [ ] Create subtle background element for each dependency group
-  - [ ] Ensure background spans across wrapped row segments
-  - [ ] Use semi-transparent background to not obscure nodes
-  - [ ] Test different colors/opacities for readability
-  - [ ] Ensure backgrounds don't overlap inappropriately
+- [x] Add visual grouping for dependency rows
+  - [x] Create subtle background element for each dependency group
+  - [x] Ensure background spans across wrapped row segments
+  - [x] Use semi-transparent background to not obscure nodes
+  - [x] Test different colors/opacities for readability
+  - [x] Ensure backgrounds don't overlap inappropriately
 
-- [ ] Handle window resize events
-  - [ ] Subscribe to window size change events
-  - [ ] Recalculate row breaks on resize
-  - [ ] Animate/smooth transition (optional)
-  - [ ] Maintain scroll position during resize
+- [x] Handle window resize events
+  - [x] Subscribe to window size change events
+  - [x] Recalculate row breaks on resize
+  - [x] Animate/smooth transition (optional)
+  - [x] Maintain scroll position during resize
 
 ### Testing Criteria
-- [ ] Nodes are left-aligned with consistent spacing
-- [ ] Rows wrap when window width decreases
-- [ ] Row wrapping unwraps when window width increases
-- [ ] Background grouping clearly shows which nodes belong together
-- [ ] Wrapped rows have continuous background across segments
-- [ ] Resizing window smoothly adjusts layout
-- [ ] No overlapping or misaligned nodes
+- [x] Nodes are left-aligned with consistent spacing
+- [x] Rows wrap when window width decreases
+- [x] Row wrapping unwraps when window width increases
+- [x] Background grouping clearly shows which nodes belong together
+- [x] Wrapped rows have continuous background across segments
+- [x] Resizing window smoothly adjusts layout
+- [x] No overlapping or misaligned nodes
 
 ---
 
@@ -295,7 +295,7 @@ Add ability to switch between row-based and column-based layout in graph view.
 **Overall Progress:**
 - [x] Increment 1: Solution Event Handling & UI Cleanup
 - [x] Increment 2: Graph View - Node Sizing & Remove Dependency Lines
-- [ ] Increment 3: Graph View - Responsive Layout with Row Grouping
+- [x] Increment 3: Graph View - Responsive Layout with Row Grouping
 - [ ] Increment 4: Context Menu - Build Operations
 - [ ] Increment 5: Context Menu - Solution Explorer Integration
 - [ ] Increment 6: Visual Studio Theme Support

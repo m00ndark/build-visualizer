@@ -45,28 +45,37 @@
 
 			<!-- Graph View Tab -->
 			<TabItem Header="Graph">
-				<ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto">
-					<Canvas Width="{Binding CanvasWidth}" Height="{Binding CanvasHeight}" Background="White">
-						<!-- Project Nodes Layer -->
-						<ItemsControl ItemsSource="{Binding GraphNodes}">
-							<ItemsControl.ItemsPanel>
-								<ItemsPanelTemplate>
-									<Canvas/>
-								</ItemsPanelTemplate>
-							</ItemsControl.ItemsPanel>
-							<ItemsControl.ItemContainerStyle>
-								<Style TargetType="ContentPresenter">
-									<Setter Property="Canvas.Left" Value="{Binding X}"/>
-									<Setter Property="Canvas.Top" Value="{Binding Y}"/>
-								</Style>
-							</ItemsControl.ItemContainerStyle>
-							<ItemsControl.ItemTemplate>
-								<DataTemplate>
-									<views:ProjectNodeControl/>
-								</DataTemplate>
-							</ItemsControl.ItemTemplate>
-						</ItemsControl>
-					</Canvas>
+				<ScrollViewer HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto">
+					<ItemsControl ItemsSource="{Binding GraphRowGroups}" Margin="10">
+						<ItemsControl.ItemsPanel>
+							<ItemsPanelTemplate>
+								<StackPanel Orientation="Vertical"/>
+							</ItemsPanelTemplate>
+						</ItemsControl.ItemsPanel>
+						<ItemsControl.ItemTemplate>
+							<DataTemplate>
+								<Border Background="{Binding BackgroundBrush}"
+										BorderBrush="Transparent"
+										BorderThickness="0"
+										CornerRadius="5"
+										Margin="0,0,0,10"
+										Padding="8">
+									<ItemsControl ItemsSource="{Binding Nodes}">
+										<ItemsControl.ItemsPanel>
+											<ItemsPanelTemplate>
+												<WrapPanel Orientation="Horizontal"/>
+											</ItemsPanelTemplate>
+										</ItemsControl.ItemsPanel>
+										<ItemsControl.ItemTemplate>
+											<DataTemplate>
+												<views:ProjectNodeControl Margin="5"/>
+											</DataTemplate>
+										</ItemsControl.ItemTemplate>
+									</ItemsControl>
+								</Border>
+							</DataTemplate>
+						</ItemsControl.ItemTemplate>
+					</ItemsControl>
 				</ScrollViewer>
 			</TabItem>
 		</TabControl>
