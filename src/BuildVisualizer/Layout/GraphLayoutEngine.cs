@@ -41,7 +41,7 @@ namespace BuildVisualizer.Layout
 			var nodeToLayer = new Dictionary<ProjectNodeViewModel, int>();
 
 			// Find nodes with no dependencies (layer 0)
-			var rootNodes = nodes.Where(n => n.ProjectData.Dependencies.Count == 0).ToList();
+			var rootNodes = nodes.Where(n => n.ProjectInfo.Dependencies.Count == 0).ToList();
 
 			foreach (var root in rootNodes)
 			{

@@ -14,6 +14,7 @@ namespace BuildVisualizer.Services
 {
 	public sealed class SolutionReferenceWatcher : IDisposable
 	{
+		private readonly IVsSolution _solution;
 		private readonly IProjectServiceAccessor _projectServiceAccessor;
 		private readonly List<ResolvedReferenceWatcher> _cpsWatchers = new List<ResolvedReferenceWatcher>();
 		private readonly List<LegacyReferenceWatcher> _legacyWatchers = new List<LegacyReferenceWatcher>();
@@ -30,8 +31,10 @@ namespace BuildVisualizer.Services
 		/// </summary>
 		public event Action<string, IReadOnlyList<ReferenceInfo>> ProjectReferencesChanged;
 
-		public SolutionReferenceWatcher(IProjectServiceAccessor projectServiceAccessor)
+		public SolutionReferenceWatcher(IVsSolution solution, IProjectServiceAccessor projectServiceAccessor)
 		{
+			_solution = solution ?? throw new ArgumentNullException(nameof(solution));
+
 			_projectServiceAccessor = projectServiceAccessor
 				?? throw new ArgumentNullException(nameof(projectServiceAccessor));
 		}
@@ -52,8 +55,7 @@ namespace BuildVisualizer.Services
 			{
 				cancellationToken.ThrowIfCancellationRequested();
 
-				string projectName = GetProjectName(hierarchy);
-				string projectPath = GetProjectPath(hierarchy);
+				(string projectName, string projectUniqueName, string projectPath) = GetProjectData(hierarchy);
 
 				UnconfiguredProject unconfigured = GetUnconfiguredProject(hierarchy);
 
@@ -61,7 +63,7 @@ namespace BuildVisualizer.Services
 				{
 					Debug.WriteLine($"[Solution] SDK-style: {projectName}");
 
-					ResolvedReferenceWatcher watcher = new ResolvedReferenceWatcher(projectName, projectPath);
+					ResolvedReferenceWatcher watcher = new ResolvedReferenceWatcher(projectName, projectUniqueName, projectPath);
 					await watcher.SubscribeAsync(unconfigured, cancellationToken);
 
 					watcher.ReferencesChanged += refs => ProjectReferencesChanged?.Invoke(projectName, refs);
@@ -80,7 +82,7 @@ namespace BuildVisualizer.Services
 					{
 						Debug.WriteLine($"[Solution] Legacy: {projectName}");
 
-						LegacyReferenceWatcher watcher = new LegacyReferenceWatcher(projectName, projectPath);
+						LegacyReferenceWatcher watcher = new LegacyReferenceWatcher(projectName, projectUniqueName, projectPath);
 						watcher.Subscribe(project);
 						_legacyWatchers.Add(watcher);
 						readyTasks.Add(watcher.WaitForReferencesAsync(cancellationToken));
@@ -115,6 +117,7 @@ namespace BuildVisualizer.Services
 				results.Add(new ProjectReferences
 					{
 						ProjectName = watcher.ProjectName,
+						ProjectUniqueName = watcher.ProjectUniqueName,
 						ProjectPath = watcher.ProjectPath,
 						ProjectStyle = "SDK",
 						References = watcher.GetCurrentReferences()
@@ -127,6 +130,7 @@ namespace BuildVisualizer.Services
 				results.Add(new ProjectReferences
 					{
 						ProjectName = watcher.ProjectName,
+						ProjectUniqueName = watcher.ProjectUniqueName,
 						ProjectPath = watcher.ProjectPath,
 						ProjectStyle = "Legacy",
 						References = watcher.GetCurrentReferences()
@@ -155,7 +159,7 @@ namespace BuildVisualizer.Services
 				.FirstOrDefault(p => StringComparer.OrdinalIgnoreCase.Equals((string)p.FullPath, projectPath));
 		}
 
-		private static string GetProjectName(IVsHierarchy hierarchy)
+		private (string Name, string UniqueName, string Path) GetProjectData(IVsHierarchy hierarchy)
 		{
 			ThreadHelper.ThrowIfNotOnUIThread();
 
@@ -164,15 +168,14 @@ namespace BuildVisualizer.Services
 				(int)__VSHPROPID.VSHPROPID_Name,
 				out object nameObj);
 
-			return nameObj as string ?? "(unknown)";
-		}
+			_solution.GetUniqueNameOfProject(hierarchy, out string uniqueName);
 
-		private static string GetProjectPath(IVsHierarchy hierarchy)
-		{
-			ThreadHelper.ThrowIfNotOnUIThread();
+			hierarchy.GetCanonicalName(
+				VSConstants.VSITEMID_ROOT, out string path);
 
-			hierarchy.GetCanonicalName(VSConstants.VSITEMID_ROOT, out string path);
-			return path ?? string.Empty;
+			return (nameObj as string ?? "(unknown)",
+				uniqueName ?? "(unknown)",
+				path ?? string.Empty);
 		}
 
 		public void Dispose()

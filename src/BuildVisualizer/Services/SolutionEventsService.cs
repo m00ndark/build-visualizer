@@ -195,7 +195,7 @@ namespace BuildVisualizer.Services
 					IProjectServiceAccessor accessor = componentModel.GetService<IProjectServiceAccessor>();
 
 					_watcher?.Dispose();
-					_watcher = new SolutionReferenceWatcher(accessor);
+					_watcher = new SolutionReferenceWatcher(_solution, accessor);
 
 					_watcher.AllReferencesReady += OnAllReady;
 					_watcher.ProjectReferencesChanged += OnProjectChanged;

@@ -19,15 +19,16 @@ namespace BuildVisualizer.Services
 		public event Action<string, string> ReferenceAdded;
 		public event Action<string, string> ReferenceRemoved;
 		public event Action<string, string> ReferenceChanged;
-		public LegacyReferenceWatcher(string projectName, string projectPath)
+		public LegacyReferenceWatcher(string projectName, string projectUniqueName, string projectPath)
 		{
 			ProjectName = projectName;
+			ProjectUniqueName = projectUniqueName;
 			ProjectPath = projectPath;
 		}
 
 		public string ProjectName { get; }
+		public string ProjectUniqueName { get; }
 		public string ProjectPath { get; }
-
 
 		/// <summary>
 		/// Subscribes to reference events on a legacy (old-style) project.

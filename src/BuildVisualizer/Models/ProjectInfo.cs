@@ -1,6 +1,7 @@
 using BuildVisualizer.ViewModels;
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
+using System.IO;
 using System.Linq;
 using System.Windows.Media;
 
@@ -10,6 +11,8 @@ namespace BuildVisualizer.Models
 	{
 		private string _name;
 		private string _uniqueName;
+		private string _projectPath;
+		private string _projectDirectory;
 		private BuildStatus _status;
 
 		public string Name
@@ -22,6 +25,18 @@ namespace BuildVisualizer.Models
 		{
 			get => _uniqueName;
 			set => SetProperty(ref _uniqueName, value);
+		}
+
+		public string ProjectPath
+		{
+			get => _projectPath;
+			set => SetProperty(ref _projectPath, value);
+		}
+
+		public string ProjectDirectory
+		{
+			get => _projectDirectory;
+			set => SetProperty(ref _projectDirectory, value);
 		}
 
 		public BuildStatus Status
@@ -58,30 +73,30 @@ namespace BuildVisualizer.Models
 			}
 		}
 
-		public ObservableCollection<string> Dependencies { get; set; }
+		public ObservableCollection<ProjectInfo> Dependencies { get; set; }
 
-		public ObservableCollection<string> Dependents { get; set; }
+		public ObservableCollection<ProjectInfo> Dependents { get; set; }
 
 		public string DependenciesText
 		{
 			get
 			{
-				if (Dependencies == null || Dependencies.Count == 0)
-				{
-					return "No dependencies";
-				}
-				return "→ " + string.Join(", ", Dependencies);
+				return Dependencies == null || Dependencies.Count == 0
+					? "No dependencies" 
+					: "→ " + string.Join(", ", Dependencies.Select(x => x.Name));
 			}
 		}
 
-		public ProjectInfo(string name, string uniqueName)
+		public ProjectInfo(string name, string uniqueName, string projectPath)
 		{
 			_name = name;
 			_uniqueName = uniqueName;
+			_projectPath = projectPath;
+			_projectDirectory = Path.GetDirectoryName(projectPath);
 			_status = BuildStatus.NotBuilt;
 
-			Dependencies = new ObservableCollection<string>();
-			Dependents = new ObservableCollection<string>();
+			Dependencies = new ObservableCollection<ProjectInfo>();
+			Dependents = new ObservableCollection<ProjectInfo>();
 
 			// Subscribe to collection changes to update DependenciesText
 			Dependencies.CollectionChanged += OnDependenciesChanged;

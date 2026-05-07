@@ -13,7 +13,7 @@ namespace BuildVisualizer.ViewModels
 		private double _width = 120;
 		private double _height = 60;
 
-		public ProjectInfo ProjectData { get; }
+		public ProjectInfo ProjectInfo { get; }
 
 		public ObservableCollection<ProjectNodeViewModel> Children { get; set; }
 
@@ -57,23 +57,25 @@ namespace BuildVisualizer.ViewModels
 		}
 
 		// Delegated properties from ProjectInfo
-		public string Name => ProjectData.Name;
+		public string Name => ProjectInfo.Name;
 
-		public BuildStatus Status => ProjectData.Status;
+		public string ProjectPath => ProjectInfo.ProjectPath;
 
-		public SolidColorBrush StatusColor => ProjectData.StatusColor;
+		public BuildStatus Status => ProjectInfo.Status;
 
-		public ProjectNodeViewModel(ProjectInfo projectData)
+		public SolidColorBrush StatusColor => ProjectInfo.StatusColor;
+
+		public ProjectNodeViewModel(ProjectInfo projectInfo)
 		{
-			ProjectData = projectData;
+			ProjectInfo = projectInfo;
 			Children = new ObservableCollection<ProjectNodeViewModel>();
 			DependencyNodes = new ObservableCollection<ProjectNodeViewModel>();
 			_isExpanded = false;
 
-			// Subscribe to ProjectData property changes to relay them
-			ProjectData.PropertyChanged += (sender, e) =>
+			// Subscribe to ProjectInfo property changes to relay them
+			ProjectInfo.PropertyChanged += (sender, e) =>
 			{
-				if (e.PropertyName == nameof(ProjectInfo.Status))
+				if (e.PropertyName == nameof(Models.ProjectInfo.Status))
 				{
 					OnPropertyChanged(nameof(Status));
 					OnPropertyChanged(nameof(StatusColor));

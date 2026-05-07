@@ -42,7 +42,7 @@ namespace BuildVisualizer.Services
 
 			foreach (ProjectReferences projectRef in _cachedProjectReferences)
 			{
-				ProjectInfo projectInfo = new ProjectInfo(projectRef.ProjectName, projectRef.ProjectPath);
+				ProjectInfo projectInfo = new ProjectInfo(projectRef.ProjectName, projectRef.ProjectUniqueName, projectRef.ProjectPath);
 				projects.Add(projectInfo);
 				projectDict[projectRef.ProjectPath] = projectInfo;
 			}
@@ -50,12 +50,7 @@ namespace BuildVisualizer.Services
 			// Populate dependencies based on project references
 			foreach (ProjectReferences projectRef in _cachedProjectReferences)
 			{
-				if (!projectDict.TryGetValue(projectRef.ProjectPath, out ProjectInfo projectInfo))
-					continue;
-
-				string projectPath = Path.GetDirectoryName(projectRef.ProjectPath);
-
-				if (projectPath == null)
+				if (!projectDict.TryGetValue(projectRef.ProjectPath, out ProjectInfo project))
 					continue;
 
 				foreach (ReferenceInfo reference in projectRef.References)
@@ -64,22 +59,22 @@ namespace BuildVisualizer.Services
 					if (reference.ReferenceKind != ReferenceKind.Project)
 						continue;
 
-					FileInfo referencedProjectFile = new FileInfo(Path.Combine(projectPath, reference.OriginalItemSpec));
-					string referencedProjectName = referencedProjectFile.FullName.ToLowerInvariant();
+					FileInfo referencedProjectFile = new FileInfo(Path.Combine(project.ProjectDirectory, reference.OriginalItemSpec));
+					string referencedProjectPath = referencedProjectFile.FullName.ToLowerInvariant();
+
+					if (!projectDict.TryGetValue(referencedProjectPath, out ProjectInfo referencedProject)) 
+						continue;
 
 					// Add to current project's dependencies
-					if (!projectInfo.Dependencies.Contains(referencedProjectName))
+					if (!project.Dependencies.Contains(referencedProject))
 					{
-						projectInfo.Dependencies.Add(referencedProjectName);
+						project.Dependencies.Add(referencedProject);
 					}
 
 					// Find the referenced project and add current project to its dependents
-					if (projectDict.TryGetValue(referencedProjectName, out ProjectInfo referencedProject))
+					if (!referencedProject.Dependents.Contains(project))
 					{
-						if (!referencedProject.Dependents.Contains(projectInfo.Name))
-						{
-							referencedProject.Dependents.Add(projectInfo.Name);
-						}
+						referencedProject.Dependents.Add(project);
 					}
 				}
 			}

@@ -42,8 +42,7 @@ namespace BuildVisualizer.Services
 			{
 				cancellationToken.ThrowIfCancellationRequested();
 
-				string projectName = GetProjectName(hierarchy);
-				string projectPath = GetProjectPath(hierarchy);
+				(string projectName, string projectUniqueName, string projectPath) = GetProjectData(hierarchy);
 
 				UnconfiguredProject unconfigured =
 					GetUnconfiguredProject(projectPath);
@@ -57,6 +56,7 @@ namespace BuildVisualizer.Services
 					results.Add(new ProjectReferences
 						{
 							ProjectName = projectName,
+							ProjectUniqueName = projectUniqueName,
 							ProjectPath = projectPath,
 							ProjectStyle = "SDK",
 							References = refs
@@ -74,6 +74,7 @@ namespace BuildVisualizer.Services
 						results.Add(new ProjectReferences
 							{
 								ProjectName = projectName,
+								ProjectUniqueName = projectUniqueName,
 								ProjectPath = projectPath,
 								ProjectStyle = "Legacy",
 								References = refs
@@ -345,7 +346,7 @@ namespace BuildVisualizer.Services
 				&& typeGuid == SolutionFolderGuid;
 		}
 
-		private static string GetProjectName(IVsHierarchy hierarchy)
+		private (string Name, string UniqueName, string Path) GetProjectData(IVsHierarchy hierarchy)
 		{
 			ThreadHelper.ThrowIfNotOnUIThread();
 
@@ -354,15 +355,14 @@ namespace BuildVisualizer.Services
 				(int)__VSHPROPID.VSHPROPID_Name,
 				out object nameObj);
 
-			return nameObj as string ?? "(unknown)";
-		}
+			_solution.GetUniqueNameOfProject(hierarchy, out string uniqueName);
 
-		private static string GetProjectPath(IVsHierarchy hierarchy)
-		{
-			ThreadHelper.ThrowIfNotOnUIThread();
+			hierarchy.GetCanonicalName(
+				VSConstants.VSITEMID_ROOT, out string path);
 
-			hierarchy.GetCanonicalName(VSConstants.VSITEMID_ROOT, out string path);
-			return path ?? string.Empty;
+			return (nameObj as string ?? "(unknown)",
+				uniqueName ?? "(unknown)",
+				path ?? string.Empty);
 		}
 
 		private static UnconfiguredProject GetUnconfiguredProject(string projectPath)

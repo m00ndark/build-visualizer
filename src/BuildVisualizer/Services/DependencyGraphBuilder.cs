@@ -2,7 +2,6 @@ using BuildVisualizer.Models;
 using BuildVisualizer.ViewModels;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using System.Linq;
 
 namespace BuildVisualizer.Services
 {
@@ -16,36 +15,36 @@ namespace BuildVisualizer.Services
 			}
 
 			// Create a dictionary mapping project names to ProjectNodeViewModel instances
-			var nodeMap = new Dictionary<string, ProjectNodeViewModel>();
-			foreach (var project in projects)
+			Dictionary<string, ProjectNodeViewModel> nodeMap = new Dictionary<string, ProjectNodeViewModel>();
+			foreach (ProjectInfo project in projects)
 			{
-				nodeMap[project.Name] = new ProjectNodeViewModel(project);
+				nodeMap[project.ProjectPath] = new ProjectNodeViewModel(project);
 			}
 
 			// Track which nodes are children of other nodes
-			var childNodes = new HashSet<string>();
+			HashSet<string> childNodes = new HashSet<string>();
 
 			// Build the hierarchy by processing dependencies
-			foreach (var project in projects)
+			foreach (ProjectInfo project in projects)
 			{
-				var currentNode = nodeMap[project.Name];
+				ProjectNodeViewModel currentNode = nodeMap[project.ProjectPath];
 
 				// For each dependency, add the current project to that dependency's children
 				// This creates a "who depends on me" hierarchy
-				foreach (var dependencyName in project.Dependencies)
+				foreach (ProjectInfo dependencyProject in project.Dependencies)
 				{
-					if (nodeMap.TryGetValue(dependencyName, out var dependencyNode))
+					if (nodeMap.TryGetValue(dependencyProject.ProjectPath, out ProjectNodeViewModel dependencyNode))
 					{
 						// Add current node as a child of its dependency
 						dependencyNode.Children.Add(currentNode);
-						childNodes.Add(project.Name);
+						childNodes.Add(project.ProjectPath);
 					}
 				}
 			}
 
 			// Root nodes are those that are NOT children of any other node
-			var rootNodes = new ObservableCollection<ProjectNodeViewModel>();
-			foreach (var kvp in nodeMap)
+			ObservableCollection<ProjectNodeViewModel> rootNodes = new ObservableCollection<ProjectNodeViewModel>();
+			foreach (KeyValuePair<string, ProjectNodeViewModel> kvp in nodeMap)
 			{
 				if (!childNodes.Contains(kvp.Key))
 				{
@@ -57,7 +56,7 @@ namespace BuildVisualizer.Services
 			// include all nodes as roots
 			if (rootNodes.Count == 0 && nodeMap.Count > 0)
 			{
-				foreach (var node in nodeMap.Values)
+				foreach (ProjectNodeViewModel node in nodeMap.Values)
 				{
 					rootNodes.Add(node);
 				}

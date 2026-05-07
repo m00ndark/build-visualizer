@@ -93,7 +93,7 @@ namespace BuildVisualizer.ViewModels
 			{
 				await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
 
-				ProjectInfo project = Projects.FirstOrDefault(p => p.UniqueName == e.ProjectUniqueName);
+				ProjectInfo project = Projects.FirstOrDefault(p => p.ProjectPath == e.ProjectUniqueName);
 				if (project != null)
 				{
 					project.Status = BuildStatus.NotBuilt;
@@ -109,7 +109,7 @@ namespace BuildVisualizer.ViewModels
 				await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
 
 				// Find the project by UniqueName and update its status
-				ProjectInfo project = Projects.FirstOrDefault(p => p.UniqueName == e.ProjectUniqueName);
+				ProjectInfo project = Projects.FirstOrDefault(p => string.Equals(p.UniqueName, e.ProjectUniqueName, StringComparison.OrdinalIgnoreCase));
 				if (project != null)
 				{
 					project.Status = e.NewStatus;
@@ -164,18 +164,18 @@ namespace BuildVisualizer.ViewModels
 			{
 				ProjectNodeViewModel node = new ProjectNodeViewModel(project);
 				allNodes.Add(node);
-				nodeMap[node.Name] = node;
+				nodeMap[node.ProjectPath] = node;
 			}
 
 			// Populate DependencyNodes for each node (resolve string names to node references)
 			foreach (ProjectNodeViewModel node in allNodes)
 			{
 				node.DependencyNodes.Clear();
-				foreach (string depName in node.ProjectData.Dependencies)
+				foreach (ProjectInfo dependencyProject in node.ProjectInfo.Dependencies)
 				{
-					if (nodeMap.ContainsKey(depName))
+					if (nodeMap.TryGetValue(dependencyProject.ProjectPath, out ProjectNodeViewModel projectNode))
 					{
-						node.DependencyNodes.Add(nodeMap[depName]);
+						node.DependencyNodes.Add(projectNode);
 					}
 				}
 			}
