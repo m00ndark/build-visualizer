@@ -3,6 +3,7 @@ using BuildVisualizer.Layout;
 using BuildVisualizer.Models;
 using BuildVisualizer.Services;
 using Microsoft.VisualStudio.Shell;
+using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
@@ -15,14 +16,13 @@ namespace BuildVisualizer.ViewModels
 	{
 		private readonly SolutionService _solutionService;
 		private readonly BuildEventService _buildEventService;
+		private readonly SolutionEventsService _solutionEventsService;
 		private readonly DependencyGraphBuilder _graphBuilder;
 		private readonly GraphLayoutEngine _layoutEngine;
 		private double _canvasWidth;
 		private double _canvasHeight;
 
 		public ObservableCollection<ProjectInfo> Projects { get; set; }
-
-		public ObservableCollection<ProjectNodeViewModel> ProjectTree { get; set; }
 
 		public ObservableCollection<ProjectNodeViewModel> GraphNodes { get; set; }
 
@@ -42,14 +42,14 @@ namespace BuildVisualizer.ViewModels
 
 		public ICommand RefreshCommand { get; }
 
-		public BuildVisualizerViewModel(SolutionService solutionService, BuildEventService buildEventService)
+		public BuildVisualizerViewModel(SolutionService solutionService, BuildEventService buildEventService, SolutionEventsService solutionEventsService)
 		{
 			_solutionService = solutionService;
 			_buildEventService = buildEventService;
+			_solutionEventsService = solutionEventsService;
 			_graphBuilder = new DependencyGraphBuilder();
 			_layoutEngine = new GraphLayoutEngine();
 			Projects = new ObservableCollection<ProjectInfo>();
-			ProjectTree = new ObservableCollection<ProjectNodeViewModel>();
 			GraphNodes = new ObservableCollection<ProjectNodeViewModel>();
 			DependencyLines = new ObservableCollection<DependencyLineViewModel>();
 			RefreshCommand = new RelayCommand(_ => ThreadHelper.JoinableTaskFactory.Run(LoadProjectsAsync));
@@ -59,11 +59,17 @@ namespace BuildVisualizer.ViewModels
 			_buildEventService.AllProjectsStatusReset += OnAllProjectsStatusReset;
 			_buildEventService.ProjectStatusReset += OnProjectStatusReset;
 
-			// Fire and forget - load projects asynchronously without blocking constructor
-#pragma warning disable VSSDK007 // Avoid fire-and-forget in analyzers (intentional for async initialization)
-			var loadTask = ThreadHelper.JoinableTaskFactory.RunAsync(LoadProjectsAsync);
-#pragma warning restore VSSDK007
-			loadTask.Task.FileAndForget("BuildVisualizer/LoadProjects");
+			// Subscribe to solution events
+			_solutionEventsService.SolutionFullyLoaded += OnSolutionFullyLoaded;
+			_solutionEventsService.SolutionClosed += OnSolutionClosed;
+			_solutionEventsService.ProjectAdded += OnProjectAdded;
+			_solutionEventsService.ProjectRemoved += OnProjectRemoved;
+
+//			// Fire and forget - load projects asynchronously without blocking constructor
+//#pragma warning disable VSSDK007 // Avoid fire-and-forget in analyzers (intentional for async initialization)
+//			var loadTask = ThreadHelper.JoinableTaskFactory.RunAsync(LoadProjectsAsync);
+//#pragma warning restore VSSDK007
+//			loadTask.Task.FileAndForget("BuildVisualizer/LoadProjects");
 		}
 
 		private void OnAllProjectsStatusReset(object sender, System.EventArgs e)
@@ -73,7 +79,7 @@ namespace BuildVisualizer.ViewModels
 			{
 				await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
 
-				foreach (var project in Projects)
+				foreach (ProjectInfo project in Projects)
 				{
 					project.Status = BuildStatus.NotBuilt;
 				}
@@ -87,7 +93,7 @@ namespace BuildVisualizer.ViewModels
 			{
 				await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
 
-				var project = Projects.FirstOrDefault(p => p.UniqueName == e.ProjectUniqueName);
+				ProjectInfo project = Projects.FirstOrDefault(p => p.UniqueName == e.ProjectUniqueName);
 				if (project != null)
 				{
 					project.Status = BuildStatus.NotBuilt;
@@ -103,7 +109,7 @@ namespace BuildVisualizer.ViewModels
 				await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
 
 				// Find the project by UniqueName and update its status
-				var project = Projects.FirstOrDefault(p => p.UniqueName == e.ProjectUniqueName);
+				ProjectInfo project = Projects.FirstOrDefault(p => p.UniqueName == e.ProjectUniqueName);
 				if (project != null)
 				{
 					project.Status = e.NewStatus;
@@ -115,24 +121,22 @@ namespace BuildVisualizer.ViewModels
 		{
 			await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
 
+			await _solutionService.LoadProjectReferencesAsync();
+			await UpdateProjectsAsync();
+		}
+
+		private async Task UpdateProjectsAsync()
+		{
+			await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
+
 			Projects.Clear();
-			ProjectTree.Clear();
 
-			var projects = _solutionService.GetProjects();
+			// Get projects (which will now use the cached references)
+			List<ProjectInfo> projects = await _solutionService.GetProjectsAsync();
 
-			// Parse dependencies
-			_solutionService.ParseProjectDependencies(projects);
-
-			foreach (var project in projects)
+			foreach (ProjectInfo project in projects)
 			{
 				Projects.Add(project);
-			}
-
-			// Build the project hierarchy tree
-			var treeNodes = _graphBuilder.BuildHierarchy(projects);
-			foreach (var node in treeNodes)
-			{
-				ProjectTree.Add(node);
 			}
 
 			// Build graph layout
@@ -144,7 +148,7 @@ namespace BuildVisualizer.ViewModels
 			GraphNodes.Clear();
 			DependencyLines.Clear();
 
-			if (ProjectTree.Count == 0)
+			if (Projects.Count == 0)
 			{
 				CanvasWidth = 800;
 				CanvasHeight = 200;
@@ -152,22 +156,22 @@ namespace BuildVisualizer.ViewModels
 			}
 
 			// Create a mapping from project name to node
-			var nodeMap = new Dictionary<string, ProjectNodeViewModel>();
+			Dictionary<string, ProjectNodeViewModel> nodeMap = new Dictionary<string, ProjectNodeViewModel>();
 
-			// Flatten the tree into a list of all nodes
-			var allNodes = new List<ProjectNodeViewModel>();
-			FlattenTree(ProjectTree, allNodes);
-
-			foreach (var node in allNodes)
+			// Create nodes directly from Projects
+			List<ProjectNodeViewModel> allNodes = new List<ProjectNodeViewModel>();
+			foreach (ProjectInfo project in Projects)
 			{
+				ProjectNodeViewModel node = new ProjectNodeViewModel(project);
+				allNodes.Add(node);
 				nodeMap[node.Name] = node;
 			}
 
 			// Populate DependencyNodes for each node (resolve string names to node references)
-			foreach (var node in allNodes)
+			foreach (ProjectNodeViewModel node in allNodes)
 			{
 				node.DependencyNodes.Clear();
-				foreach (var depName in node.ProjectData.Dependencies)
+				foreach (string depName in node.ProjectData.Dependencies)
 				{
 					if (nodeMap.ContainsKey(depName))
 					{
@@ -177,37 +181,60 @@ namespace BuildVisualizer.ViewModels
 			}
 
 			// Add nodes to GraphNodes collection
-			foreach (var node in allNodes)
+			foreach (ProjectNodeViewModel node in allNodes)
 			{
 				GraphNodes.Add(node);
 			}
 
 			// Calculate layout
-			var (width, height) = _layoutEngine.CalculateLayout(allNodes);
+			(double width, double height) = _layoutEngine.CalculateLayout(allNodes);
 			CanvasWidth = width;
 			CanvasHeight = height;
 
 			// Build dependency lines
-			foreach (var node in allNodes)
+			foreach (ProjectNodeViewModel node in allNodes)
 			{
-				foreach (var depNode in node.DependencyNodes)
+				foreach (ProjectNodeViewModel depNode in node.DependencyNodes)
 				{
-					var line = new DependencyLineViewModel(node, depNode, allNodes);
+					DependencyLineViewModel line = new DependencyLineViewModel(node, depNode, allNodes);
 					DependencyLines.Add(line);
 				}
 			}
 		}
 
-		private void FlattenTree(ObservableCollection<ProjectNodeViewModel> nodes, List<ProjectNodeViewModel> result)
+		private void OnSolutionFullyLoaded(IReadOnlyList<ProjectReferences> projectReferences)
 		{
-			foreach (var node in nodes)
+			_solutionService.UpdateProjectReferences(projectReferences);
+
+			// Reload projects when solution is fully loaded with all dependencies ready
+			ThreadHelper.JoinableTaskFactory.Run(UpdateProjectsAsync);
+		}
+
+		private void OnSolutionClosed(object sender, EventArgs e)
+		{
+			// Clear all visualizations when solution closes
+			ThreadHelper.JoinableTaskFactory.Run(async () =>
 			{
-				result.Add(node);
-				if (node.Children.Count > 0)
-				{
-					FlattenTree(node.Children, result);
-				}
-			}
+				await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
+
+				Projects.Clear();
+				GraphNodes.Clear();
+				DependencyLines.Clear();
+				CanvasWidth = 800;
+				CanvasHeight = 200;
+			});
+		}
+
+		private void OnProjectAdded(object sender, ProjectEventArgs e)
+		{
+			// Reload all projects when a project is added
+			ThreadHelper.JoinableTaskFactory.Run(LoadProjectsAsync);
+		}
+
+		private void OnProjectRemoved(object sender, ProjectEventArgs e)
+		{
+			// Reload all projects when a project is removed
+			ThreadHelper.JoinableTaskFactory.Run(LoadProjectsAsync);
 		}
 	}
 }

@@ -1,7 +1,6 @@
-﻿using EnvDTE80;
-using Microsoft.VisualStudio.Shell;
-using System;
+﻿using Microsoft.VisualStudio.Shell;
 using System.Runtime.InteropServices;
+using BuildVisualizer.Services;
 
 namespace BuildVisualizer.ToolWindow
 {
@@ -24,19 +23,17 @@ namespace BuildVisualizer.ToolWindow
 		/// </summary>
 		public BuildVisualizerToolWindow() : base(null)
 		{
-			this.Caption = "Build Visualizer";
+			Caption = "Build Visualizer";
 
-			// Get DTE2 service
-			ThreadHelper.ThrowIfNotOnUIThread();
-			var dte = ServiceProvider.GlobalProvider.GetService(typeof(EnvDTE.DTE)) as DTE2;
-
-			// Get BuildEventService from package
-			var buildEventService = BuildVisualizerPackage.BuildEventService;
+			// Get services from package
+			BuildEventService buildEventService = BuildVisualizerPackage.BuildEventService;
+			SolutionService solutionService = BuildVisualizerPackage.SolutionService;
+			SolutionEventsService solutionEventsService = BuildVisualizerPackage.SolutionEventsService;
 
 			// This is the user control hosted by the tool window; Note that, even if this class implements IDisposable,
 			// we are not calling Dispose on this object. This is because ToolWindowPane calls Dispose on
 			// the object returned by the Content property.
-			this.Content = new BuildVisualizerToolWindowControl(dte, buildEventService);
+			Content = new BuildVisualizerToolWindowControl(solutionService, buildEventService, solutionEventsService);
 		}
 	}
 }

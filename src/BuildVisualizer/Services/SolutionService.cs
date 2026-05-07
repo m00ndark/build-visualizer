@@ -1,194 +1,103 @@
 using BuildVisualizer.Models;
-using EnvDTE;
-using EnvDTE80;
 using Microsoft.VisualStudio.Shell;
 using System;
 using System.Collections.Generic;
-using System.Linq;
+using System.IO;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace BuildVisualizer.Services
 {
 	public class SolutionService
 	{
-		private static readonly string[] _solutionFolderKinds =
-			{
-				"{66A26720-8FB5-11D2-AA7E-00C04F688DDE}", // solution folder for web projects
-				"{66A2671D-8FB5-11D2-AA7E-00C04F688DDE}", // generic solution folder
-			};
+		private readonly SolutionReferenceSnapshot _snapshot;
+		private IReadOnlyList<ProjectReferences> _cachedProjectReferences;
 
-		private readonly DTE2 _dte;
-
-		public SolutionService(DTE2 dte)
+		public SolutionService(SolutionReferenceSnapshot snapshot)
 		{
-			_dte = dte;
+			_snapshot = snapshot;
 		}
 
-		public List<ProjectInfo> GetProjects()
+		public async Task<List<ProjectInfo>> GetProjectsAsync(CancellationToken cancellationToken = default)
 		{
-			ThreadHelper.ThrowIfNotOnUIThread();
+			await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
 
-			var projects = new List<ProjectInfo>();
+			List<ProjectInfo> projects = new List<ProjectInfo>();
 
-			if (_dte?.Solution == null)
+			// TODO: Make project and reference loading work,
+			// TODO: then continue on the implementation plan
+
+			if (_cachedProjectReferences == null)
+			{
+				await LoadProjectReferencesAsync(cancellationToken);
+			}
+
+			if (_cachedProjectReferences == null || _cachedProjectReferences.Count == 0)
 			{
 				return projects;
 			}
 
-			foreach (Project project in _dte.Solution.Projects)
+			// Create ProjectInfo objects from cached ProjectReferences
+			Dictionary<string, ProjectInfo> projectDict = new Dictionary<string, ProjectInfo>(StringComparer.OrdinalIgnoreCase);
+
+			foreach (ProjectReferences projectRef in _cachedProjectReferences)
 			{
-				GetProjectsRecursive(project, projects);
+				ProjectInfo projectInfo = new ProjectInfo(projectRef.ProjectName, projectRef.ProjectPath);
+				projects.Add(projectInfo);
+				projectDict[projectRef.ProjectPath] = projectInfo;
+			}
+
+			// Populate dependencies based on project references
+			foreach (ProjectReferences projectRef in _cachedProjectReferences)
+			{
+				if (!projectDict.TryGetValue(projectRef.ProjectPath, out ProjectInfo projectInfo))
+					continue;
+
+				string projectPath = Path.GetDirectoryName(projectRef.ProjectPath);
+
+				if (projectPath == null)
+					continue;
+
+				foreach (ReferenceInfo reference in projectRef.References)
+				{
+					// Only process project references
+					if (reference.ReferenceKind != ReferenceKind.Project)
+						continue;
+
+					FileInfo referencedProjectFile = new FileInfo(Path.Combine(projectPath, reference.OriginalItemSpec));
+					string referencedProjectName = referencedProjectFile.FullName.ToLowerInvariant();
+
+					// Add to current project's dependencies
+					if (!projectInfo.Dependencies.Contains(referencedProjectName))
+					{
+						projectInfo.Dependencies.Add(referencedProjectName);
+					}
+
+					// Find the referenced project and add current project to its dependents
+					if (projectDict.TryGetValue(referencedProjectName, out ProjectInfo referencedProject))
+					{
+						if (!referencedProject.Dependents.Contains(projectInfo.Name))
+						{
+							referencedProject.Dependents.Add(projectInfo.Name);
+						}
+					}
+				}
 			}
 
 			return projects;
 		}
 
-		private void GetProjectsRecursive(Project project, List<ProjectInfo> projects)
+		public async Task LoadProjectReferencesAsync(CancellationToken cancellationToken = default)
 		{
-			ThreadHelper.ThrowIfNotOnUIThread();
-
-			if (project == null)
-			{
+			if (_snapshot == null)
 				return;
-			}
 
-			try
-			{
-				// Check if this is a solution folder
-				if (_solutionFolderKinds.Contains(project.Kind))
-				{
-					// Recursively process items in the solution folder
-					if (project.ProjectItems != null)
-					{
-						foreach (ProjectItem item in project.ProjectItems)
-						{
-							if (item.SubProject != null)
-							{
-								GetProjectsRecursive(item.SubProject, projects);
-							}
-						}
-					}
-				}
-				else
-				{
-					// This is a real project, add it
-					var projectInfo = new ProjectInfo(project.Name, project.UniqueName);
-					projects.Add(projectInfo);
-				}
-			}
-			catch (Exception)
-			{
-				// Skip projects that can't be accessed
-			}
+			_cachedProjectReferences = await _snapshot.GetAllProjectReferencesAsync(cancellationToken);
 		}
 
-		public void ParseProjectDependencies(List<ProjectInfo> projects)
+		public void UpdateProjectReferences(IReadOnlyList<ProjectReferences> projectReferences)
 		{
-			ThreadHelper.ThrowIfNotOnUIThread();
-
-			if (_dte?.Solution == null || projects == null)
-			{
-				return;
-			}
-
-			// Create dictionaries for fast lookup by both UniqueName and Name
-			var projectDictByUniqueName = new Dictionary<string, ProjectInfo>(StringComparer.OrdinalIgnoreCase);
-			var projectDictByName = new Dictionary<string, ProjectInfo>(StringComparer.OrdinalIgnoreCase);
-
-			foreach (var proj in projects)
-			{
-				projectDictByUniqueName[proj.UniqueName] = proj;
-				projectDictByName[proj.Name] = proj;
-			}
-
-			// Iterate through all real projects in the solution
-			foreach (Project project in _dte.Solution.Projects)
-			{
-				ParseProjectDependenciesRecursive(project, projectDictByUniqueName, projectDictByName);
-			}
-		}
-
-		private void ParseProjectDependenciesRecursive(Project project, 
-			Dictionary<string, ProjectInfo> projectDictByUniqueName,
-			Dictionary<string, ProjectInfo> projectDictByName)
-		{
-			ThreadHelper.ThrowIfNotOnUIThread();
-
-			if (project == null)
-			{
-				return;
-			}
-
-			try
-			{
-				// Check if this is a solution folder
-				if (_solutionFolderKinds.Contains(project.Kind))
-				{
-					// Recursively process items in the solution folder
-					if (project.ProjectItems != null)
-					{
-						foreach (ProjectItem item in project.ProjectItems)
-						{
-							if (item.SubProject != null)
-							{
-								ParseProjectDependenciesRecursive(item.SubProject, projectDictByUniqueName, projectDictByName);
-							}
-						}
-					}
-					return;
-				}
-
-				// Find corresponding ProjectInfo
-				if (!projectDictByUniqueName.TryGetValue(project.UniqueName, out var projectInfo))
-					return;
-
-				try
-				{
-					// Try to get VSProject (for C# and VB.NET projects)
-					var vsProject = project.Object as VSLangProj.VSProject;
-					if (vsProject != null)
-					{
-						// Iterate through references
-						foreach (VSLangProj.Reference reference in vsProject.References)
-						{
-							try
-							{
-								// Check if this is a project reference
-								if (reference.SourceProject != null)
-								{
-									var referencedProjectName = reference.SourceProject.Name;
-
-									// Add to current project's dependencies
-									if (!projectInfo.Dependencies.Contains(referencedProjectName))
-									{
-										projectInfo.Dependencies.Add(referencedProjectName);
-									}
-
-									// Find the referenced project and add current project to its dependents
-									if (projectDictByName.TryGetValue(referencedProjectName, out var referencedProject))
-									{
-										if (!referencedProject.Dependents.Contains(projectInfo.Name))
-										{
-											referencedProject.Dependents.Add(projectInfo.Name);
-										}
-									}
-								}
-							}
-							catch (Exception)
-							{
-								// Skip references that can't be accessed
-							}
-						}
-					}
-				}
-				catch (Exception)
-				{
-					// Skip projects that can't be cast to VSProject (e.g., C++ projects)
-				}
-			}
-			catch (Exception)
-			{
-				// Skip projects that can't be accessed
-			}
+			_cachedProjectReferences = projectReferences;
 		}
 	}
 }

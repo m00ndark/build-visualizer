@@ -1,6 +1,5 @@
 ﻿using BuildVisualizer.Services;
 using BuildVisualizer.ViewModels;
-using EnvDTE80;
 using System.Windows.Controls;
 using System.Windows.Input;
 
@@ -14,10 +13,11 @@ namespace BuildVisualizer.ToolWindow
 		/// <summary>
 		/// Initializes a new instance of the <see cref="BuildVisualizerToolWindowControl"/> class.
 		/// </summary>
-		public BuildVisualizerToolWindowControl(DTE2 dte, BuildEventService buildEventService)
+		public BuildVisualizerToolWindowControl(SolutionService solutionService, BuildEventService buildEventService, SolutionEventsService solutionEventsService)
 		{
-			this.InitializeComponent();
-			DataContext = new BuildVisualizerViewModel(new SolutionService(dte), buildEventService);
+			InitializeComponent();
+
+			DataContext = new BuildVisualizerViewModel(solutionService, buildEventService, solutionEventsService);
 		}
 
 		private void DependencyLine_MouseEnter(object sender, MouseEventArgs e)

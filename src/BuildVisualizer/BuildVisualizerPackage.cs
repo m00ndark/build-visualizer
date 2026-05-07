@@ -1,6 +1,7 @@
 ﻿using BuildVisualizer.Services;
 using EnvDTE80;
 using Microsoft.VisualStudio.Shell;
+using Microsoft.VisualStudio.Shell.Interop;
 using System;
 using System.Runtime.InteropServices;
 using System.Threading;
@@ -26,9 +27,9 @@ namespace BuildVisualizer
 	/// </para>
 	/// </remarks>
 	[PackageRegistration(UseManagedResourcesOnly = true, AllowsBackgroundLoading = true)]
-	[Guid(BuildVisualizerPackage.PackageGuidString)]
+	[Guid(PackageGuidString)]
 	[ProvideMenuResource("Menus.ctmenu", 1)]
-	[ProvideToolWindow(typeof(BuildVisualizer.ToolWindow.BuildVisualizerToolWindow))]
+	[ProvideToolWindow(typeof(ToolWindow.BuildVisualizerToolWindow))]
 	public sealed class BuildVisualizerPackage : AsyncPackage
 	{
 		/// <summary>
@@ -36,12 +37,20 @@ namespace BuildVisualizer
 		/// </summary>
 		public const string PackageGuidString = "6cb9de7d-b7e0-4471-8b66-df6dd4bda1a4";
 
-		private BuildEventService _buildEventService;
-
 		/// <summary>
 		/// Gets the BuildEventService instance for this package.
 		/// </summary>
 		public static BuildEventService BuildEventService { get; private set; }
+
+		/// <summary>
+		/// Gets the SolutionService instance for this package.
+		/// </summary>
+		public static SolutionService SolutionService { get; private set; }
+
+		/// <summary>
+		/// Gets the SolutionEventsService instance for this package.
+		/// </summary>
+		public static SolutionEventsService SolutionEventsService { get; private set; }
 
 		/// <summary>
 		/// Initialization of the package; this method is called right after the package is sited, so this is the place
@@ -54,17 +63,20 @@ namespace BuildVisualizer
 		{
 			// When initialized asynchronously, the current thread may be a background thread at this point.
 			// Do any initialization that requires the UI thread after switching to the UI thread.
-			await this.JoinableTaskFactory.SwitchToMainThreadAsync(cancellationToken);
+			await JoinableTaskFactory.SwitchToMainThreadAsync(cancellationToken);
 
-			// Get DTE2 service and create BuildEventService
-			var dte = await GetServiceAsync(typeof(EnvDTE.DTE)) as DTE2;
-			if (dte != null)
+			// Get DTE2 and IVsSolution services
+			if (!(await GetServiceAsync(typeof(EnvDTE.DTE)) is DTE2 dte)
+				|| !(await GetServiceAsync(typeof(SVsSolution)) is IVsSolution solution))
 			{
-				_buildEventService = new BuildEventService(dte);
-				BuildEventService = _buildEventService;
+				throw new InvalidOperationException("Failed to get required services.");
 			}
 
-			await BuildVisualizer.ToolWindow.BuildVisualizerToolWindowCommand.InitializeAsync(this);
+			BuildEventService = new BuildEventService(dte);
+			SolutionService = new SolutionService(new SolutionReferenceSnapshot(solution));
+			SolutionEventsService = new SolutionEventsService(solution);
+
+			await ToolWindow.BuildVisualizerToolWindowCommand.InitializeAsync(this);
 		}
 
 		protected override void Dispose(bool disposing)
@@ -73,8 +85,10 @@ namespace BuildVisualizer
 
 			if (disposing)
 			{
-				_buildEventService?.Dispose();
+				BuildEventService?.Dispose();
+				SolutionEventsService?.Dispose();
 			}
+
 			base.Dispose(disposing);
 		}
 	}

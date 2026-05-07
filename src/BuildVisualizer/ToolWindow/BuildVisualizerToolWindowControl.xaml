@@ -43,26 +43,6 @@
 				</ListBox>
 			</TabItem>
 
-			<!-- Tree View Tab -->
-			<TabItem Header="Tree">
-				<TreeView ItemsSource="{Binding ProjectTree}">
-					<TreeView.ItemContainerStyle>
-						<Style TargetType="TreeViewItem">
-							<Setter Property="IsExpanded" Value="{Binding IsExpanded, Mode=TwoWay}"/>
-						</Style>
-					</TreeView.ItemContainerStyle>
-					<TreeView.ItemTemplate>
-						<HierarchicalDataTemplate ItemsSource="{Binding Children}">
-							<StackPanel Orientation="Horizontal">
-								<Border Width="16" Height="16" Background="{Binding StatusColor}" Margin="0,0,5,0"/>
-								<TextBlock Text="{Binding Name}" VerticalAlignment="Center"/>
-								<TextBlock Text="{Binding Status}" FontSize="10" Foreground="Gray" Margin="5,0,0,0" VerticalAlignment="Center"/>
-							</StackPanel>
-						</HierarchicalDataTemplate>
-					</TreeView.ItemTemplate>
-				</TreeView>
-			</TabItem>
-
 			<!-- Graph View Tab -->
 			<TabItem Header="Graph">
 				<ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto">
