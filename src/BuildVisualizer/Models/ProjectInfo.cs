@@ -17,7 +17,7 @@ namespace BuildVisualizer.Models
 		private string _projectType;
 		private BuildStatus _status;
 		private DateTime? _buildStart;
-		private DateTime? _buildStop;
+		private DateTime? _buildFinish;
 
 		public string Name
 		{
@@ -56,11 +56,28 @@ namespace BuildVisualizer.Models
 			{
 				if (SetProperty(ref _status, value))
 				{
+					OnPropertyChanged(nameof(StatusText));
 					OnPropertyChanged(nameof(StatusColor));
 					OnPropertyChanged(nameof(StatusHighlightColor));
 					OnPropertyChanged(nameof(StatusDependencyBorderColor));
 					OnPropertyChanged(nameof(StatusDependencyBackgroundColor));
 					OnPropertyChanged(nameof(StatusTextColor));
+				}
+			}
+		}
+
+		public string StatusText
+		{
+			get
+			{
+				switch (_status)
+				{
+					case BuildStatus.NotBuilt:  return "Not Built";
+					case BuildStatus.Building:  return "Building";
+					case BuildStatus.Success:   return "Success";
+					case BuildStatus.Failed:    return "Failed";
+					case BuildStatus.Skipped:   return "Skipped";
+					default:                    return _status.ToString();
 				}
 			}
 		}
@@ -90,19 +107,19 @@ namespace BuildVisualizer.Models
 			}
 		}
 
-		public DateTime? BuildStop
+		public DateTime? BuildFinish
 		{
-			get => _buildStop;
+			get => _buildFinish;
 			set
 			{
-				if (SetProperty(ref _buildStop, value))
+				if (SetProperty(ref _buildFinish, value))
 					OnPropertyChanged(nameof(BuildDuration));
 			}
 		}
 
 		public TimeSpan? BuildDuration =>
-			_buildStart.HasValue && _buildStop.HasValue
-				? _buildStop.Value - _buildStart.Value
+			_buildStart.HasValue && _buildFinish.HasValue
+				? _buildFinish.Value - _buildStart.Value
 				: (TimeSpan?)null;
 
 		public ObservableCollection<ProjectInfo> Dependencies { get; set; }

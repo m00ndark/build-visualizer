@@ -221,16 +221,10 @@
 			<RowDefinition Height="*"/>
 		</Grid.RowDefinitions>
 
-		<StackPanel Grid.Row="0" Orientation="Horizontal" HorizontalAlignment="Left" Margin="10,10,10,10">
-			<Button Content="Refresh" Command="{Binding RefreshCommand}" Padding="5" Margin="0,0,5,0"/>
-			<Button Command="{Binding ToggleViewCommand}" Padding="5">
-				<Grid>
-					<!-- Include text blocks for both texts to ensure the button width remains consistent -->
-					<TextBlock Text="{Binding ToggleViewTextAlternate}" Visibility="Hidden"/>
-					<TextBlock Text="{Binding ToggleViewText}" HorizontalAlignment="Center"/>
-				</Grid>
-			</Button>
-		</StackPanel>
+		<Grid Grid.Row="0" Margin="10,10,10,10">
+			<Button Content="Switch View" Command="{Binding ToggleViewCommand}" Padding="5" HorizontalAlignment="Left"/>
+			<Button Content="Refresh" Command="{Binding RefreshCommand}" Padding="5" HorizontalAlignment="Right"/>
+		</Grid>
 
 		<!-- List View -->
 		<ListView Grid.Row="1" Margin="10,0,10,10"
@@ -256,13 +250,13 @@
 						<GridViewColumn.HeaderContainerStyle>
 							<Style TargetType="GridViewColumnHeader" BasedOn="{StaticResource SortableColumnHeaderStyle}">
 								<Setter Property="Command" Value="{Binding DataContext.SortCommand, RelativeSource={RelativeSource AncestorType=ListView}}"/>
-								<Setter Property="CommandParameter" Value="Status"/>
+								<Setter Property="CommandParameter" Value="StatusText"/>
 							</Style>
 						</GridViewColumn.HeaderContainerStyle>
 						<GridViewColumn.CellTemplate>
 							<DataTemplate>
 								<Border Background="{Binding StatusColor}" CornerRadius="4" Padding="6,2" HorizontalAlignment="Left">
-									<TextBlock Text="{Binding Status}" Foreground="{Binding StatusTextColor}" FontSize="11" FontWeight="SemiBold"/>
+									<TextBlock Text="{Binding StatusText}" Foreground="{Binding StatusTextColor}" FontSize="11" FontWeight="SemiBold"/>
 								</Border>
 							</DataTemplate>
 						</GridViewColumn.CellTemplate>
@@ -282,16 +276,16 @@
 						</GridViewColumn.CellTemplate>
 					</GridViewColumn>
 
-					<GridViewColumn Header="Build Stop" HeaderTemplate="{StaticResource ColumnHeaderTemplate}" Width="80">
+					<GridViewColumn Header="Build Finish" HeaderTemplate="{StaticResource ColumnHeaderTemplate}" Width="80">
 						<GridViewColumn.HeaderContainerStyle>
 							<Style TargetType="GridViewColumnHeader" BasedOn="{StaticResource SortableColumnHeaderStyle}">
 								<Setter Property="Command" Value="{Binding DataContext.SortCommand, RelativeSource={RelativeSource AncestorType=ListView}}"/>
-								<Setter Property="CommandParameter" Value="BuildStop"/>
+								<Setter Property="CommandParameter" Value="BuildFinish"/>
 							</Style>
 						</GridViewColumn.HeaderContainerStyle>
 						<GridViewColumn.CellTemplate>
 							<DataTemplate>
-								<TextBlock Text="{Binding BuildStop, TargetNullValue='', StringFormat=HH:mm:ss}"/>
+								<TextBlock Text="{Binding BuildFinish, TargetNullValue='', StringFormat=HH:mm:ss}"/>
 							</DataTemplate>
 						</GridViewColumn.CellTemplate>
 					</GridViewColumn>

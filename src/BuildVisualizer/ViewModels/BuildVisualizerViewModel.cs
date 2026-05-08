@@ -55,21 +55,8 @@ namespace BuildVisualizer.ViewModels
 		public bool IsGraphView
 		{
 			get => _isGraphView;
-			set
-			{
-				if (SetProperty(ref _isGraphView, value))
-				{
-					OnPropertyChanged(nameof(ToggleViewText));
-					OnPropertyChanged(nameof(ToggleViewTextAlternate));
-				}
-			}
+			set => SetProperty(ref _isGraphView, value);
 		}
-
-		private const string ShowListViewText = "Show List View";
-		private const string ShowGraphViewText = "Show Graph View";
-
-		public string ToggleViewText => _isGraphView ? ShowListViewText : ShowGraphViewText;
-		public string ToggleViewTextAlternate => _isGraphView ? ShowGraphViewText : ShowListViewText;
 
 		public BuildVisualizerViewModel(SolutionService solutionService, BuildEventService buildEventService, SolutionEventsService solutionEventsService, ThemeService themeService)
 		{
@@ -142,7 +129,7 @@ namespace BuildVisualizer.ViewModels
 				{
 					project.Status = BuildStatus.NotBuilt;
 					project.BuildStart = null;
-					project.BuildStop = null;
+					project.BuildFinish = null;
 				}
 			});
 		}
@@ -159,7 +146,7 @@ namespace BuildVisualizer.ViewModels
 				{
 					project.Status = BuildStatus.NotBuilt;
 					project.BuildStart = null;
-					project.BuildStop = null;
+					project.BuildFinish = null;
 				}
 			});
 		}
@@ -180,7 +167,7 @@ namespace BuildVisualizer.ViewModels
 					if (e.NewStatus == BuildStatus.Building)
 						project.BuildStart = e.Timestamp;
 					else if (e.NewStatus == BuildStatus.Success || e.NewStatus == BuildStatus.Failed || e.NewStatus == BuildStatus.Skipped)
-						project.BuildStop = e.Timestamp;
+						project.BuildFinish = e.Timestamp;
 				}
 			});
 		}

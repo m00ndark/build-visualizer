@@ -30,7 +30,7 @@
                    HorizontalAlignment="Center"
                    VerticalAlignment="Center"
                    Foreground="{Binding TextColor}"
-                   FontWeight="Bold"
+                   FontWeight="Medium"
                    Margin="8,0"/>
     </Border>
 </UserControl>

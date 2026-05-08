@@ -14,7 +14,7 @@ namespace BuildVisualizer.ViewModels
 		private const double NodeHeight = 28.0;
 		private const double FontSize = 12.0;
 		private static readonly Typeface NodeTypeface = new Typeface(
-			new FontFamily("Segoe UI"), FontStyles.Normal, FontWeights.Bold, FontStretches.Normal);
+			new FontFamily("Segoe UI"), FontStyles.Normal, FontWeights.Medium, FontStretches.Normal);
 
 		private double _x;
 		private double _y;
