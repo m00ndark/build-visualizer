@@ -4,7 +4,6 @@
 			 xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
 			 xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
 			 xmlns:vsshell="clr-namespace:Microsoft.VisualStudio.Shell;assembly=Microsoft.VisualStudio.Shell.15.0"
-			 xmlns:platformUI="clr-namespace:Microsoft.VisualStudio.PlatformUI;assembly=Microsoft.VisualStudio.Shell.15.0"
 			 xmlns:vm="clr-namespace:BuildVisualizer.ViewModels"
 			 xmlns:views="clr-namespace:BuildVisualizer.Views"
 			 xmlns:converters="clr-namespace:BuildVisualizer.Converters"
@@ -12,8 +11,7 @@
 			 Foreground="{DynamicResource {x:Static vsshell:VsBrushes.WindowTextKey}}"
 			 mc:Ignorable="d"
 			 d:DesignHeight="300" d:DesignWidth="300"
-			 d:DataContext="{d:DesignInstance Type=vm:BuildVisualizerViewModel}"
-			 Name="MyToolWindow">
+			 d:DataContext="{d:DesignInstance Type=vm:BuildVisualizerViewModel}">
 	<UserControl.Resources>
 		<BooleanToVisibilityConverter x:Key="BoolToVisibilityConverter"/>
 		<converters:InverseBooleanToVisibilityConverter x:Key="BoolToVisibilityInverseConverter"/>

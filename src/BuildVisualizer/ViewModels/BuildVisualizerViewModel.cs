@@ -77,6 +77,7 @@ namespace BuildVisualizer.ViewModels
 			_buildEventService = buildEventService;
 			_solutionEventsService = solutionEventsService;
 			_themeService = themeService;
+			Resources.Colors.IsDarkTheme = themeService.IsDarkTheme;
 			_graphBuilder = new DependencyGraphBuilder();
 			_layoutEngine = new GraphLayoutEngine();
 			Projects = new ObservableCollection<ProjectInfo>();
@@ -303,11 +304,16 @@ namespace BuildVisualizer.ViewModels
 		private void OnThemeChanged(object sender, EventArgs e)
 		{
 			bool isDarkTheme = _themeService.IsDarkTheme;
+			Resources.Colors.IsDarkTheme = isDarkTheme;
 			ThreadHelper.JoinableTaskFactory.Run(async () =>
 			{
 				await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
 				foreach (GraphRowGroupViewModel group in GraphRowGroups)
 					group.UpdateTheme(isDarkTheme);
+				foreach (ProjectInfo project in Projects)
+				{
+					project.NotifyColorPropertiesChanged();
+				}
 			});
 		}
 	}
