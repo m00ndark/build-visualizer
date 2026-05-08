@@ -49,6 +49,7 @@
   <ItemGroup>
     <Compile Include="Commands\RelayCommand.cs" />
     <Compile Include="Converters\InverseBooleanToVisibilityConverter.cs" />
+    <Compile Include="Converters\NullableTimeSpanConverter.cs" />
     <Compile Include="Layout\GraphLayoutEngine.cs" />
     <Compile Include="Models\BuildStatus.cs" />
     <Compile Include="Models\ProjectInfo.cs" />
@@ -59,6 +60,7 @@
     <Compile Include="Services\BuildEventService.cs" />
     <Compile Include="Services\DependencyGraphBuilder.cs" />
     <Compile Include="Services\LegacyReferenceWatcher.cs" />
+    <Compile Include="Services\ProjectMetadata.cs" />
     <Compile Include="Services\ProjectReferences.cs" />
     <Compile Include="Services\ReferenceInfo.cs" />
     <Compile Include="Services\ReferenceKind.cs" />

@@ -15,6 +15,7 @@ using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Threading.Tasks.Dataflow;
+using System.Xml.Linq;
 using VSLangProj;
 
 namespace BuildVisualizer.Services
@@ -42,10 +43,10 @@ namespace BuildVisualizer.Services
 			{
 				cancellationToken.ThrowIfCancellationRequested();
 
-				(string projectName, string projectUniqueName, string projectPath) = GetProjectData(hierarchy);
+				ProjectMetadata projectMetadata = GetProjectData(hierarchy);
 
 				UnconfiguredProject unconfigured =
-					GetUnconfiguredProject(projectPath);
+					GetUnconfiguredProject(projectMetadata.Path);
 
 				if (unconfigured != null)
 				{
@@ -55,14 +56,15 @@ namespace BuildVisualizer.Services
 
 					results.Add(new ProjectReferences
 						{
-							ProjectName = projectName,
-							ProjectUniqueName = projectUniqueName,
-							ProjectPath = projectPath,
+							ProjectName = projectMetadata.Name,
+							ProjectUniqueName = projectMetadata.UniqueName,
+							ProjectPath = projectMetadata.Path,
 							ProjectStyle = "SDK",
+							OutputType = projectMetadata.OutputType,
 							References = refs
 						});
 
-					Debug.WriteLine($"[Snapshot] SDK '{projectName}': {refs.Count} direct ref(s)");
+					Debug.WriteLine($"[Snapshot] SDK '{projectMetadata.Name}': {refs.Count} direct ref(s)");
 				}
 				else
 				{
@@ -73,18 +75,19 @@ namespace BuildVisualizer.Services
 					{
 						results.Add(new ProjectReferences
 							{
-								ProjectName = projectName,
-								ProjectUniqueName = projectUniqueName,
-								ProjectPath = projectPath,
+								ProjectName = projectMetadata.Name,
+								ProjectUniqueName = projectMetadata.UniqueName,
+								ProjectPath = projectMetadata.Path,
 								ProjectStyle = "Legacy",
+								OutputType = projectMetadata.OutputType,
 								References = refs
 							});
 
-						Debug.WriteLine($"[Snapshot] Legacy '{projectName}': {refs.Count} direct ref(s)");
+						Debug.WriteLine($"[Snapshot] Legacy '{projectMetadata.Name}': {refs.Count} direct ref(s)");
 					}
 					else
 					{
-						Debug.WriteLine($"[Snapshot] Skipping '{projectName}' (no ref model)");
+						Debug.WriteLine($"[Snapshot] Skipping '{projectMetadata.Name}' (no ref model)");
 					}
 				}
 			}
@@ -346,7 +349,7 @@ namespace BuildVisualizer.Services
 				&& typeGuid == SolutionFolderGuid;
 		}
 
-		private (string Name, string UniqueName, string Path) GetProjectData(IVsHierarchy hierarchy)
+		private ProjectMetadata GetProjectData(IVsHierarchy hierarchy)
 		{
 			ThreadHelper.ThrowIfNotOnUIThread();
 
@@ -360,9 +363,30 @@ namespace BuildVisualizer.Services
 			hierarchy.GetCanonicalName(
 				VSConstants.VSITEMID_ROOT, out string path);
 
-			return (nameObj as string ?? "(unknown)",
-				uniqueName ?? "(unknown)",
-				path ?? string.Empty);
+			string outputType = null;
+			(hierarchy as IVsBuildPropertyStorage)?
+				.GetPropertyValue("OutputType", null, (uint)_PersistStorageType.PST_PROJECT_FILE, out outputType);
+
+			return new ProjectMetadata
+				{
+					Name = nameObj as string ?? "(unknown)",
+					UniqueName = uniqueName ?? "(unknown)",
+					Path = path ?? string.Empty,
+					OutputType = ConvertOutputType(outputType) ?? "(unknown)"
+				};
+		}
+
+		private static string ConvertOutputType(string outputType)
+		{
+			switch (outputType?.ToLowerInvariant())
+			{
+				case null: return null;
+				case "exe": return "Executable";
+				case "winexe": return "Windows App";
+				case "library": return "Library";
+				case "module": return "Module";
+				default: return outputType;
+			}
 		}
 
 		private static UnconfiguredProject GetUnconfiguredProject(string projectPath)

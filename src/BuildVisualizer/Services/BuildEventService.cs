@@ -47,22 +47,24 @@ namespace BuildVisualizer.Services
 
 			if (!string.IsNullOrEmpty(project))
 			{
+				DateTime now = DateTime.Now;
+
 				// Reset this specific project's status first
-				ProjectStatusReset?.Invoke(this, new ProjectStatusChangedEventArgs(project, BuildStatus.NotBuilt));
+				ProjectStatusReset?.Invoke(this, new ProjectStatusChangedEventArgs(project, BuildStatus.NotBuilt, now));
 
 				// Then set it to Building
-				ProjectStatusChanged?.Invoke(this, new ProjectStatusChangedEventArgs(project, BuildStatus.Building));
+				ProjectStatusChanged?.Invoke(this, new ProjectStatusChangedEventArgs(project, BuildStatus.Building, now));
 			}
 		}
 
 		private void OnBuildProjConfigDone(string project, string projectConfig, string platform, string solutionConfig, bool success)
 		{
 			ThreadHelper.ThrowIfNotOnUIThread();
-			
+
 			if (!string.IsNullOrEmpty(project))
 			{
-				var status = success ? BuildStatus.Success : BuildStatus.Failed;
-				ProjectStatusChanged?.Invoke(this, new ProjectStatusChangedEventArgs(project, status));
+				BuildStatus status = success ? BuildStatus.Success : BuildStatus.Failed;
+				ProjectStatusChanged?.Invoke(this, new ProjectStatusChangedEventArgs(project, status, DateTime.Now));
 			}
 		}
 

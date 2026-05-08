@@ -23,16 +23,12 @@ namespace BuildVisualizer.Services
 		private bool _hasResolvedData;
 		private bool _hasEvaluationData;
 
-		public ResolvedReferenceWatcher(string projectName, string projectUniqueName, string projectPath)
+		public ResolvedReferenceWatcher(ProjectMetadata projectMetadata)
 		{
-			ProjectName = projectName;
-			ProjectUniqueName = projectUniqueName;
-			ProjectPath = projectPath;
+			ProjectMetadata = projectMetadata;
 		}
 
-		public string ProjectName { get; }
-		public string ProjectUniqueName { get; }
-		public string ProjectPath { get; }
+		public ProjectMetadata ProjectMetadata { get; }
 
 		private static readonly ImmutableHashSet<string> ResolvedRules =
 			ImmutableHashSet<string>.Empty

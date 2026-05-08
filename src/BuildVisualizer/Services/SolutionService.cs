@@ -42,7 +42,7 @@ namespace BuildVisualizer.Services
 
 			foreach (ProjectReferences projectRef in _cachedProjectReferences)
 			{
-				ProjectInfo projectInfo = new ProjectInfo(projectRef.ProjectName, projectRef.ProjectUniqueName, projectRef.ProjectPath);
+				ProjectInfo projectInfo = new ProjectInfo(projectRef.ProjectName, projectRef.ProjectUniqueName, projectRef.ProjectPath, projectRef.OutputType);
 				projects.Add(projectInfo);
 				projectDict[projectRef.ProjectPath] = projectInfo;
 			}

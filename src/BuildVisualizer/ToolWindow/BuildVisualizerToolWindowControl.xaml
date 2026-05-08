@@ -16,6 +16,24 @@
 	<UserControl.Resources>
 		<BooleanToVisibilityConverter x:Key="BoolToVisibilityConverter"/>
 		<converters:InverseBooleanToVisibilityConverter x:Key="BoolToVisibilityInverseConverter"/>
+		<converters:NullableTimeSpanConverter x:Key="NullableTimeSpanConverter"/>
+
+		<!-- Column header templates for sort indicators -->
+		<DataTemplate x:Key="SortableHeaderTemplate">
+			<TextBlock Text="{Binding}" HorizontalAlignment="Left"/>
+		</DataTemplate>
+		<DataTemplate x:Key="SortableHeaderAscTemplate">
+			<StackPanel Orientation="Horizontal">
+				<TextBlock Text="{Binding}"/>
+				<TextBlock Text=" ▲" FontSize="9" VerticalAlignment="Center"/>
+			</StackPanel>
+		</DataTemplate>
+		<DataTemplate x:Key="SortableHeaderDescTemplate">
+			<StackPanel Orientation="Horizontal">
+				<TextBlock Text="{Binding}"/>
+				<TextBlock Text=" ▼" FontSize="9" VerticalAlignment="Center"/>
+			</StackPanel>
+		</DataTemplate>
 	</UserControl.Resources>
 	<Grid>
 		<Grid.RowDefinitions>
@@ -29,22 +47,107 @@
 		</StackPanel>
 
 		<!-- List View -->
-		<ListBox Grid.Row="1" Margin="10,0,10,10"
-				 ItemsSource="{Binding Projects}"
-				 Visibility="{Binding IsGraphView, Converter={StaticResource BoolToVisibilityInverseConverter}}">
-			<ListBox.ItemTemplate>
-				<DataTemplate>
-					<StackPanel Orientation="Vertical" Margin="0,5,0,5">
-						<StackPanel Orientation="Horizontal">
-							<Border Width="16" Height="16" Background="{Binding StatusColor}" Margin="0,0,5,0"/>
-							<TextBlock Text="{Binding Name}" VerticalAlignment="Center"/>
-							<TextBlock Text="{Binding Status}" Margin="5,0,0,0" FontSize="10" Foreground="Gray" VerticalAlignment="Center"/>
-						</StackPanel>
-						<TextBlock Text="{Binding DependenciesText}" FontSize="10" Foreground="Gray" Margin="20,2,0,0"/>
-					</StackPanel>
-				</DataTemplate>
-			</ListBox.ItemTemplate>
-		</ListBox>
+		<ListView Grid.Row="1" Margin="10,0,10,10"
+				  ItemsSource="{Binding SortedProjects}"
+				  Visibility="{Binding IsGraphView, Converter={StaticResource BoolToVisibilityInverseConverter}}"
+				  GridViewColumnHeader.Click="ListViewHeader_Click">
+			<ListView.View>
+				<GridView>
+					<GridViewColumn HeaderTemplate="{StaticResource SortableHeaderTemplate}" Header="Project Name" Width="200">
+						<GridViewColumn.HeaderContainerStyle>
+							<Style TargetType="GridViewColumnHeader">
+								<Setter Property="Tag" Value="Name"/>
+							</Style>
+						</GridViewColumn.HeaderContainerStyle>
+						<GridViewColumn.CellTemplate>
+							<DataTemplate>
+								<TextBlock Text="{Binding Name}" TextTrimming="CharacterEllipsis"/>
+							</DataTemplate>
+						</GridViewColumn.CellTemplate>
+					</GridViewColumn>
+
+					<GridViewColumn HeaderTemplate="{StaticResource SortableHeaderTemplate}" Header="Build Status" Width="110">
+						<GridViewColumn.HeaderContainerStyle>
+							<Style TargetType="GridViewColumnHeader">
+								<Setter Property="Tag" Value="Status"/>
+							</Style>
+						</GridViewColumn.HeaderContainerStyle>
+						<GridViewColumn.CellTemplate>
+							<DataTemplate>
+								<Border Background="{Binding StatusColor}" CornerRadius="4" Padding="6,2" HorizontalAlignment="Left">
+									<TextBlock Text="{Binding Status}" Foreground="{Binding StatusTextColor}" FontSize="11" FontWeight="SemiBold"/>
+								</Border>
+							</DataTemplate>
+						</GridViewColumn.CellTemplate>
+					</GridViewColumn>
+
+					<GridViewColumn HeaderTemplate="{StaticResource SortableHeaderTemplate}" Header="Build Start" Width="80">
+						<GridViewColumn.HeaderContainerStyle>
+							<Style TargetType="GridViewColumnHeader">
+								<Setter Property="Tag" Value="BuildStart"/>
+							</Style>
+						</GridViewColumn.HeaderContainerStyle>
+						<GridViewColumn.CellTemplate>
+							<DataTemplate>
+								<TextBlock Text="{Binding BuildStart, TargetNullValue='', StringFormat=HH:mm:ss}"/>
+							</DataTemplate>
+						</GridViewColumn.CellTemplate>
+					</GridViewColumn>
+
+					<GridViewColumn HeaderTemplate="{StaticResource SortableHeaderTemplate}" Header="Build Stop" Width="80">
+						<GridViewColumn.HeaderContainerStyle>
+							<Style TargetType="GridViewColumnHeader">
+								<Setter Property="Tag" Value="BuildStop"/>
+							</Style>
+						</GridViewColumn.HeaderContainerStyle>
+						<GridViewColumn.CellTemplate>
+							<DataTemplate>
+								<TextBlock Text="{Binding BuildStop, TargetNullValue='', StringFormat=HH:mm:ss}"/>
+							</DataTemplate>
+						</GridViewColumn.CellTemplate>
+					</GridViewColumn>
+
+					<GridViewColumn HeaderTemplate="{StaticResource SortableHeaderTemplate}" Header="Duration" Width="80">
+						<GridViewColumn.HeaderContainerStyle>
+							<Style TargetType="GridViewColumnHeader">
+								<Setter Property="Tag" Value="BuildDuration"/>
+							</Style>
+						</GridViewColumn.HeaderContainerStyle>
+						<GridViewColumn.CellTemplate>
+							<DataTemplate>
+								<TextBlock Text="{Binding BuildDuration, Converter={StaticResource NullableTimeSpanConverter}}"/>
+							</DataTemplate>
+						</GridViewColumn.CellTemplate>
+					</GridViewColumn>
+
+					<GridViewColumn HeaderTemplate="{StaticResource SortableHeaderTemplate}" Header="Project Type" Width="90">
+						<GridViewColumn.HeaderContainerStyle>
+							<Style TargetType="GridViewColumnHeader">
+								<Setter Property="Tag" Value="ProjectType"/>
+							</Style>
+						</GridViewColumn.HeaderContainerStyle>
+						<GridViewColumn.CellTemplate>
+							<DataTemplate>
+								<TextBlock Text="{Binding ProjectType}" TextTrimming="CharacterEllipsis"/>
+							</DataTemplate>
+						</GridViewColumn.CellTemplate>
+					</GridViewColumn>
+
+					<GridViewColumn HeaderTemplate="{StaticResource SortableHeaderTemplate}" Header="Dependencies" Width="200">
+						<GridViewColumn.HeaderContainerStyle>
+							<Style TargetType="GridViewColumnHeader">
+								<Setter Property="Tag" Value="DependenciesText"/>
+							</Style>
+						</GridViewColumn.HeaderContainerStyle>
+						<GridViewColumn.CellTemplate>
+							<DataTemplate>
+								<TextBlock Text="{Binding DependenciesText}" TextTrimming="CharacterEllipsis" Foreground="Gray" FontSize="11"/>
+							</DataTemplate>
+						</GridViewColumn.CellTemplate>
+					</GridViewColumn>
+				</GridView>
+			</ListView.View>
+		</ListView>
 
 		<!-- Graph View -->
 		<ScrollViewer Grid.Row="2" Margin="10,0,10,10"

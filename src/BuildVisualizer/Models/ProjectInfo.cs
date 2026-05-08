@@ -1,4 +1,5 @@
 using BuildVisualizer.ViewModels;
+using System;
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
 using System.IO;
@@ -13,7 +14,10 @@ namespace BuildVisualizer.Models
 		private string _uniqueName;
 		private string _projectPath;
 		private string _projectDirectory;
+		private string _projectType;
 		private BuildStatus _status;
+		private DateTime? _buildStart;
+		private DateTime? _buildStop;
 
 		public string Name
 		{
@@ -37,6 +41,12 @@ namespace BuildVisualizer.Models
 		{
 			get => _projectDirectory;
 			set => SetProperty(ref _projectDirectory, value);
+		}
+
+		public string ProjectType
+		{
+			get => _projectType;
+			set => SetProperty(ref _projectType, value);
 		}
 
 		public BuildStatus Status
@@ -101,6 +111,31 @@ namespace BuildVisualizer.Models
 			}
 		}
 
+		public DateTime? BuildStart
+		{
+			get => _buildStart;
+			set
+			{
+				if (SetProperty(ref _buildStart, value))
+					OnPropertyChanged(nameof(BuildDuration));
+			}
+		}
+
+		public DateTime? BuildStop
+		{
+			get => _buildStop;
+			set
+			{
+				if (SetProperty(ref _buildStop, value))
+					OnPropertyChanged(nameof(BuildDuration));
+			}
+		}
+
+		public TimeSpan? BuildDuration =>
+			_buildStart.HasValue && _buildStop.HasValue
+				? _buildStop.Value - _buildStart.Value
+				: (TimeSpan?)null;
+
 		public ObservableCollection<ProjectInfo> Dependencies { get; set; }
 
 		public ObservableCollection<ProjectInfo> Dependents { get; set; }
@@ -110,17 +145,18 @@ namespace BuildVisualizer.Models
 			get
 			{
 				return Dependencies == null || Dependencies.Count == 0
-					? "No dependencies" 
-					: "→ " + string.Join(", ", Dependencies.Select(x => x.Name));
+					? string.Empty
+					: string.Join(", ", Dependencies.Select(x => x.Name).OrderBy(n => n));
 			}
 		}
 
-		public ProjectInfo(string name, string uniqueName, string projectPath)
+		public ProjectInfo(string name, string uniqueName, string projectPath, string projectType = null)
 		{
 			_name = name;
 			_uniqueName = uniqueName;
 			_projectPath = projectPath;
 			_projectDirectory = Path.GetDirectoryName(projectPath);
+			_projectType = projectType;
 			_status = BuildStatus.NotBuilt;
 
 			Dependencies = new ObservableCollection<ProjectInfo>();

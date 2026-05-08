@@ -6,8 +6,10 @@ using Microsoft.VisualStudio.Shell;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.ComponentModel;
 using System.Linq;
 using System.Threading.Tasks;
+using System.Windows.Data;
 using System.Windows.Input;
 
 namespace BuildVisualizer.ViewModels
@@ -22,6 +24,8 @@ namespace BuildVisualizer.ViewModels
 		private bool _isGraphView;
 
 		public ObservableCollection<ProjectInfo> Projects { get; set; }
+
+		public ICollectionView SortedProjects { get; private set; }
 
 		public ObservableCollection<ProjectNodeViewModel> GraphNodes { get; set; }
 
@@ -51,6 +55,7 @@ namespace BuildVisualizer.ViewModels
 			_graphBuilder = new DependencyGraphBuilder();
 			_layoutEngine = new GraphLayoutEngine();
 			Projects = new ObservableCollection<ProjectInfo>();
+			SortedProjects = CollectionViewSource.GetDefaultView(Projects);
 			GraphNodes = new ObservableCollection<ProjectNodeViewModel>();
 			GraphRowGroups = new ObservableCollection<GraphRowGroupViewModel>();
 			RefreshCommand = new RelayCommand(_ => ThreadHelper.JoinableTaskFactory.Run(LoadProjectsAsync));
@@ -84,6 +89,8 @@ namespace BuildVisualizer.ViewModels
 				foreach (ProjectInfo project in Projects)
 				{
 					project.Status = BuildStatus.NotBuilt;
+					project.BuildStart = null;
+					project.BuildStop = null;
 				}
 			});
 		}
@@ -99,6 +106,8 @@ namespace BuildVisualizer.ViewModels
 				if (project != null)
 				{
 					project.Status = BuildStatus.NotBuilt;
+					project.BuildStart = null;
+					project.BuildStop = null;
 				}
 			});
 		}
@@ -115,6 +124,11 @@ namespace BuildVisualizer.ViewModels
 				if (project != null)
 				{
 					project.Status = e.NewStatus;
+
+					if (e.NewStatus == BuildStatus.Building)
+						project.BuildStart = e.Timestamp;
+					else if (e.NewStatus == BuildStatus.Success || e.NewStatus == BuildStatus.Failed || e.NewStatus == BuildStatus.Skipped)
+						project.BuildStop = e.Timestamp;
 				}
 			});
 		}

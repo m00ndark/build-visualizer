@@ -6,11 +6,13 @@ namespace BuildVisualizer.Models
 	{
 		public string ProjectUniqueName { get; }
 		public BuildStatus NewStatus { get; }
+		public DateTime Timestamp { get; }
 
-		public ProjectStatusChangedEventArgs(string projectUniqueName, BuildStatus newStatus)
+		public ProjectStatusChangedEventArgs(string projectUniqueName, BuildStatus newStatus, DateTime timestamp)
 		{
 			ProjectUniqueName = projectUniqueName;
 			NewStatus = newStatus;
+			Timestamp = timestamp;
 		}
 	}
 }

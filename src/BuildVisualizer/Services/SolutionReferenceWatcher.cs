@@ -1,14 +1,17 @@
+using EnvDTE;
+using Microsoft.VisualStudio;
+using Microsoft.VisualStudio.OLE.Interop;
+using Microsoft.VisualStudio.ProjectSystem;
+using Microsoft.VisualStudio.Shell;
+using Microsoft.VisualStudio.Shell.Interop;
+using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using EnvDTE;
-using Microsoft.VisualStudio;
-using Microsoft.VisualStudio.ProjectSystem;
-using Microsoft.VisualStudio.Shell;
-using Microsoft.VisualStudio.Shell.Interop;
+using System.Xml.Linq;
 
 namespace BuildVisualizer.Services
 {
@@ -55,18 +58,18 @@ namespace BuildVisualizer.Services
 			{
 				cancellationToken.ThrowIfCancellationRequested();
 
-				(string projectName, string projectUniqueName, string projectPath) = GetProjectData(hierarchy);
+				ProjectMetadata projectMetadata = GetProjectData(hierarchy);
 
 				UnconfiguredProject unconfigured = GetUnconfiguredProject(hierarchy);
 
 				if (unconfigured != null)
 				{
-					Debug.WriteLine($"[Solution] SDK-style: {projectName}");
+					Debug.WriteLine($"[Solution] SDK-style: {projectMetadata.Name}");
 
-					ResolvedReferenceWatcher watcher = new ResolvedReferenceWatcher(projectName, projectUniqueName, projectPath);
+					ResolvedReferenceWatcher watcher = new ResolvedReferenceWatcher(projectMetadata);
 					await watcher.SubscribeAsync(unconfigured, cancellationToken);
 
-					watcher.ReferencesChanged += refs => ProjectReferencesChanged?.Invoke(projectName, refs);
+					watcher.ReferencesChanged += refs => ProjectReferencesChanged?.Invoke(projectMetadata.Name, refs);
 
 					_cpsWatchers.Add(watcher);
 					readyTasks.Add(watcher.ReferencesReady);
@@ -80,16 +83,16 @@ namespace BuildVisualizer.Services
 
 					if (extObject is Project project && project.Object is VSLangProj.VSProject)
 					{
-						Debug.WriteLine($"[Solution] Legacy: {projectName}");
+						Debug.WriteLine($"[Solution] Legacy: {projectMetadata.Name}");
 
-						LegacyReferenceWatcher watcher = new LegacyReferenceWatcher(projectName, projectUniqueName, projectPath);
+						LegacyReferenceWatcher watcher = new LegacyReferenceWatcher(projectMetadata);
 						watcher.Subscribe(project);
 						_legacyWatchers.Add(watcher);
 						readyTasks.Add(watcher.WaitForReferencesAsync(cancellationToken));
 					}
 					else
 					{
-						Debug.WriteLine($"[Solution] Skipping (no ref model): {projectName}");
+						Debug.WriteLine($"[Solution] Skipping (no ref model): {projectMetadata.Name}");
 					}
 				}
 			}
@@ -116,10 +119,11 @@ namespace BuildVisualizer.Services
 			{
 				results.Add(new ProjectReferences
 					{
-						ProjectName = watcher.ProjectName,
-						ProjectUniqueName = watcher.ProjectUniqueName,
-						ProjectPath = watcher.ProjectPath,
+						ProjectName = watcher.ProjectMetadata.Name,
+						ProjectUniqueName = watcher.ProjectMetadata.UniqueName,
+						ProjectPath = watcher.ProjectMetadata.Path,
 						ProjectStyle = "SDK",
+						OutputType = watcher.ProjectMetadata.OutputType,
 						References = watcher.GetCurrentReferences()
 					});
 				i++;
@@ -129,10 +133,11 @@ namespace BuildVisualizer.Services
 			{
 				results.Add(new ProjectReferences
 					{
-						ProjectName = watcher.ProjectName,
-						ProjectUniqueName = watcher.ProjectUniqueName,
-						ProjectPath = watcher.ProjectPath,
+						ProjectName = watcher.ProjectMetadata.Name,
+						ProjectUniqueName = watcher.ProjectMetadata.UniqueName,
+						ProjectPath = watcher.ProjectMetadata.Path,
 						ProjectStyle = "Legacy",
+						OutputType = watcher.ProjectMetadata.OutputType,
 						References = watcher.GetCurrentReferences()
 					});
 				i++;
@@ -159,7 +164,7 @@ namespace BuildVisualizer.Services
 				.FirstOrDefault(p => StringComparer.OrdinalIgnoreCase.Equals((string)p.FullPath, projectPath));
 		}
 
-		private (string Name, string UniqueName, string Path) GetProjectData(IVsHierarchy hierarchy)
+		private ProjectMetadata GetProjectData(IVsHierarchy hierarchy)
 		{
 			ThreadHelper.ThrowIfNotOnUIThread();
 
@@ -173,9 +178,30 @@ namespace BuildVisualizer.Services
 			hierarchy.GetCanonicalName(
 				VSConstants.VSITEMID_ROOT, out string path);
 
-			return (nameObj as string ?? "(unknown)",
-				uniqueName ?? "(unknown)",
-				path ?? string.Empty);
+			string outputType = null;
+			(hierarchy as IVsBuildPropertyStorage)?
+				.GetPropertyValue("OutputType", null, (uint)_PersistStorageType.PST_PROJECT_FILE, out outputType);
+
+			return new ProjectMetadata
+			{
+				Name = nameObj as string ?? "(unknown)",
+				UniqueName = uniqueName ?? "(unknown)",
+				Path = path ?? string.Empty,
+				OutputType = ConvertOutputType(outputType) ?? "(unknown)"
+			};
+		}
+
+		private static string ConvertOutputType(string outputType)
+		{
+			switch (outputType?.ToLowerInvariant())
+			{
+				case null: return null;
+				case "exe": return "Executable";
+				case "winexe": return "Windows App";
+				case "library": return "Library";
+				case "module": return "Module";
+				default: return outputType;
+			}
 		}
 
 		public void Dispose()
