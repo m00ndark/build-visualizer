@@ -50,6 +50,7 @@
     <Compile Include="Commands\RelayCommand.cs" />
     <Compile Include="Converters\InverseBooleanToVisibilityConverter.cs" />
     <Compile Include="Converters\NullableTimeSpanConverter.cs" />
+    <Compile Include="Converters\SortIndicatorVisibilityConverter.cs" />
     <Compile Include="Layout\GraphLayoutEngine.cs" />
     <Compile Include="Models\BuildStatus.cs" />
     <Compile Include="Models\ProjectInfo.cs" />

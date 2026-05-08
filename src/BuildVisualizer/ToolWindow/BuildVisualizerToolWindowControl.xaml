@@ -17,21 +17,29 @@
 		<BooleanToVisibilityConverter x:Key="BoolToVisibilityConverter"/>
 		<converters:InverseBooleanToVisibilityConverter x:Key="BoolToVisibilityInverseConverter"/>
 		<converters:NullableTimeSpanConverter x:Key="NullableTimeSpanConverter"/>
+		<converters:SortIndicatorVisibilityConverter x:Key="SortIndicatorVisibilityConverter"/>
 
-		<!-- Column header templates for sort indicators -->
-		<DataTemplate x:Key="SortableHeaderTemplate">
-			<TextBlock Text="{Binding}" HorizontalAlignment="Left"/>
-		</DataTemplate>
-		<DataTemplate x:Key="SortableHeaderAscTemplate">
+		<DataTemplate x:Key="ColumnHeaderTemplate">
 			<StackPanel Orientation="Horizontal">
-				<TextBlock Text="{Binding}"/>
-				<TextBlock Text=" ▲" FontSize="9" VerticalAlignment="Center"/>
-			</StackPanel>
-		</DataTemplate>
-		<DataTemplate x:Key="SortableHeaderDescTemplate">
-			<StackPanel Orientation="Horizontal">
-				<TextBlock Text="{Binding}"/>
-				<TextBlock Text=" ▼" FontSize="9" VerticalAlignment="Center"/>
+				<TextBlock Text="{Binding}" VerticalAlignment="Center"/>
+				<TextBlock Text=" ▲" FontSize="9" VerticalAlignment="Center">
+					<TextBlock.Visibility>
+						<MultiBinding Converter="{StaticResource SortIndicatorVisibilityConverter}" ConverterParameter="Ascending">
+							<Binding RelativeSource="{RelativeSource AncestorType=GridViewColumnHeader}" Path="CommandParameter"/>
+							<Binding Path="DataContext.SortProperty" RelativeSource="{RelativeSource AncestorType=ListView}"/>
+							<Binding Path="DataContext.SortDirection" RelativeSource="{RelativeSource AncestorType=ListView}"/>
+						</MultiBinding>
+					</TextBlock.Visibility>
+				</TextBlock>
+				<TextBlock Text=" ▼" FontSize="9" VerticalAlignment="Center">
+					<TextBlock.Visibility>
+						<MultiBinding Converter="{StaticResource SortIndicatorVisibilityConverter}" ConverterParameter="Descending">
+							<Binding RelativeSource="{RelativeSource AncestorType=GridViewColumnHeader}" Path="CommandParameter"/>
+							<Binding Path="DataContext.SortProperty" RelativeSource="{RelativeSource AncestorType=ListView}"/>
+							<Binding Path="DataContext.SortDirection" RelativeSource="{RelativeSource AncestorType=ListView}"/>
+						</MultiBinding>
+					</TextBlock.Visibility>
+				</TextBlock>
 			</StackPanel>
 		</DataTemplate>
 	</UserControl.Resources>
@@ -49,14 +57,14 @@
 		<!-- List View -->
 		<ListView Grid.Row="1" Margin="10,0,10,10"
 				  ItemsSource="{Binding SortedProjects}"
-				  Visibility="{Binding IsGraphView, Converter={StaticResource BoolToVisibilityInverseConverter}}"
-				  GridViewColumnHeader.Click="ListViewHeader_Click">
+				  Visibility="{Binding IsGraphView, Converter={StaticResource BoolToVisibilityInverseConverter}}">
 			<ListView.View>
 				<GridView>
-					<GridViewColumn HeaderTemplate="{StaticResource SortableHeaderTemplate}" Header="Project Name" Width="200">
+					<GridViewColumn Header="Project Name" HeaderTemplate="{StaticResource ColumnHeaderTemplate}" Width="200">
 						<GridViewColumn.HeaderContainerStyle>
 							<Style TargetType="GridViewColumnHeader">
-								<Setter Property="Tag" Value="Name"/>
+								<Setter Property="Command" Value="{Binding DataContext.SortCommand, RelativeSource={RelativeSource AncestorType=ListView}}"/>
+								<Setter Property="CommandParameter" Value="Name"/>
 							</Style>
 						</GridViewColumn.HeaderContainerStyle>
 						<GridViewColumn.CellTemplate>
@@ -66,10 +74,11 @@
 						</GridViewColumn.CellTemplate>
 					</GridViewColumn>
 
-					<GridViewColumn HeaderTemplate="{StaticResource SortableHeaderTemplate}" Header="Build Status" Width="110">
+					<GridViewColumn Header="Build Status" HeaderTemplate="{StaticResource ColumnHeaderTemplate}" Width="110">
 						<GridViewColumn.HeaderContainerStyle>
 							<Style TargetType="GridViewColumnHeader">
-								<Setter Property="Tag" Value="Status"/>
+								<Setter Property="Command" Value="{Binding DataContext.SortCommand, RelativeSource={RelativeSource AncestorType=ListView}}"/>
+								<Setter Property="CommandParameter" Value="Status"/>
 							</Style>
 						</GridViewColumn.HeaderContainerStyle>
 						<GridViewColumn.CellTemplate>
@@ -81,10 +90,11 @@
 						</GridViewColumn.CellTemplate>
 					</GridViewColumn>
 
-					<GridViewColumn HeaderTemplate="{StaticResource SortableHeaderTemplate}" Header="Build Start" Width="80">
+					<GridViewColumn Header="Build Start" HeaderTemplate="{StaticResource ColumnHeaderTemplate}" Width="80">
 						<GridViewColumn.HeaderContainerStyle>
 							<Style TargetType="GridViewColumnHeader">
-								<Setter Property="Tag" Value="BuildStart"/>
+								<Setter Property="Command" Value="{Binding DataContext.SortCommand, RelativeSource={RelativeSource AncestorType=ListView}}"/>
+								<Setter Property="CommandParameter" Value="BuildStart"/>
 							</Style>
 						</GridViewColumn.HeaderContainerStyle>
 						<GridViewColumn.CellTemplate>
@@ -94,10 +104,11 @@
 						</GridViewColumn.CellTemplate>
 					</GridViewColumn>
 
-					<GridViewColumn HeaderTemplate="{StaticResource SortableHeaderTemplate}" Header="Build Stop" Width="80">
+					<GridViewColumn Header="Build Stop" HeaderTemplate="{StaticResource ColumnHeaderTemplate}" Width="80">
 						<GridViewColumn.HeaderContainerStyle>
 							<Style TargetType="GridViewColumnHeader">
-								<Setter Property="Tag" Value="BuildStop"/>
+								<Setter Property="Command" Value="{Binding DataContext.SortCommand, RelativeSource={RelativeSource AncestorType=ListView}}"/>
+								<Setter Property="CommandParameter" Value="BuildStop"/>
 							</Style>
 						</GridViewColumn.HeaderContainerStyle>
 						<GridViewColumn.CellTemplate>
@@ -107,10 +118,11 @@
 						</GridViewColumn.CellTemplate>
 					</GridViewColumn>
 
-					<GridViewColumn HeaderTemplate="{StaticResource SortableHeaderTemplate}" Header="Duration" Width="80">
+					<GridViewColumn Header="Duration" HeaderTemplate="{StaticResource ColumnHeaderTemplate}" Width="80">
 						<GridViewColumn.HeaderContainerStyle>
 							<Style TargetType="GridViewColumnHeader">
-								<Setter Property="Tag" Value="BuildDuration"/>
+								<Setter Property="Command" Value="{Binding DataContext.SortCommand, RelativeSource={RelativeSource AncestorType=ListView}}"/>
+								<Setter Property="CommandParameter" Value="BuildDuration"/>
 							</Style>
 						</GridViewColumn.HeaderContainerStyle>
 						<GridViewColumn.CellTemplate>
@@ -120,10 +132,11 @@
 						</GridViewColumn.CellTemplate>
 					</GridViewColumn>
 
-					<GridViewColumn HeaderTemplate="{StaticResource SortableHeaderTemplate}" Header="Project Type" Width="90">
+					<GridViewColumn Header="Project Type" HeaderTemplate="{StaticResource ColumnHeaderTemplate}" Width="90">
 						<GridViewColumn.HeaderContainerStyle>
 							<Style TargetType="GridViewColumnHeader">
-								<Setter Property="Tag" Value="ProjectType"/>
+								<Setter Property="Command" Value="{Binding DataContext.SortCommand, RelativeSource={RelativeSource AncestorType=ListView}}"/>
+								<Setter Property="CommandParameter" Value="ProjectType"/>
 							</Style>
 						</GridViewColumn.HeaderContainerStyle>
 						<GridViewColumn.CellTemplate>
@@ -133,10 +146,11 @@
 						</GridViewColumn.CellTemplate>
 					</GridViewColumn>
 
-					<GridViewColumn HeaderTemplate="{StaticResource SortableHeaderTemplate}" Header="Dependencies" Width="200">
+					<GridViewColumn Header="Dependencies" HeaderTemplate="{StaticResource ColumnHeaderTemplate}" Width="200">
 						<GridViewColumn.HeaderContainerStyle>
 							<Style TargetType="GridViewColumnHeader">
-								<Setter Property="Tag" Value="DependenciesText"/>
+								<Setter Property="Command" Value="{Binding DataContext.SortCommand, RelativeSource={RelativeSource AncestorType=ListView}}"/>
+								<Setter Property="CommandParameter" Value="DependenciesText"/>
 							</Style>
 						</GridViewColumn.HeaderContainerStyle>
 						<GridViewColumn.CellTemplate>

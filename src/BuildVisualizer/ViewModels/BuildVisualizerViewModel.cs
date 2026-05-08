@@ -22,6 +22,8 @@ namespace BuildVisualizer.ViewModels
 		private readonly DependencyGraphBuilder _graphBuilder;
 		private readonly GraphLayoutEngine _layoutEngine;
 		private bool _isGraphView;
+		private string _sortProperty;
+		private ListSortDirection _sortDirection = ListSortDirection.Ascending;
 
 		public ObservableCollection<ProjectInfo> Projects { get; set; }
 
@@ -34,6 +36,20 @@ namespace BuildVisualizer.ViewModels
 		public ICommand RefreshCommand { get; }
 
 		public ICommand ToggleViewCommand { get; }
+
+		public ICommand SortCommand { get; }
+
+		public string SortProperty
+		{
+			get => _sortProperty;
+			private set => SetProperty(ref _sortProperty, value);
+		}
+
+		public ListSortDirection SortDirection
+		{
+			get => _sortDirection;
+			private set => SetProperty(ref _sortDirection, value);
+		}
 
 		public bool IsGraphView
 		{
@@ -56,10 +72,33 @@ namespace BuildVisualizer.ViewModels
 			_layoutEngine = new GraphLayoutEngine();
 			Projects = new ObservableCollection<ProjectInfo>();
 			SortedProjects = CollectionViewSource.GetDefaultView(Projects);
+			if (SortedProjects is ICollectionViewLiveShaping liveShaping && liveShaping.CanChangeLiveSorting)
+				liveShaping.IsLiveSorting = true;
 			GraphNodes = new ObservableCollection<ProjectNodeViewModel>();
 			GraphRowGroups = new ObservableCollection<GraphRowGroupViewModel>();
 			RefreshCommand = new RelayCommand(_ => ThreadHelper.JoinableTaskFactory.Run(LoadProjectsAsync));
 			ToggleViewCommand = new RelayCommand(_ => IsGraphView = !IsGraphView);
+			SortCommand = new RelayCommand(param =>
+			{
+				if (!(param is string property) || string.IsNullOrEmpty(property))
+					return;
+
+				ListSortDirection direction = (property == SortProperty && SortDirection == ListSortDirection.Ascending)
+					? ListSortDirection.Descending
+					: ListSortDirection.Ascending;
+
+				SortedProjects.SortDescriptions.Clear();
+				SortedProjects.SortDescriptions.Add(new SortDescription(property, direction));
+
+				if (SortedProjects is ICollectionViewLiveShaping liveSorting)
+				{
+					liveSorting.LiveSortingProperties.Clear();
+					liveSorting.LiveSortingProperties.Add(property);
+				}
+
+				SortProperty = property;
+				SortDirection = direction;
+			});
 
 			// Subscribe to build events
 			_buildEventService.ProjectStatusChanged += OnProjectStatusChanged;
