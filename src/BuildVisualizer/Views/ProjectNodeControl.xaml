@@ -4,29 +4,70 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              xmlns:vm="clr-namespace:BuildVisualizer.ViewModels"
+             xmlns:models="clr-namespace:BuildVisualizer.Models"
              mc:Ignorable="d" 
              d:DataContext="{d:DesignInstance Type=vm:ProjectNodeViewModel}"
              Width="{Binding Width}" 
              Height="{Binding Height}">
-    <Border Background="{Binding StatusColor}"
-            CornerRadius="5">
-        <Border.Style>
-            <Style TargetType="Border">
-                <Setter Property="BorderBrush" Value="{Binding HighlightBorderColor}"/>
-                <Setter Property="BorderThickness" Value="{Binding NormalBorderThickness}"/>
-                <Style.Triggers>
-                    <Trigger Property="IsMouseOver" Value="True">
-                        <Setter Property="BorderBrush" Value="{Binding HighlightBorderColor}"/>
-                        <Setter Property="BorderThickness" Value="{Binding HighlightedBorderThickness}"/>
-                    </Trigger>
-                </Style.Triggers>
-            </Style>
-        </Border.Style>
-        <TextBlock Text="{Binding Name}"
-                   HorizontalAlignment="Center"
-                   VerticalAlignment="Center"
-                   Foreground="{Binding TextColor}"
-                   FontWeight="Bold"
-                   Margin="8,0"/>
-    </Border>
+    <Grid>
+        <!-- Main node border -->
+        <Border Background="{Binding StatusColor}"
+                CornerRadius="5">
+            <Border.Style>
+                <Style TargetType="Border">
+                    <Setter Property="BorderBrush" Value="{Binding HighlightBorderColor}"/>
+                    <Setter Property="BorderThickness" Value="{Binding NormalBorderThickness}"/>
+                    <Style.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter Property="BorderBrush" Value="{Binding HighlightBorderColor}"/>
+                            <Setter Property="BorderThickness" Value="{Binding HighlightedBorderThickness}"/>
+                        </Trigger>
+                    </Style.Triggers>
+                </Style>
+            </Border.Style>
+            <TextBlock Text="{Binding Name}"
+                       HorizontalAlignment="Center"
+                       VerticalAlignment="Center"
+                       Foreground="{Binding TextColor}"
+                       FontWeight="Bold"
+                       Margin="8,0"/>
+        </Border>
+
+        <!-- Pulsing brightness overlay - visible only when Building -->
+        <Border CornerRadius="5"
+                Background="White"
+                IsHitTestVisible="False"
+                Opacity="0">
+            <Border.Style>
+                <Style TargetType="Border">
+                    <Setter Property="Opacity" Value="0"/>
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding Status}" Value="{x:Static models:BuildStatus.Building}">
+                            <DataTrigger.EnterActions>
+                                <BeginStoryboard>
+                                    <Storyboard>
+                                        <DoubleAnimation
+                                            Storyboard.TargetProperty="Opacity"
+                                            From="0" To="0.3"
+                                            Duration="0:0:0.8"
+                                            AutoReverse="True"
+                                            RepeatBehavior="Forever"/>
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </DataTrigger.EnterActions>
+                            <DataTrigger.ExitActions>
+                                <BeginStoryboard>
+                                    <Storyboard>
+                                        <DoubleAnimation
+                                            Storyboard.TargetProperty="Opacity"
+                                            To="0" Duration="0:0:0.2"/>
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </DataTrigger.ExitActions>
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </Border.Style>
+        </Border>
+    </Grid>
 </UserControl>
