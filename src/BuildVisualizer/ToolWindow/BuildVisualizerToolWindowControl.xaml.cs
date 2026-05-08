@@ -1,5 +1,8 @@
 ﻿using BuildVisualizer.Services;
 using BuildVisualizer.ViewModels;
+using System;
+using System.Linq;
+using System.Windows;
 using System.Windows.Controls;
 
 namespace BuildVisualizer.ToolWindow
@@ -9,6 +12,8 @@ namespace BuildVisualizer.ToolWindow
 	/// </summary>
 	public partial class BuildVisualizerToolWindowControl : UserControl
 	{
+		private const double MinDependenciesColumnWidth = 60;
+
 		/// <summary>
 		/// Initializes a new instance of the <see cref="BuildVisualizerToolWindowControl"/> class.
 		/// </summary>
@@ -17,6 +22,16 @@ namespace BuildVisualizer.ToolWindow
 			InitializeComponent();
 
 			DataContext = new BuildVisualizerViewModel(solutionService, buildEventService, solutionEventsService, themeService);
+		}
+
+		private void ProjectListView_SizeChanged(object sender, SizeChangedEventArgs e)
+		{
+			double fixedWidth = ((GridView)ProjectListView.View).Columns
+				.Where(column => column != DependenciesColumn)
+				.Sum(column => column.ActualWidth);
+
+			double available = ProjectListView.ActualWidth - fixedWidth - (SystemParameters.VerticalScrollBarWidth + 8);
+			DependenciesColumn.Width = Math.Max(available, MinDependenciesColumnWidth);
 		}
 	}
 }
