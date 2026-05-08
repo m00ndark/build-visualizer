@@ -82,7 +82,20 @@ namespace BuildVisualizer
 			SolutionEventsService = new SolutionEventsService(solution);
 			ThemeService = new ThemeService();
 
+			BuildEventService.BuildBegin += OnBuildBegin;
+
 			await ToolWindow.BuildVisualizerToolWindowCommand.InitializeAsync(this);
+		}
+
+		private void OnBuildBegin(object sender, EventArgs e)
+		{
+			ThreadHelper.ThrowIfNotOnUIThread();
+
+			ToolWindowPane window = FindToolWindow(typeof(ToolWindow.BuildVisualizerToolWindow), 0, true);
+			if (window?.Frame is IVsWindowFrame frame)
+			{
+				frame.Show();
+			}
 		}
 
 		protected override void Dispose(bool disposing)
@@ -91,7 +104,11 @@ namespace BuildVisualizer
 
 			if (disposing)
 			{
-				BuildEventService?.Dispose();
+				if (BuildEventService != null)
+				{
+					BuildEventService.BuildBegin -= OnBuildBegin;
+					BuildEventService.Dispose();
+				}
 				SolutionEventsService?.Dispose();
 			}
 

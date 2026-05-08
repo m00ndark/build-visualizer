@@ -13,6 +13,7 @@ namespace BuildVisualizer.Services
 		private readonly BuildEvents _buildEvents;
 		private bool _disposed;
 
+		public event EventHandler BuildBegin;
 		public event EventHandler<ProjectStatusChangedEventArgs> ProjectStatusChanged;
 		public event EventHandler AllProjectsStatusReset;
 		public event EventHandler<ProjectStatusChangedEventArgs> ProjectStatusReset;
@@ -33,6 +34,8 @@ namespace BuildVisualizer.Services
 		private void OnBuildBegin(vsBuildScope scope, vsBuildAction action)
 		{
 			ThreadHelper.ThrowIfNotOnUIThread();
+
+			BuildBegin?.Invoke(this, EventArgs.Empty);
 
 			// Reset all project statuses when a solution build starts
 			if (scope == vsBuildScope.vsBuildScopeSolution)
