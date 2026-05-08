@@ -19,6 +19,8 @@ namespace BuildVisualizer.ViewModels
 		private readonly SolutionEventsService _solutionEventsService;
 		private readonly DependencyGraphBuilder _graphBuilder;
 		private readonly GraphLayoutEngine _layoutEngine;
+		private bool _isGraphView;
+
 		public ObservableCollection<ProjectInfo> Projects { get; set; }
 
 		public ObservableCollection<ProjectNodeViewModel> GraphNodes { get; set; }
@@ -26,6 +28,20 @@ namespace BuildVisualizer.ViewModels
 		public ObservableCollection<GraphRowGroupViewModel> GraphRowGroups { get; set; }
 
 		public ICommand RefreshCommand { get; }
+
+		public ICommand ToggleViewCommand { get; }
+
+		public bool IsGraphView
+		{
+			get => _isGraphView;
+			set
+			{
+				if (SetProperty(ref _isGraphView, value))
+					OnPropertyChanged(nameof(ToggleViewText));
+			}
+		}
+
+		public string ToggleViewText => _isGraphView ? "Show List View" : "Show Graph View";
 
 		public BuildVisualizerViewModel(SolutionService solutionService, BuildEventService buildEventService, SolutionEventsService solutionEventsService)
 		{
@@ -38,6 +54,7 @@ namespace BuildVisualizer.ViewModels
 			GraphNodes = new ObservableCollection<ProjectNodeViewModel>();
 			GraphRowGroups = new ObservableCollection<GraphRowGroupViewModel>();
 			RefreshCommand = new RelayCommand(_ => ThreadHelper.JoinableTaskFactory.Run(LoadProjectsAsync));
+			ToggleViewCommand = new RelayCommand(_ => IsGraphView = !IsGraphView);
 
 			// Subscribe to build events
 			_buildEventService.ProjectStatusChanged += OnProjectStatusChanged;
