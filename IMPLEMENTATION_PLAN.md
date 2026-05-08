@@ -182,31 +182,31 @@ Add "Show in Solution Explorer" functionality to context menus.
 Integrate with Visual Studio theming system to support light, dark, and custom themes.
 
 ### Tasks
-- [ ] Reference Visual Studio theme colors
-  - [ ] Add reference to `Microsoft.VisualStudio.Shell` theming APIs
-  - [ ] Use `EnvironmentColors` for standard UI elements
-  - [ ] Use `ThemedDialogColors` where appropriate
-  - [ ] Create custom theme color resources if needed
+- [x] Reference Visual Studio theme colors
+  - [x] Add reference to `Microsoft.VisualStudio.Shell` theming APIs
+  - [x] Use `EnvironmentColors` for standard UI elements
+  - [x] Use `ThemedDialogColors` where appropriate
+  - [x] Create custom theme color resources if needed
 
-- [ ] Update tool window styling
-  - [ ] Apply theme-aware background colors
-  - [ ] Apply theme-aware foreground/text colors
-  - [ ] Apply theme-aware border colors
-  - [ ] Update node styling to use theme colors
-  - [ ] Update row grouping backgrounds to use theme colors
+- [x] Update tool window styling
+  - [x] Apply theme-aware background colors
+  - [x] Apply theme-aware foreground/text colors
+  - [x] Apply theme-aware border colors
+  - [x] Update node styling to use theme colors
+  - [x] Update row grouping backgrounds to use theme colors
 
-- [ ] Update build status colors
-  - [ ] Ensure green (success) is visible in all themes
-  - [ ] Ensure red (failure) is visible in all themes
-  - [ ] Ensure yellow (building) is visible in all themes
-  - [ ] Test color contrast in light and dark themes
-  - [ ] Adjust color opacity if needed for readability
+- [x] Update build status colors
+  - [x] Ensure green (success) is visible in all themes
+  - [x] Ensure red (failure) is visible in all themes
+  - [x] Ensure yellow (building) is visible in all themes
+  - [x] Test color contrast in light and dark themes
+  - [x] Adjust color opacity if needed for readability
 
-- [ ] Handle theme change events
-  - [ ] Subscribe to `VSColorTheme.ThemeChanged` event
-  - [ ] Refresh UI colors when theme changes
-  - [ ] Update cached color resources
-  - [ ] Test switching themes while tool window is open
+- [x] Handle theme change events
+  - [x] Subscribe to `VSColorTheme.ThemeChanged` event
+  - [x] Refresh UI colors when theme changes
+  - [x] Update cached color resources
+  - [x] Test switching themes while tool window is open
 
 ### Testing Criteria
 - [ ] Tool window looks native in light theme
@@ -298,7 +298,7 @@ Add ability to switch between row-based and column-based layout in graph view.
 - [x] Increment 3: Graph View - Responsive Layout with Row Grouping
 - [ ] Increment 4: Context Menu - Build Operations
 - [ ] Increment 5: Context Menu - Solution Explorer Integration
-- [ ] Increment 6: Visual Studio Theme Support
+- [x] Increment 6: Visual Studio Theme Support
 - [ ] Increment 7: Column-Based Layout Option
 
 **Current Increment:** Increment 2 - Completed

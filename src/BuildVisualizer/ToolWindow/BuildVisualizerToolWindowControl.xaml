@@ -4,6 +4,7 @@
 			 xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
 			 xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
 			 xmlns:vsshell="clr-namespace:Microsoft.VisualStudio.Shell;assembly=Microsoft.VisualStudio.Shell.15.0"
+			 xmlns:platformUI="clr-namespace:Microsoft.VisualStudio.PlatformUI;assembly=Microsoft.VisualStudio.Shell.15.0"
 			 xmlns:vm="clr-namespace:BuildVisualizer.ViewModels"
 			 xmlns:views="clr-namespace:BuildVisualizer.Views"
 			 xmlns:converters="clr-namespace:BuildVisualizer.Converters"
@@ -18,6 +19,179 @@
 		<converters:InverseBooleanToVisibilityConverter x:Key="BoolToVisibilityInverseConverter"/>
 		<converters:NullableTimeSpanConverter x:Key="NullableTimeSpanConverter"/>
 		<converters:SortIndicatorVisibilityConverter x:Key="SortIndicatorVisibilityConverter"/>
+
+		<!-- Resize gripper for column headers -->
+		<Style x:Key="ColumnHeaderGripperStyle" TargetType="Thumb">
+			<Setter Property="Width" Value="18"/>
+			<Setter Property="Background" Value="Transparent"/>
+			<Setter Property="Cursor" Value="SizeWE"/>
+			<Setter Property="Template">
+				<Setter.Value>
+					<ControlTemplate TargetType="Thumb">
+						<Border Background="{TemplateBinding Background}"/>
+					</ControlTemplate>
+				</Setter.Value>
+			</Setter>
+		</Style>
+
+		<!-- Column header style: VS-themed background, no OS hover effects -->
+		<Style x:Key="SortableColumnHeaderStyle" TargetType="GridViewColumnHeader">
+			<Setter Property="HorizontalContentAlignment" Value="Left"/>
+			<Setter Property="VerticalContentAlignment" Value="Center"/>
+			<Setter Property="Padding" Value="6,3"/>
+			<Setter Property="Foreground" Value="{DynamicResource {x:Static vsshell:VsBrushes.ToolWindowTextKey}}"/>
+			<Setter Property="Template">
+				<Setter.Value>
+					<ControlTemplate TargetType="GridViewColumnHeader">
+						<Border x:Name="HeaderBorder"
+								Background="{DynamicResource {x:Static vsshell:VsBrushes.ToolWindowBackgroundKey}}"
+								BorderBrush="{DynamicResource {x:Static vsshell:VsBrushes.ToolWindowBorderKey}}"
+								BorderThickness="0,0,1,1">
+							<Grid>
+								<ContentPresenter Margin="{TemplateBinding Padding}"
+												  HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+												  VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
+												  RecognizesAccessKey="True"
+												  SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}"/>
+								<Thumb x:Name="PART_HeaderGripper"
+									   HorizontalAlignment="Right"
+									   Margin="0,0,-9,0"
+									   Style="{StaticResource ColumnHeaderGripperStyle}"/>
+							</Grid>
+						</Border>
+						<ControlTemplate.Triggers>
+							<Trigger Property="IsMouseOver" Value="True">
+								<Setter TargetName="HeaderBorder" Property="Background" Value="{DynamicResource {x:Static vsshell:VsBrushes.CommandBarHoverKey}}"/>
+							</Trigger>
+							<Trigger Property="IsPressed" Value="True">
+								<Setter TargetName="HeaderBorder" Property="Background" Value="{DynamicResource {x:Static vsshell:VsBrushes.CommandBarMouseDownBackgroundGradientKey}}"/>
+							</Trigger>
+						</ControlTemplate.Triggers>
+					</ControlTemplate>
+				</Setter.Value>
+			</Setter>
+			<!-- Filler column at the right edge of the header row — must be a Style trigger, not inside the ControlTemplate -->
+			<Style.Triggers>
+				<Trigger Property="Role" Value="Padding">
+					<Setter Property="Template">
+						<Setter.Value>
+							<ControlTemplate TargetType="GridViewColumnHeader">
+								<Border Background="{DynamicResource {x:Static vsshell:VsBrushes.ToolWindowBackgroundKey}}"
+										BorderBrush="{DynamicResource {x:Static vsshell:VsBrushes.ToolWindowBorderKey}}"
+										BorderThickness="0,0,0,1"/>
+							</ControlTemplate>
+						</Setter.Value>
+					</Setter>
+				</Trigger>
+			</Style.Triggers>
+		</Style>
+
+		<!-- ListView style: VS-themed border that does not change on hover or focus -->
+		<Style TargetType="ListView">
+			<Setter Property="Background" Value="{DynamicResource {x:Static vsshell:VsBrushes.ToolWindowBackgroundKey}}"/>
+			<Setter Property="BorderBrush" Value="{DynamicResource {x:Static vsshell:VsBrushes.ToolWindowBorderKey}}"/>
+			<Setter Property="Foreground" Value="{DynamicResource {x:Static vsshell:VsBrushes.ToolWindowTextKey}}"/>
+			<Setter Property="Template">
+				<Setter.Value>
+					<ControlTemplate TargetType="ListView">
+						<Border x:Name="Bd"
+								Background="{TemplateBinding Background}"
+								BorderBrush="{TemplateBinding BorderBrush}"
+								BorderThickness="{TemplateBinding BorderThickness}"
+								SnapsToDevicePixels="true">
+							<ScrollViewer Style="{DynamicResource {x:Static GridView.GridViewScrollViewerStyleKey}}"
+										  Padding="{TemplateBinding Padding}">
+								<ItemsPresenter SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}"/>
+							</ScrollViewer>
+						</Border>
+						<ControlTemplate.Triggers>
+							<Trigger Property="IsGrouping" Value="True">
+								<Setter Property="ScrollViewer.CanContentScroll" Value="False"/>
+							</Trigger>
+						</ControlTemplate.Triggers>
+					</ControlTemplate>
+				</Setter.Value>
+			</Setter>
+		</Style>
+
+		<!-- ListViewItem style: VS-themed hover and selection, no OS hover effects -->
+		<Style TargetType="ListViewItem">
+			<Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+			<Setter Property="Foreground" Value="{DynamicResource {x:Static vsshell:VsBrushes.ToolWindowTextKey}}"/>
+			<Setter Property="Padding" Value="0"/>
+			<Setter Property="Template">
+				<Setter.Value>
+					<ControlTemplate TargetType="ListViewItem">
+						<Border x:Name="Bd"
+								Background="{TemplateBinding Background}"
+								BorderBrush="{TemplateBinding BorderBrush}"
+								BorderThickness="{TemplateBinding BorderThickness}"
+								Padding="{TemplateBinding Padding}"
+								SnapsToDevicePixels="true">
+							<GridViewRowPresenter Columns="{TemplateBinding GridView.ColumnCollection}"
+												  Content="{TemplateBinding Content}"
+												  VerticalAlignment="{TemplateBinding VerticalContentAlignment}"/>
+						</Border>
+						<ControlTemplate.Triggers>
+							<Trigger Property="IsMouseOver" Value="True">
+								<Setter TargetName="Bd" Property="Background" Value="{DynamicResource {x:Static vsshell:VsBrushes.CommandBarHoverKey}}"/>
+							</Trigger>
+							<Trigger Property="IsSelected" Value="True">
+								<Setter TargetName="Bd" Property="Background" Value="{DynamicResource {x:Static vsshell:VsBrushes.HighlightKey}}"/>
+								<Setter Property="Foreground" Value="{DynamicResource {x:Static vsshell:VsBrushes.HighlightTextKey}}"/>
+							</Trigger>
+							<MultiTrigger>
+								<MultiTrigger.Conditions>
+									<Condition Property="IsSelected" Value="True"/>
+									<Condition Property="IsKeyboardFocusWithin" Value="False"/>
+								</MultiTrigger.Conditions>
+								<Setter TargetName="Bd" Property="Background" Value="{DynamicResource {x:Static vsshell:VsBrushes.ToolWindowBackgroundKey}}"/>
+								<Setter Property="Foreground" Value="{DynamicResource {x:Static vsshell:VsBrushes.GrayTextKey}}"/>
+							</MultiTrigger>
+						</ControlTemplate.Triggers>
+					</ControlTemplate>
+				</Setter.Value>
+			</Setter>
+		</Style>
+
+		<!-- Button style: VS-themed, flat appearance matching the tool window -->
+		<Style TargetType="Button">
+			<Setter Property="Background" Value="{DynamicResource {x:Static vsshell:VsBrushes.ToolWindowBackgroundKey}}"/>
+			<Setter Property="Foreground" Value="{DynamicResource {x:Static vsshell:VsBrushes.CommandBarTextActiveKey}}"/>
+			<Setter Property="BorderBrush" Value="{DynamicResource {x:Static vsshell:VsBrushes.CommandBarBorderKey}}"/>
+			<Setter Property="BorderThickness" Value="1"/>
+			<Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+			<Setter Property="Template">
+				<Setter.Value>
+					<ControlTemplate TargetType="Button">
+						<Border x:Name="Bd"
+								Background="{TemplateBinding Background}"
+								BorderBrush="{TemplateBinding BorderBrush}"
+								BorderThickness="{TemplateBinding BorderThickness}"
+								Padding="{TemplateBinding Padding}"
+								SnapsToDevicePixels="true">
+							<ContentPresenter HorizontalAlignment="Center"
+											  VerticalAlignment="Center"
+											  RecognizesAccessKey="True"/>
+						</Border>
+						<ControlTemplate.Triggers>
+							<Trigger Property="IsMouseOver" Value="True">
+								<Setter TargetName="Bd" Property="Background" Value="{DynamicResource {x:Static vsshell:VsBrushes.CommandBarHoverKey}}"/>
+								<Setter TargetName="Bd" Property="BorderBrush" Value="{DynamicResource {x:Static vsshell:VsBrushes.CommandBarHoverKey}}"/>
+								<Setter Property="Foreground" Value="{DynamicResource {x:Static vsshell:VsBrushes.CommandBarTextHoverKey}}"/>
+							</Trigger>
+							<Trigger Property="IsPressed" Value="True">
+								<Setter TargetName="Bd" Property="Background" Value="{DynamicResource {x:Static vsshell:VsBrushes.CommandBarMouseDownBackgroundBeginKey}}"/>
+								<Setter TargetName="Bd" Property="BorderBrush" Value="{DynamicResource {x:Static vsshell:VsBrushes.CommandBarMouseDownBorderKey}}"/>
+							</Trigger>
+							<Trigger Property="IsEnabled" Value="False">
+								<Setter Property="Foreground" Value="{DynamicResource {x:Static vsshell:VsBrushes.GrayTextKey}}"/>
+							</Trigger>
+						</ControlTemplate.Triggers>
+					</ControlTemplate>
+				</Setter.Value>
+			</Setter>
+		</Style>
 
 		<DataTemplate x:Key="ColumnHeaderTemplate">
 			<StackPanel Orientation="Horizontal">
@@ -59,10 +233,10 @@
 				  ItemsSource="{Binding SortedProjects}"
 				  Visibility="{Binding IsGraphView, Converter={StaticResource BoolToVisibilityInverseConverter}}">
 			<ListView.View>
-				<GridView>
+				<GridView ColumnHeaderContainerStyle="{StaticResource SortableColumnHeaderStyle}">
 					<GridViewColumn Header="Project Name" HeaderTemplate="{StaticResource ColumnHeaderTemplate}" Width="200">
 						<GridViewColumn.HeaderContainerStyle>
-							<Style TargetType="GridViewColumnHeader">
+							<Style TargetType="GridViewColumnHeader" BasedOn="{StaticResource SortableColumnHeaderStyle}">
 								<Setter Property="Command" Value="{Binding DataContext.SortCommand, RelativeSource={RelativeSource AncestorType=ListView}}"/>
 								<Setter Property="CommandParameter" Value="Name"/>
 							</Style>
@@ -76,7 +250,7 @@
 
 					<GridViewColumn Header="Build Status" HeaderTemplate="{StaticResource ColumnHeaderTemplate}" Width="110">
 						<GridViewColumn.HeaderContainerStyle>
-							<Style TargetType="GridViewColumnHeader">
+							<Style TargetType="GridViewColumnHeader" BasedOn="{StaticResource SortableColumnHeaderStyle}">
 								<Setter Property="Command" Value="{Binding DataContext.SortCommand, RelativeSource={RelativeSource AncestorType=ListView}}"/>
 								<Setter Property="CommandParameter" Value="Status"/>
 							</Style>
@@ -92,7 +266,7 @@
 
 					<GridViewColumn Header="Build Start" HeaderTemplate="{StaticResource ColumnHeaderTemplate}" Width="80">
 						<GridViewColumn.HeaderContainerStyle>
-							<Style TargetType="GridViewColumnHeader">
+							<Style TargetType="GridViewColumnHeader" BasedOn="{StaticResource SortableColumnHeaderStyle}">
 								<Setter Property="Command" Value="{Binding DataContext.SortCommand, RelativeSource={RelativeSource AncestorType=ListView}}"/>
 								<Setter Property="CommandParameter" Value="BuildStart"/>
 							</Style>
@@ -106,7 +280,7 @@
 
 					<GridViewColumn Header="Build Stop" HeaderTemplate="{StaticResource ColumnHeaderTemplate}" Width="80">
 						<GridViewColumn.HeaderContainerStyle>
-							<Style TargetType="GridViewColumnHeader">
+							<Style TargetType="GridViewColumnHeader" BasedOn="{StaticResource SortableColumnHeaderStyle}">
 								<Setter Property="Command" Value="{Binding DataContext.SortCommand, RelativeSource={RelativeSource AncestorType=ListView}}"/>
 								<Setter Property="CommandParameter" Value="BuildStop"/>
 							</Style>
@@ -120,7 +294,7 @@
 
 					<GridViewColumn Header="Duration" HeaderTemplate="{StaticResource ColumnHeaderTemplate}" Width="80">
 						<GridViewColumn.HeaderContainerStyle>
-							<Style TargetType="GridViewColumnHeader">
+							<Style TargetType="GridViewColumnHeader" BasedOn="{StaticResource SortableColumnHeaderStyle}">
 								<Setter Property="Command" Value="{Binding DataContext.SortCommand, RelativeSource={RelativeSource AncestorType=ListView}}"/>
 								<Setter Property="CommandParameter" Value="BuildDuration"/>
 							</Style>
@@ -134,7 +308,7 @@
 
 					<GridViewColumn Header="Project Type" HeaderTemplate="{StaticResource ColumnHeaderTemplate}" Width="90">
 						<GridViewColumn.HeaderContainerStyle>
-							<Style TargetType="GridViewColumnHeader">
+							<Style TargetType="GridViewColumnHeader" BasedOn="{StaticResource SortableColumnHeaderStyle}">
 								<Setter Property="Command" Value="{Binding DataContext.SortCommand, RelativeSource={RelativeSource AncestorType=ListView}}"/>
 								<Setter Property="CommandParameter" Value="ProjectType"/>
 							</Style>
@@ -147,15 +321,15 @@
 					</GridViewColumn>
 
 					<GridViewColumn Header="Dependencies" HeaderTemplate="{StaticResource ColumnHeaderTemplate}" Width="200">
-						<GridViewColumn.HeaderContainerStyle>
-							<Style TargetType="GridViewColumnHeader">
-								<Setter Property="Command" Value="{Binding DataContext.SortCommand, RelativeSource={RelativeSource AncestorType=ListView}}"/>
-								<Setter Property="CommandParameter" Value="DependenciesText"/>
-							</Style>
-						</GridViewColumn.HeaderContainerStyle>
+							<GridViewColumn.HeaderContainerStyle>
+								<Style TargetType="GridViewColumnHeader" BasedOn="{StaticResource SortableColumnHeaderStyle}">
+									<Setter Property="Command" Value="{Binding DataContext.SortCommand, RelativeSource={RelativeSource AncestorType=ListView}}"/>
+									<Setter Property="CommandParameter" Value="DependenciesText"/>
+								</Style>
+							</GridViewColumn.HeaderContainerStyle>
 						<GridViewColumn.CellTemplate>
 							<DataTemplate>
-								<TextBlock Text="{Binding DependenciesText}" TextTrimming="CharacterEllipsis" Foreground="Gray" FontSize="11"/>
+								<TextBlock Text="{Binding DependenciesText}" TextTrimming="CharacterEllipsis" Foreground="{DynamicResource {x:Static vsshell:VsBrushes.GrayTextKey}}" FontSize="11"/>
 							</DataTemplate>
 						</GridViewColumn.CellTemplate>
 					</GridViewColumn>

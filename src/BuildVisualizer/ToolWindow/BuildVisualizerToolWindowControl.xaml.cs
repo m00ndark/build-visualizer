@@ -12,11 +12,11 @@ namespace BuildVisualizer.ToolWindow
 		/// <summary>
 		/// Initializes a new instance of the <see cref="BuildVisualizerToolWindowControl"/> class.
 		/// </summary>
-		public BuildVisualizerToolWindowControl(SolutionService solutionService, BuildEventService buildEventService, SolutionEventsService solutionEventsService)
+		public BuildVisualizerToolWindowControl(SolutionService solutionService, BuildEventService buildEventService, SolutionEventsService solutionEventsService, ThemeService themeService)
 		{
 			InitializeComponent();
 
-			DataContext = new BuildVisualizerViewModel(solutionService, buildEventService, solutionEventsService);
+			DataContext = new BuildVisualizerViewModel(solutionService, buildEventService, solutionEventsService, themeService);
 		}
 	}
 }

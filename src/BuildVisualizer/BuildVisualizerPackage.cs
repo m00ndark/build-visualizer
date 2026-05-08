@@ -53,6 +53,11 @@ namespace BuildVisualizer
 		public static SolutionEventsService SolutionEventsService { get; private set; }
 
 		/// <summary>
+		/// Gets the ThemeService instance for this package.
+		/// </summary>
+		public static ThemeService ThemeService { get; private set; }
+
+		/// <summary>
 		/// Initialization of the package; this method is called right after the package is sited, so this is the place
 		/// where you can put all the initialization code that rely on services provided by VisualStudio.
 		/// </summary>
@@ -75,6 +80,7 @@ namespace BuildVisualizer
 			BuildEventService = new BuildEventService(dte);
 			SolutionService = new SolutionService(new SolutionReferenceSnapshot(solution));
 			SolutionEventsService = new SolutionEventsService(solution);
+			ThemeService = new ThemeService();
 
 			await ToolWindow.BuildVisualizerToolWindowCommand.InitializeAsync(this);
 		}

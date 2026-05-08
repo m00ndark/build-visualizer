@@ -19,6 +19,7 @@ namespace BuildVisualizer.ViewModels
 		private readonly SolutionService _solutionService;
 		private readonly BuildEventService _buildEventService;
 		private readonly SolutionEventsService _solutionEventsService;
+		private readonly ThemeService _themeService;
 		private readonly DependencyGraphBuilder _graphBuilder;
 		private readonly GraphLayoutEngine _layoutEngine;
 		private bool _isGraphView;
@@ -63,11 +64,12 @@ namespace BuildVisualizer.ViewModels
 
 		public string ToggleViewText => _isGraphView ? "Show List View" : "Show Graph View";
 
-		public BuildVisualizerViewModel(SolutionService solutionService, BuildEventService buildEventService, SolutionEventsService solutionEventsService)
+		public BuildVisualizerViewModel(SolutionService solutionService, BuildEventService buildEventService, SolutionEventsService solutionEventsService, ThemeService themeService)
 		{
 			_solutionService = solutionService;
 			_buildEventService = buildEventService;
 			_solutionEventsService = solutionEventsService;
+			_themeService = themeService;
 			_graphBuilder = new DependencyGraphBuilder();
 			_layoutEngine = new GraphLayoutEngine();
 			Projects = new ObservableCollection<ProjectInfo>();
@@ -110,6 +112,9 @@ namespace BuildVisualizer.ViewModels
 			_solutionEventsService.SolutionClosed += OnSolutionClosed;
 			_solutionEventsService.ProjectAdded += OnProjectAdded;
 			_solutionEventsService.ProjectRemoved += OnProjectRemoved;
+
+			// Subscribe to theme change events
+			_themeService.ThemeChanged += OnThemeChanged;
 
 //			// Fire and forget - load projects asynchronously without blocking constructor
 //#pragma warning disable VSSDK007 // Avoid fire-and-forget in analyzers (intentional for async initialization)
@@ -246,7 +251,7 @@ namespace BuildVisualizer.ViewModels
 				if (!layers.ContainsKey(layer))
 					continue;
 
-				GraphRowGroupViewModel group = new GraphRowGroupViewModel(layer, maxLayer + 1);
+				GraphRowGroupViewModel group = new GraphRowGroupViewModel(layer, maxLayer + 1, _themeService.IsDarkTheme);
 				foreach (ProjectNodeViewModel node in layers[layer])
 				{
 					group.Nodes.Add(node);
@@ -286,6 +291,17 @@ namespace BuildVisualizer.ViewModels
 		{
 			// Reload all projects when a project is removed
 			ThreadHelper.JoinableTaskFactory.Run(LoadProjectsAsync);
+		}
+
+		private void OnThemeChanged(object sender, EventArgs e)
+		{
+			bool isDarkTheme = _themeService.IsDarkTheme;
+			ThreadHelper.JoinableTaskFactory.Run(async () =>
+			{
+				await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
+				foreach (GraphRowGroupViewModel group in GraphRowGroups)
+					group.UpdateTheme(isDarkTheme);
+			});
 		}
 	}
 }
