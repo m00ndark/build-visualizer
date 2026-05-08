@@ -225,7 +225,13 @@
 
 		<StackPanel Grid.Row="0" Orientation="Horizontal" HorizontalAlignment="Left" Margin="10,10,10,10">
 			<Button Content="Refresh" Command="{Binding RefreshCommand}" Padding="5" Margin="0,0,5,0"/>
-			<Button Content="{Binding ToggleViewText}" Command="{Binding ToggleViewCommand}" Padding="5"/>
+			<Button Command="{Binding ToggleViewCommand}" Padding="5">
+				<Grid>
+					<!-- Include text blocks for both texts to ensure the button width remains consistent -->
+					<TextBlock Text="{Binding ToggleViewTextAlternate}" Visibility="Hidden"/>
+					<TextBlock Text="{Binding ToggleViewText}" HorizontalAlignment="Center"/>
+				</Grid>
+			</Button>
 		</StackPanel>
 
 		<!-- List View -->

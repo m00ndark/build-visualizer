@@ -58,11 +58,18 @@ namespace BuildVisualizer.ViewModels
 			set
 			{
 				if (SetProperty(ref _isGraphView, value))
+				{
 					OnPropertyChanged(nameof(ToggleViewText));
+					OnPropertyChanged(nameof(ToggleViewTextAlternate));
+				}
 			}
 		}
 
-		public string ToggleViewText => _isGraphView ? "Show List View" : "Show Graph View";
+		private const string ShowListViewText = "Show List View";
+		private const string ShowGraphViewText = "Show Graph View";
+
+		public string ToggleViewText => _isGraphView ? ShowListViewText : ShowGraphViewText;
+		public string ToggleViewTextAlternate => _isGraphView ? ShowGraphViewText : ShowListViewText;
 
 		public BuildVisualizerViewModel(SolutionService solutionService, BuildEventService buildEventService, SolutionEventsService solutionEventsService, ThemeService themeService)
 		{
