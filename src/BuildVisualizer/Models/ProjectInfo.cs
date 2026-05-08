@@ -58,6 +58,8 @@ namespace BuildVisualizer.Models
 				{
 					OnPropertyChanged(nameof(StatusColor));
 					OnPropertyChanged(nameof(StatusHighlightColor));
+					OnPropertyChanged(nameof(StatusDependencyBorderColor));
+					OnPropertyChanged(nameof(StatusDependencyBackgroundColor));
 					OnPropertyChanged(nameof(StatusTextColor));
 				}
 			}
@@ -91,6 +93,38 @@ namespace BuildVisualizer.Models
 					case BuildStatus.Failed:    return Resources.Colors.FailedHighlightBrush;
 					case BuildStatus.Skipped:   return Resources.Colors.SkippedHighlightBrush;
 					default:                    return Resources.Colors.NotBuiltHighlightBrush;
+				}
+			}
+		}
+
+		public SolidColorBrush StatusDependencyBorderColor
+		{
+			get
+			{
+				switch (Status)
+				{
+					case BuildStatus.NotBuilt:  return Resources.Colors.NotBuiltDependencyBorderBrush;
+					case BuildStatus.Building:  return Resources.Colors.BuildingDependencyBorderBrush;
+					case BuildStatus.Success:   return Resources.Colors.SuccessDependencyBorderBrush;
+					case BuildStatus.Failed:    return Resources.Colors.FailedDependencyBorderBrush;
+					case BuildStatus.Skipped:   return Resources.Colors.SkippedDependencyBorderBrush;
+					default:                    return Resources.Colors.NotBuiltDependencyBorderBrush;
+				}
+			}
+		}
+
+		public SolidColorBrush StatusDependencyBackgroundColor
+		{
+			get
+			{
+				switch (Status)
+				{
+					case BuildStatus.NotBuilt:  return Resources.Colors.NotBuiltDependencyBackgroundBrush;
+					case BuildStatus.Building:  return Resources.Colors.BuildingDependencyBackgroundBrush;
+					case BuildStatus.Success:   return Resources.Colors.SuccessDependencyBackgroundBrush;
+					case BuildStatus.Failed:    return Resources.Colors.FailedDependencyBackgroundBrush;
+					case BuildStatus.Skipped:   return Resources.Colors.SkippedDependencyBackgroundBrush;
+					default:                    return Resources.Colors.NotBuiltDependencyBackgroundBrush;
 				}
 			}
 		}

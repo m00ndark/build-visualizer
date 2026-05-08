@@ -23,6 +23,18 @@ namespace BuildVisualizer.Resources
 		public static readonly SolidColorBrush FailedHighlightBrush;
 		public static readonly SolidColorBrush SkippedHighlightBrush;
 
+		public static readonly SolidColorBrush NotBuiltDependencyBorderBrush;
+		public static readonly SolidColorBrush BuildingDependencyBorderBrush;
+		public static readonly SolidColorBrush SuccessDependencyBorderBrush;
+		public static readonly SolidColorBrush FailedDependencyBorderBrush;
+		public static readonly SolidColorBrush SkippedDependencyBorderBrush;
+
+		public static readonly SolidColorBrush NotBuiltDependencyBackgroundBrush;
+		public static readonly SolidColorBrush BuildingDependencyBackgroundBrush;
+		public static readonly SolidColorBrush SuccessDependencyBackgroundBrush;
+		public static readonly SolidColorBrush FailedDependencyBackgroundBrush;
+		public static readonly SolidColorBrush SkippedDependencyBackgroundBrush;
+
 		public static readonly SolidColorBrush NotBuiltTextBrush;
 		public static readonly SolidColorBrush BuildingTextBrush;
 		public static readonly SolidColorBrush SuccessTextBrush;
@@ -42,6 +54,18 @@ namespace BuildVisualizer.Resources
 			SuccessHighlightBrush  = CreateFrozen(Darken(SuccessColor));
 			FailedHighlightBrush   = CreateFrozen(Darken(FailedColor));
 			SkippedHighlightBrush  = CreateFrozen(Darken(SkippedColor));
+
+			NotBuiltDependencyBorderBrush = CreateFrozen(Darken(NotBuiltColor, 150));
+			BuildingDependencyBorderBrush = CreateFrozen(Darken(BuildingColor, 150));
+			SuccessDependencyBorderBrush  = CreateFrozen(Darken(SuccessColor,  150));
+			FailedDependencyBorderBrush   = CreateFrozen(Darken(FailedColor,   150));
+			SkippedDependencyBorderBrush  = CreateFrozen(Darken(SkippedColor,  150));
+
+			NotBuiltDependencyBackgroundBrush = CreateFrozen(Darken(NotBuiltColor, 100));
+			BuildingDependencyBackgroundBrush = CreateFrozen(Darken(BuildingColor, 100));
+			SuccessDependencyBackgroundBrush  = CreateFrozen(Darken(SuccessColor,  100));
+			FailedDependencyBackgroundBrush   = CreateFrozen(Darken(FailedColor,   100));
+			SkippedDependencyBackgroundBrush  = CreateFrozen(Darken(SkippedColor,  100));
 
 			NotBuiltTextBrush  = CreateFrozen(GetTextColor(NotBuiltColor));
 			BuildingTextBrush  = CreateFrozen(GetTextColor(BuildingColor));

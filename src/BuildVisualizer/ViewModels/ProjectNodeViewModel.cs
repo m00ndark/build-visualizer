@@ -22,6 +22,7 @@ namespace BuildVisualizer.ViewModels
 		private double _height = NodeHeight;
 		private Thickness _normalBorderThickness = new Thickness(NormalBorderThicknessValue);
 		private Thickness _highlightedBorderThickness = new Thickness(HighlightedBorderThicknessValue);
+		private bool _isDependencyHighlighted;
 
 		public ProjectInfo ProjectInfo { get; }
 
@@ -39,6 +40,12 @@ namespace BuildVisualizer.ViewModels
 		{
 			get => _highlightedBorderThickness;
 			set => SetProperty(ref _highlightedBorderThickness, value);
+		}
+
+		public bool IsDependencyHighlighted
+		{
+			get => _isDependencyHighlighted;
+			set => SetProperty(ref _isDependencyHighlighted, value);
 		}
 
 		// Layout properties
@@ -77,6 +84,10 @@ namespace BuildVisualizer.ViewModels
 
 		public SolidColorBrush HighlightBorderColor => ProjectInfo.StatusHighlightColor;
 
+		public SolidColorBrush DependencyBorderColor => ProjectInfo.StatusDependencyBorderColor;
+
+		public SolidColorBrush DependencyBackgroundColor => ProjectInfo.StatusDependencyBackgroundColor;
+
 		public SolidColorBrush TextColor => ProjectInfo.StatusTextColor;
 
 		public ProjectNodeViewModel(ProjectInfo projectInfo)
@@ -94,9 +105,17 @@ namespace BuildVisualizer.ViewModels
 					OnPropertyChanged(nameof(Status));
 					OnPropertyChanged(nameof(StatusColor));
 					OnPropertyChanged(nameof(HighlightBorderColor));
+					OnPropertyChanged(nameof(DependencyBorderColor));
+					OnPropertyChanged(nameof(DependencyBackgroundColor));
 					OnPropertyChanged(nameof(TextColor));
 				}
 			};
+		}
+
+		public void SetHovered(bool isHovered)
+		{
+			foreach (ProjectNodeViewModel dependency in DependencyNodes)
+				dependency.IsDependencyHighlighted = isHovered;
 		}
 
 		private static double MeasureTextWidth(string text)
