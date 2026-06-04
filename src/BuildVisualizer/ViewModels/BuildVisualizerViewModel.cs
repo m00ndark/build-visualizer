@@ -2,11 +2,15 @@ using BuildVisualizer.Commands;
 using BuildVisualizer.Layout;
 using BuildVisualizer.Models;
 using BuildVisualizer.Services;
+using EnvDTE80;
+using Microsoft.VisualStudio;
 using Microsoft.VisualStudio.Shell;
+using Microsoft.VisualStudio.Shell.Interop;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Windows.Data;
@@ -20,8 +24,12 @@ namespace BuildVisualizer.ViewModels
 		private readonly BuildEventService _buildEventService;
 		private readonly SolutionEventsService _solutionEventsService;
 		private readonly ThemeService _themeService;
+		private readonly DTE2 _dte;
+		private readonly IVsSolution _solution;
+		private readonly IVsSolutionBuildManager2 _buildManager;
 		private readonly GraphLayoutEngine _layoutEngine;
 		private bool _isGraphView;
+		private ProjectInfo _selectedProject;
 		private string _sortProperty;
 		private ListSortDirection _sortDirection = ListSortDirection.Ascending;
 
@@ -39,6 +47,18 @@ namespace BuildVisualizer.ViewModels
 
 		public ICommand SortCommand { get; }
 
+		public ICommand CleanProjectCommand { get; }
+
+		public ICommand BuildProjectCommand { get; }
+
+		public ICommand RebuildProjectCommand { get; }
+
+		public ICommand CleanSolutionCommand { get; }
+
+		public ICommand BuildSolutionCommand { get; }
+
+		public ICommand RebuildSolutionCommand { get; }
+
 		public string SortProperty
 		{
 			get => _sortProperty;
@@ -51,18 +71,42 @@ namespace BuildVisualizer.ViewModels
 			private set => SetProperty(ref _sortDirection, value);
 		}
 
+		public ProjectInfo SelectedProject
+		{
+			get => _selectedProject;
+			set
+			{
+				if (SetProperty(ref _selectedProject, value))
+					CommandManager.InvalidateRequerySuggested();
+			}
+		}
+
 		public bool IsGraphView
 		{
 			get => _isGraphView;
-			set => SetProperty(ref _isGraphView, value);
+			set
+			{
+				if (SetProperty(ref _isGraphView, value))
+					CommandManager.InvalidateRequerySuggested();
+			}
 		}
 
-		public BuildVisualizerViewModel(SolutionService solutionService, BuildEventService buildEventService, SolutionEventsService solutionEventsService, ThemeService themeService)
+		public BuildVisualizerViewModel(
+			SolutionService solutionService,
+			BuildEventService buildEventService,
+			SolutionEventsService solutionEventsService,
+			ThemeService themeService,
+			DTE2 dte,
+			IVsSolution solution,
+			IVsSolutionBuildManager2 buildManager)
 		{
 			_solutionService = solutionService;
 			_buildEventService = buildEventService;
 			_solutionEventsService = solutionEventsService;
 			_themeService = themeService;
+			_dte = dte;
+			_solution = solution;
+			_buildManager = buildManager;
 			Resources.Colors.IsDarkTheme = themeService.IsDarkTheme;
 			_layoutEngine = new GraphLayoutEngine();
 			Projects = new ObservableCollection<ProjectInfo>();
@@ -94,6 +138,17 @@ namespace BuildVisualizer.ViewModels
 				SortProperty = property;
 				SortDirection = direction;
 			});
+
+#pragma warning disable VSTHRD010 // RunOnMainThread ensures UI thread
+			Func<object, bool> canBuildProject = _ => !IsGraphView && SelectedProject != null;
+			CleanProjectCommand = new RelayCommand(_ => RunOnMainThread(() => BuildProject(VSSOLNBUILDUPDATEFLAGS.SBF_OPERATION_CLEAN)), canBuildProject);
+			BuildProjectCommand = new RelayCommand(_ => RunOnMainThread(() => BuildProject(VSSOLNBUILDUPDATEFLAGS.SBF_OPERATION_BUILD)), canBuildProject);
+			RebuildProjectCommand = new RelayCommand(_ => RunOnMainThread(() => BuildProject(VSSOLNBUILDUPDATEFLAGS.SBF_OPERATION_BUILD | VSSOLNBUILDUPDATEFLAGS.SBF_OPERATION_FORCE_UPDATE)), canBuildProject);
+
+			CleanSolutionCommand = new RelayCommand(_ => RunOnMainThread(() => ExecuteCommand("Build.CleanSolution")));
+			BuildSolutionCommand = new RelayCommand(_ => RunOnMainThread(() => ExecuteCommand("Build.BuildSolution")));
+			RebuildSolutionCommand = new RelayCommand(_ => RunOnMainThread(() => ExecuteCommand("Build.RebuildSolution")));
+#pragma warning restore VSTHRD010
 
 			// Subscribe to build events
 			_buildEventService.ProjectStatusChanged += OnProjectStatusChanged;
@@ -259,6 +314,40 @@ namespace BuildVisualizer.ViewModels
 				}
 				GraphRowGroups.Add(group);
 			}
+		}
+
+		private static void RunOnMainThread(Action action)
+		{
+			ThreadHelper.JoinableTaskFactory.Run(async () =>
+			{
+				await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
+				action();
+			});
+		}
+
+		private void BuildProject(VSSOLNBUILDUPDATEFLAGS flags)
+		{
+			ThreadHelper.ThrowIfNotOnUIThread();
+
+			ProjectInfo project = SelectedProject;
+			if (project == null)
+				return;
+
+			int hr = _solution.GetProjectOfUniqueName(project.UniqueName, out IVsHierarchy hierarchy);
+			if (hr != VSConstants.S_OK || hierarchy == null)
+			{
+				Debug.WriteLine($"[Build] Could not resolve hierarchy for '{project.UniqueName}'");
+				return;
+			}
+
+			_buildManager.StartSimpleUpdateProjectConfiguration(
+				hierarchy, null, null, (uint)flags, 0, 0);
+		}
+
+		private void ExecuteCommand(string commandName)
+		{
+			ThreadHelper.ThrowIfNotOnUIThread();
+			_dte.ExecuteCommand(commandName);
 		}
 
 		private void OnProjectsChanged(IReadOnlyList<ProjectReferences> projectReferences)

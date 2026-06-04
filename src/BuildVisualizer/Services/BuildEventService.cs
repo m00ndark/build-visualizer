@@ -36,12 +36,7 @@ namespace BuildVisualizer.Services
 			ThreadHelper.ThrowIfNotOnUIThread();
 
 			BuildBegin?.Invoke(this, EventArgs.Empty);
-
-			// Reset all project statuses when a solution build starts
-			if (scope == vsBuildScope.vsBuildScopeSolution)
-			{
-				AllProjectsStatusReset?.Invoke(this, EventArgs.Empty);
-			}
+			AllProjectsStatusReset?.Invoke(this, EventArgs.Empty);
 		}
 
 		private void OnBuildProjConfigBegin(string project, string projectConfig, string platform, string solutionConfig)

@@ -1,6 +1,8 @@
-﻿using Microsoft.VisualStudio.Shell;
+﻿using BuildVisualizer.Services;
+using EnvDTE80;
+using Microsoft.VisualStudio.Shell;
+using Microsoft.VisualStudio.Shell.Interop;
 using System.Runtime.InteropServices;
-using BuildVisualizer.Services;
 
 namespace BuildVisualizer.ToolWindow
 {
@@ -30,11 +32,14 @@ namespace BuildVisualizer.ToolWindow
 			SolutionService solutionService = BuildVisualizerPackage.SolutionService;
 			SolutionEventsService solutionEventsService = BuildVisualizerPackage.SolutionEventsService;
 			ThemeService themeService = BuildVisualizerPackage.ThemeService;
+			DTE2 dte = BuildVisualizerPackage.Dte;
+			IVsSolution solution = BuildVisualizerPackage.Solution;
+			IVsSolutionBuildManager2 buildManager = BuildVisualizerPackage.SolutionBuildManager;
 
 			// This is the user control hosted by the tool window; Note that, even if this class implements IDisposable,
 			// we are not calling Dispose on this object. This is because ToolWindowPane calls Dispose on
 			// the object returned by the Content property.
-			Content = new BuildVisualizerToolWindowControl(solutionService, buildEventService, solutionEventsService, themeService);
+			Content = new BuildVisualizerToolWindowControl(solutionService, buildEventService, solutionEventsService, themeService, dte, solution, buildManager);
 		}
 	}
 }

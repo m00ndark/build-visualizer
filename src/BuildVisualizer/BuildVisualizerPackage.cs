@@ -6,6 +6,7 @@ using Microsoft.VisualStudio.Shell.Interop;
 using System;
 using System.Runtime.InteropServices;
 using System.Threading;
+using IVsSolutionBuildManager = Microsoft.VisualStudio.Shell.Interop.IVsSolutionBuildManager2;
 using Task = System.Threading.Tasks.Task;
 
 namespace BuildVisualizer
@@ -60,6 +61,21 @@ namespace BuildVisualizer
 		public static ThemeService ThemeService { get; private set; }
 
 		/// <summary>
+		/// Gets the IVsSolution service for resolving project hierarchies.
+		/// </summary>
+		public static IVsSolution Solution { get; private set; }
+
+		/// <summary>
+		/// Gets the IVsSolutionBuildManager2 service for triggering project builds.
+		/// </summary>
+		public static IVsSolutionBuildManager SolutionBuildManager { get; private set; }
+
+		/// <summary>
+		/// Gets the DTE2 automation object for executing VS commands.
+		/// </summary>
+		public static DTE2 Dte { get; private set; }
+
+		/// <summary>
 		/// Initialization of the package; this method is called right after the package is sited, so this is the place
 		/// where you can put all the initialization code that rely on services provided by VisualStudio.
 		/// </summary>
@@ -74,11 +90,15 @@ namespace BuildVisualizer
 
 			// Get DTE2 and IVsSolution services
 			if (!(await GetServiceAsync(typeof(EnvDTE.DTE)) is DTE2 dte)
-				|| !(await GetServiceAsync(typeof(SVsSolution)) is IVsSolution solution))
+				|| !(await GetServiceAsync(typeof(SVsSolution)) is IVsSolution solution)
+				|| !(await GetServiceAsync(typeof(SVsSolutionBuildManager)) is IVsSolutionBuildManager buildManager))
 			{
 				throw new InvalidOperationException("Failed to get required services.");
 			}
 
+			Dte = dte;
+			Solution = solution;
+			SolutionBuildManager = buildManager;
 			BuildEventService = new BuildEventService(dte);
 			SolutionService = new SolutionService(new SolutionReferenceSnapshot(solution));
 			SolutionEventsService = new SolutionEventsService(solution);

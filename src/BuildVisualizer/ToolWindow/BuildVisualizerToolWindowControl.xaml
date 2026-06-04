@@ -4,6 +4,8 @@
 			 xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
 			 xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
 			 xmlns:vsshell="clr-namespace:Microsoft.VisualStudio.Shell;assembly=Microsoft.VisualStudio.Shell.15.0"
+			 xmlns:imaging="clr-namespace:Microsoft.VisualStudio.Imaging;assembly=Microsoft.VisualStudio.Imaging"
+			 xmlns:catalog="clr-namespace:Microsoft.VisualStudio.Imaging;assembly=Microsoft.VisualStudio.ImageCatalog"
 			 xmlns:vm="clr-namespace:BuildVisualizer.ViewModels"
 			 xmlns:views="clr-namespace:BuildVisualizer.Views"
 			 xmlns:converters="clr-namespace:BuildVisualizer.Converters"
@@ -112,12 +114,11 @@
 			</Setter>
 		</Style>
 
-		<!-- ListViewItem style: VS-themed hover only, selection disabled -->
+		<!-- ListViewItem style: VS-themed hover and selection -->
 		<Style TargetType="ListViewItem">
 			<Setter Property="HorizontalContentAlignment" Value="Stretch"/>
 			<Setter Property="Foreground" Value="{DynamicResource {x:Static vsshell:VsBrushes.ToolWindowTextKey}}"/>
 			<Setter Property="Padding" Value="0"/>
-			<Setter Property="Focusable" Value="False"/>
 			<Setter Property="Template">
 				<Setter.Value>
 					<ControlTemplate TargetType="ListViewItem">
@@ -135,44 +136,47 @@
 							<Trigger Property="IsMouseOver" Value="True">
 								<Setter TargetName="Bd" Property="Background" Value="{DynamicResource {x:Static vsshell:VsBrushes.CommandBarHoverKey}}"/>
 							</Trigger>
+							<Trigger Property="IsSelected" Value="True">
+								<Setter TargetName="Bd" Property="Background" Value="{DynamicResource {x:Static vsshell:VsBrushes.HighlightKey}}"/>
+								<Setter Property="Foreground" Value="{DynamicResource {x:Static vsshell:VsBrushes.HighlightTextKey}}"/>
+							</Trigger>
 						</ControlTemplate.Triggers>
 					</ControlTemplate>
 				</Setter.Value>
 			</Setter>
 		</Style>
 
-		<!-- Button style: VS-themed, flat appearance matching the tool window -->
+		<!-- Button style: VS-themed, borderless with rounded corners -->
 		<Style TargetType="Button">
-			<Setter Property="Background" Value="{DynamicResource {x:Static vsshell:VsBrushes.ToolWindowBackgroundKey}}"/>
+			<Setter Property="Background" Value="Transparent"/>
 			<Setter Property="Foreground" Value="{DynamicResource {x:Static vsshell:VsBrushes.CommandBarTextActiveKey}}"/>
-			<Setter Property="BorderBrush" Value="{DynamicResource {x:Static vsshell:VsBrushes.CommandBarBorderKey}}"/>
-			<Setter Property="BorderThickness" Value="1"/>
+			<Setter Property="BorderThickness" Value="0"/>
 			<Setter Property="FocusVisualStyle" Value="{x:Null}"/>
 			<Setter Property="Template">
 				<Setter.Value>
 					<ControlTemplate TargetType="Button">
 						<Border x:Name="Bd"
 								Background="{TemplateBinding Background}"
-								BorderBrush="{TemplateBinding BorderBrush}"
-								BorderThickness="{TemplateBinding BorderThickness}"
+								BorderThickness="0"
+								CornerRadius="3"
 								Padding="{TemplateBinding Padding}"
 								SnapsToDevicePixels="true">
-							<ContentPresenter HorizontalAlignment="Center"
+							<ContentPresenter x:Name="Content"
+											  HorizontalAlignment="Center"
 											  VerticalAlignment="Center"
 											  RecognizesAccessKey="True"/>
 						</Border>
 						<ControlTemplate.Triggers>
 							<Trigger Property="IsMouseOver" Value="True">
 								<Setter TargetName="Bd" Property="Background" Value="{DynamicResource {x:Static vsshell:VsBrushes.CommandBarHoverKey}}"/>
-								<Setter TargetName="Bd" Property="BorderBrush" Value="{DynamicResource {x:Static vsshell:VsBrushes.CommandBarHoverKey}}"/>
 								<Setter Property="Foreground" Value="{DynamicResource {x:Static vsshell:VsBrushes.CommandBarTextHoverKey}}"/>
 							</Trigger>
 							<Trigger Property="IsPressed" Value="True">
 								<Setter TargetName="Bd" Property="Background" Value="{DynamicResource {x:Static vsshell:VsBrushes.CommandBarMouseDownBackgroundBeginKey}}"/>
-								<Setter TargetName="Bd" Property="BorderBrush" Value="{DynamicResource {x:Static vsshell:VsBrushes.CommandBarMouseDownBorderKey}}"/>
 							</Trigger>
 							<Trigger Property="IsEnabled" Value="False">
 								<Setter Property="Foreground" Value="{DynamicResource {x:Static vsshell:VsBrushes.GrayTextKey}}"/>
+								<Setter TargetName="Content" Property="Opacity" Value="0.4"/>
 							</Trigger>
 						</ControlTemplate.Triggers>
 					</ControlTemplate>
@@ -211,13 +215,57 @@
 		</Grid.RowDefinitions>
 
 		<Grid Grid.Row="0" Margin="10,10,10,10">
-			<Button Content="Switch View" Command="{Binding ToggleViewCommand}" Padding="5" HorizontalAlignment="Left"/>
-			<Button Content="Refresh" Command="{Binding RefreshCommand}" Padding="5" HorizontalAlignment="Right"/>
+			<StackPanel Orientation="Horizontal" HorizontalAlignment="Left">
+				<Button Command="{Binding ToggleViewCommand}" Padding="5, 3">
+					<StackPanel Orientation="Horizontal">
+						<imaging:CrispImage Moniker="{x:Static catalog:KnownMonikers.SwitchSourceOrTarget}" Width="16" Height="16"/>
+						<TextBlock Text="Switch View" Margin="4,0,0,0" VerticalAlignment="Center"/>
+					</StackPanel>
+				</Button>
+
+				<Border Width="1" Margin="8,2" Background="{DynamicResource {x:Static vsshell:VsBrushes.CommandBarBorderKey}}"/>
+
+				<Button Command="{Binding BuildProjectCommand}" Padding="5, 3" Margin="0,0,4,0">
+					<StackPanel Orientation="Horizontal">
+						<imaging:CrispImage Moniker="{x:Static catalog:KnownMonikers.BuildSelection}" Width="16" Height="16"/>
+						<TextBlock Text="Build" Margin="4,0,0,0" VerticalAlignment="Center"/>
+					</StackPanel>
+				</Button>
+				<Button Command="{Binding RebuildProjectCommand}" Padding="5, 3" Margin="0,0,4,0">
+					<TextBlock Text="Rebuild" VerticalAlignment="Center"/>
+				</Button>
+				<Button Command="{Binding CleanProjectCommand}" Padding="5, 3">
+					<TextBlock Text="Clean" VerticalAlignment="Center"/>
+				</Button>
+
+				<Border Width="1" Margin="8,2" Background="{DynamicResource {x:Static vsshell:VsBrushes.CommandBarBorderKey}}"/>
+
+				<Button Command="{Binding BuildSolutionCommand}" Padding="5, 3" Margin="0,0,4,0">
+					<StackPanel Orientation="Horizontal">
+						<imaging:CrispImage Moniker="{x:Static catalog:KnownMonikers.BuildSolution}" Width="16" Height="16"/>
+						<TextBlock Text="Build Solution" Margin="4,0,0,0" VerticalAlignment="Center"/>
+					</StackPanel>
+				</Button>
+				<Button Command="{Binding RebuildSolutionCommand}" Padding="5, 3" Margin="0,0,4,0">
+					<TextBlock Text="Rebuild Solution" VerticalAlignment="Center"/>
+				</Button>
+				<Button Command="{Binding CleanSolutionCommand}" Padding="5, 3">
+					<TextBlock Text="Clean Solution" VerticalAlignment="Center"/>
+				</Button>
+			</StackPanel>
+
+			<Button Command="{Binding RefreshCommand}" Padding="5, 3" HorizontalAlignment="Right">
+				<StackPanel Orientation="Horizontal">
+					<imaging:CrispImage Moniker="{x:Static catalog:KnownMonikers.Refresh}" Width="16" Height="16"/>
+					<TextBlock Text="Refresh" Margin="4,0,0,0" VerticalAlignment="Center"/>
+				</StackPanel>
+			</Button>
 		</Grid>
 
 		<!-- List View -->
 		<ListView x:Name="ProjectListView" Grid.Row="1" Margin="10,0,10,10"
 				  ItemsSource="{Binding SortedProjects}"
+				  SelectedItem="{Binding SelectedProject, Mode=TwoWay}"
 				  SizeChanged="ProjectListView_SizeChanged"
 				  Visibility="{Binding IsGraphView, Converter={StaticResource BoolToVisibilityInverseConverter}}">
 			<ListView.View>
