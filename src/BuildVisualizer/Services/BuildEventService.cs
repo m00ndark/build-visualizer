@@ -3,7 +3,6 @@ using BuildVisualizer.Models;
 using EnvDTE;
 using EnvDTE80;
 using Microsoft.VisualStudio.Shell;
-using Microsoft.VisualStudio.Shell.Interop;
 
 namespace BuildVisualizer.Services
 {
@@ -15,8 +14,6 @@ namespace BuildVisualizer.Services
 
 		public event EventHandler BuildBegin;
 		public event EventHandler<ProjectStatusChangedEventArgs> ProjectStatusChanged;
-		public event EventHandler AllProjectsStatusReset;
-		public event EventHandler<ProjectStatusChangedEventArgs> ProjectStatusReset;
 
 		public BuildEventService(DTE2 dte)
 		{
@@ -34,9 +31,7 @@ namespace BuildVisualizer.Services
 		private void OnBuildBegin(vsBuildScope scope, vsBuildAction action)
 		{
 			ThreadHelper.ThrowIfNotOnUIThread();
-
 			BuildBegin?.Invoke(this, EventArgs.Empty);
-			AllProjectsStatusReset?.Invoke(this, EventArgs.Empty);
 		}
 
 		private void OnBuildProjConfigBegin(string project, string projectConfig, string platform, string solutionConfig)
@@ -45,13 +40,7 @@ namespace BuildVisualizer.Services
 
 			if (!string.IsNullOrEmpty(project))
 			{
-				DateTime now = DateTime.Now;
-
-				// Reset this specific project's status first
-				ProjectStatusReset?.Invoke(this, new ProjectStatusChangedEventArgs(project, BuildStatus.NotBuilt, now));
-
-				// Then set it to Building
-				ProjectStatusChanged?.Invoke(this, new ProjectStatusChangedEventArgs(project, BuildStatus.Building, now));
+				ProjectStatusChanged?.Invoke(this, new ProjectStatusChangedEventArgs(project, BuildStatus.Building, DateTime.Now));
 			}
 		}
 

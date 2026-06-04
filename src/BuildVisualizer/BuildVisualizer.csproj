@@ -67,6 +67,7 @@
     <Compile Include="Services\ReferenceKind.cs" />
     <Compile Include="Services\ResolvedReferenceWatcher.cs" />
     <Compile Include="Services\SolutionEventsService.cs" />
+    <Compile Include="Services\ThreadingHelper.cs" />
     <Compile Include="Services\ThemeService.cs" />
     <Compile Include="Services\SolutionReferenceSnapshot.cs" />
     <Compile Include="Services\SolutionReferenceWatcher.cs" />

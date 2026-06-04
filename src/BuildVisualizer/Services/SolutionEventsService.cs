@@ -229,13 +229,14 @@ namespace BuildVisualizer.Services
 			// Re-collect all references and notify listeners so the UI updates
 			if (_watcher != null)
 			{
-				ThreadHelper.JoinableTaskFactory.Run(async () =>
+#pragma warning disable VSTHRD010 // ThreadingHelper.RunOnMainThread ensures UI thread
+				ThreadingHelper.RunOnMainThread(() =>
 				{
-					await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
 					IReadOnlyList<ProjectReferences> allRefs = _watcher.CollectAllReferences();
 					LastProjectReferences = allRefs;
 					ProjectsChanged?.Invoke(allRefs);
 				});
+#pragma warning restore VSTHRD010
 			}
 		}
 
@@ -254,12 +255,11 @@ namespace BuildVisualizer.Services
 
 			if (disposing)
 			{
+#pragma warning disable VSTHRD010 // Dispose is called from UI thread context
 				_watcher?.Dispose();
 
-				ThreadHelper.JoinableTaskFactory.Run(async delegate
+				ThreadingHelper.RunOnMainThread(() =>
 					{
-						await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
-
 						// Unsubscribe from solution events
 						if (_solutionEventsCookie != 0 && _solution != null)
 						{
@@ -267,6 +267,7 @@ namespace BuildVisualizer.Services
 							_solutionEventsCookie = 0;
 						}
 					});
+#pragma warning restore VSTHRD010
 			}
 
 			_disposed = true;

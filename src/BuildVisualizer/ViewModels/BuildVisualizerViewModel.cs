@@ -115,7 +115,7 @@ namespace BuildVisualizer.ViewModels
 				liveShaping.IsLiveSorting = true;
 			GraphNodes = new ObservableCollection<ProjectNodeViewModel>();
 			GraphRowGroups = new ObservableCollection<GraphRowGroupViewModel>();
-			RefreshCommand = new RelayCommand(_ => ThreadHelper.JoinableTaskFactory.Run(LoadProjectsAsync));
+			RefreshCommand = new RelayCommand(_ => ThreadingHelper.RunOnMainThread(LoadProjectsAsync));
 			ToggleViewCommand = new RelayCommand(_ => IsGraphView = !IsGraphView);
 			SortCommand = new RelayCommand(param =>
 			{
@@ -139,21 +139,20 @@ namespace BuildVisualizer.ViewModels
 				SortDirection = direction;
 			});
 
-#pragma warning disable VSTHRD010 // RunOnMainThread ensures UI thread
+#pragma warning disable VSTHRD010 // ThreadingHelper.RunOnMainThread ensures UI thread
 			Func<object, bool> canBuildProject = _ => !IsGraphView && SelectedProject != null;
-			CleanProjectCommand = new RelayCommand(_ => RunOnMainThread(() => BuildProject(VSSOLNBUILDUPDATEFLAGS.SBF_OPERATION_CLEAN)), canBuildProject);
-			BuildProjectCommand = new RelayCommand(_ => RunOnMainThread(() => BuildProject(VSSOLNBUILDUPDATEFLAGS.SBF_OPERATION_BUILD)), canBuildProject);
-			RebuildProjectCommand = new RelayCommand(_ => RunOnMainThread(() => BuildProject(VSSOLNBUILDUPDATEFLAGS.SBF_OPERATION_BUILD | VSSOLNBUILDUPDATEFLAGS.SBF_OPERATION_FORCE_UPDATE)), canBuildProject);
+			CleanProjectCommand = new RelayCommand(_ => ThreadingHelper.RunOnMainThread(() => BuildProject(VSSOLNBUILDUPDATEFLAGS.SBF_OPERATION_CLEAN)), canBuildProject);
+			BuildProjectCommand = new RelayCommand(_ => ThreadingHelper.RunOnMainThread(() => BuildProject(VSSOLNBUILDUPDATEFLAGS.SBF_OPERATION_BUILD)), canBuildProject);
+			RebuildProjectCommand = new RelayCommand(_ => ThreadingHelper.RunOnMainThread(() => BuildProject(VSSOLNBUILDUPDATEFLAGS.SBF_OPERATION_BUILD | VSSOLNBUILDUPDATEFLAGS.SBF_OPERATION_FORCE_UPDATE)), canBuildProject);
 
-			CleanSolutionCommand = new RelayCommand(_ => RunOnMainThread(() => ExecuteCommand("Build.CleanSolution")));
-			BuildSolutionCommand = new RelayCommand(_ => RunOnMainThread(() => ExecuteCommand("Build.BuildSolution")));
-			RebuildSolutionCommand = new RelayCommand(_ => RunOnMainThread(() => ExecuteCommand("Build.RebuildSolution")));
+			CleanSolutionCommand = new RelayCommand(_ => ThreadingHelper.RunOnMainThread(() => ExecuteCommand("Build.CleanSolution")));
+			BuildSolutionCommand = new RelayCommand(_ => ThreadingHelper.RunOnMainThread(() => ExecuteCommand("Build.BuildSolution")));
+			RebuildSolutionCommand = new RelayCommand(_ => ThreadingHelper.RunOnMainThread(() => ExecuteCommand("Build.RebuildSolution")));
 #pragma warning restore VSTHRD010
 
 			// Subscribe to build events
+			_buildEventService.BuildBegin += OnBuildBegin;
 			_buildEventService.ProjectStatusChanged += OnProjectStatusChanged;
-			_buildEventService.AllProjectsStatusReset += OnAllProjectsStatusReset;
-			_buildEventService.ProjectStatusReset += OnProjectStatusReset;
 
 			// Subscribe to solution events
 			_solutionEventsService.ProjectsChanged += OnProjectsChanged;
@@ -179,31 +178,12 @@ namespace BuildVisualizer.ViewModels
 #pragma warning restore VSTHRD110, VSSDK007
 		}
 
-		private void OnAllProjectsStatusReset(object sender, System.EventArgs e)
+		private void OnBuildBegin(object sender, EventArgs e)
 		{
-			// Reset all projects to NotBuilt status when solution build starts
-			ThreadHelper.JoinableTaskFactory.Run(async () =>
+			// Reset all projects when any build starts
+			ThreadingHelper.RunOnMainThread(() =>
 			{
-				await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
-
 				foreach (ProjectInfo project in Projects)
-				{
-					project.Status = BuildStatus.NotBuilt;
-					project.BuildStart = null;
-					project.BuildFinish = null;
-				}
-			});
-		}
-
-		private void OnProjectStatusReset(object sender, ProjectStatusChangedEventArgs e)
-		{
-			// Reset specific project status when individual project build starts
-			ThreadHelper.JoinableTaskFactory.Run(async () =>
-			{
-				await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
-
-				ProjectInfo project = Projects.FirstOrDefault(p => p.ProjectPath == e.ProjectUniqueName);
-				if (project != null)
 				{
 					project.Status = BuildStatus.NotBuilt;
 					project.BuildStart = null;
@@ -214,21 +194,22 @@ namespace BuildVisualizer.ViewModels
 
 		private void OnProjectStatusChanged(object sender, ProjectStatusChangedEventArgs e)
 		{
-			// This event might come from a background thread, so marshal to UI thread
-			ThreadHelper.JoinableTaskFactory.Run(async () =>
+			ThreadingHelper.RunOnMainThread(() =>
 			{
-				await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
-
-				// Find the project by UniqueName and update its status
 				ProjectInfo project = Projects.FirstOrDefault(p => string.Equals(p.UniqueName, e.ProjectUniqueName, StringComparison.OrdinalIgnoreCase));
 				if (project != null)
 				{
 					project.Status = e.NewStatus;
 
 					if (e.NewStatus == BuildStatus.Building)
+					{
 						project.BuildStart = e.Timestamp;
+						project.BuildFinish = null;
+					}
 					else if (e.NewStatus == BuildStatus.Success || e.NewStatus == BuildStatus.Failed || e.NewStatus == BuildStatus.Skipped)
+					{
 						project.BuildFinish = e.Timestamp;
+					}
 				}
 			});
 		}
@@ -316,15 +297,6 @@ namespace BuildVisualizer.ViewModels
 			}
 		}
 
-		private static void RunOnMainThread(Action action)
-		{
-			ThreadHelper.JoinableTaskFactory.Run(async () =>
-			{
-				await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
-				action();
-			});
-		}
-
 		private void BuildProject(VSSOLNBUILDUPDATEFLAGS flags)
 		{
 			ThreadHelper.ThrowIfNotOnUIThread();
@@ -353,16 +325,14 @@ namespace BuildVisualizer.ViewModels
 		private void OnProjectsChanged(IReadOnlyList<ProjectReferences> projectReferences)
 		{
 			_solutionService.UpdateProjectReferences(projectReferences);
-			ThreadHelper.JoinableTaskFactory.Run(UpdateProjectsAsync);
+			ThreadingHelper.RunOnMainThread(UpdateProjectsAsync);
 		}
 
 		private void OnSolutionClosed(object sender, EventArgs e)
 		{
 			// Clear all visualizations when solution closes
-			ThreadHelper.JoinableTaskFactory.Run(async () =>
+			ThreadingHelper.RunOnMainThread(() =>
 			{
-				await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
-
 				Projects.Clear();
 				GraphNodes.Clear();
 				GraphRowGroups.Clear();
@@ -373,9 +343,8 @@ namespace BuildVisualizer.ViewModels
 		{
 			bool isDarkTheme = _themeService.IsDarkTheme;
 			Resources.Colors.IsDarkTheme = isDarkTheme;
-			ThreadHelper.JoinableTaskFactory.Run(async () =>
+			ThreadingHelper.RunOnMainThread(() =>
 			{
-				await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
 				foreach (GraphRowGroupViewModel group in GraphRowGroups)
 					group.UpdateTheme(isDarkTheme);
 				foreach (ProjectInfo project in Projects)

@@ -24,9 +24,6 @@ namespace BuildVisualizer.Services
 
 			List<ProjectInfo> projects = new List<ProjectInfo>();
 
-			// TODO: Make project and reference loading work,
-			// TODO: then continue on the implementation plan
-
 			if (_cachedProjectReferences == null)
 			{
 				await LoadProjectReferencesAsync(cancellationToken);
