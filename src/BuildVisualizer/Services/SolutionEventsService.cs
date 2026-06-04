@@ -7,6 +7,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Threading.Tasks;
 
 namespace BuildVisualizer.Services
 {
@@ -33,8 +34,6 @@ namespace BuildVisualizer.Services
 		public event EventHandler SolutionOpened;
 		public event Action<IReadOnlyList<ProjectReferences>> SolutionFullyLoaded;
 		public event EventHandler SolutionClosed;
-		public event EventHandler<ProjectEventArgs> ProjectAdded;
-		public event EventHandler<ProjectEventArgs> ProjectRemoved;
 
 		public SolutionEventsService(IVsSolution solution)
 		{
@@ -71,17 +70,8 @@ namespace BuildVisualizer.Services
 
 			if (fAdded != 0)
 			{
-				// Project was added to the solution
-				if (pHierarchy != null)
-				{
-					if (ErrorHandler.Succeeded(pHierarchy.GetProperty(
-						(uint)VSConstants.VSITEMID.Root,
-						(int)__VSHPROPID.VSHPROPID_Name,
-						out object nameObj)) && nameObj is string projectName)
-					{
-						ProjectAdded?.Invoke(this, new ProjectEventArgs(projectName, pHierarchy));
-					}
-				}
+				// Project was added — rebuild the watcher to include it
+				RebuildWatcher();
 			}
 
 			return VSConstants.S_OK;
@@ -98,17 +88,9 @@ namespace BuildVisualizer.Services
 
 			if (fRemoved != 0)
 			{
-				// Project is being removed from the solution
-				if (pHierarchy != null)
-				{
-					if (ErrorHandler.Succeeded(pHierarchy.GetProperty(
-						(uint)VSConstants.VSITEMID.Root,
-						(int)__VSHPROPID.VSHPROPID_Name,
-						out object nameObj)) && nameObj is string projectName)
-					{
-						ProjectRemoved?.Invoke(this, new ProjectEventArgs(projectName, pHierarchy));
-					}
-				}
+				// Project is being removed — rebuild the watcher, excluding
+				// this hierarchy since it's still enumerable at this point
+				RebuildWatcher(excludeHierarchy: pHierarchy);
 			}
 
 			return VSConstants.S_OK;
@@ -118,18 +100,8 @@ namespace BuildVisualizer.Services
 		{
 			ThreadHelper.ThrowIfNotOnUIThread();
 
-			// Project was loaded (e.g., after being unloaded)
-			if (pRealHierarchy != null)
-			{
-				if (ErrorHandler.Succeeded(pRealHierarchy.GetProperty(
-					(uint)VSConstants.VSITEMID.Root,
-					(int)__VSHPROPID.VSHPROPID_Name,
-					out object nameObj)) && nameObj is string projectName)
-				{
-					ProjectAdded?.Invoke(this, new ProjectEventArgs(projectName, pRealHierarchy));
-				}
-			}
-
+			// Project was loaded (e.g., after being unloaded) — rebuild the watcher
+			RebuildWatcher();
 			return VSConstants.S_OK;
 		}
 
@@ -142,18 +114,9 @@ namespace BuildVisualizer.Services
 		{
 			ThreadHelper.ThrowIfNotOnUIThread();
 
-			// Project is being unloaded
-			if (pRealHierarchy != null)
-			{
-				if (ErrorHandler.Succeeded(pRealHierarchy.GetProperty(
-					(uint)VSConstants.VSITEMID.Root,
-					(int)__VSHPROPID.VSHPROPID_Name,
-					out object nameObj)) && nameObj is string projectName)
-				{
-					ProjectRemoved?.Invoke(this, new ProjectEventArgs(projectName, pRealHierarchy));
-				}
-			}
-
+			// Project is being unloaded — rebuild the watcher, excluding
+			// this hierarchy since it's still enumerable at this point
+			RebuildWatcher(excludeHierarchy: pRealHierarchy);
 			return VSConstants.S_OK;
 		}
 
@@ -216,12 +179,22 @@ namespace BuildVisualizer.Services
 
 		public int OnAfterBackgroundSolutionLoadComplete()
 		{
+			ThreadHelper.ThrowIfNotOnUIThread();
+
+			RebuildWatcher();
+			return VSConstants.S_OK;
+		}
+
+		private void RebuildWatcher(IVsHierarchy excludeHierarchy = null)
+		{
 #pragma warning disable VSSDK007 // Intentional fire-and-forget
 			_ = ThreadHelper.JoinableTaskFactory.RunAsync(async () =>
 				{
 					await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
 
-					List<IVsHierarchy> hierarchies = EnumerateLoadedProjects().ToList();
+					List<IVsHierarchy> hierarchies = EnumerateLoadedProjects()
+						.Where(h => h != excludeHierarchy)
+						.ToList();
 					IComponentModel componentModel = (IComponentModel)Package.GetGlobalService(typeof(SComponentModel));
 					IProjectServiceAccessor accessor = componentModel.GetService<IProjectServiceAccessor>();
 
@@ -234,8 +207,6 @@ namespace BuildVisualizer.Services
 					await _watcher.WatchAllProjectsAsync(hierarchies);
 				});
 #pragma warning restore VSTHRD110
-
-			return VSConstants.S_OK;
 		}
 
 		private void OnAllReady(IReadOnlyList<ProjectReferences> projectReferences)
@@ -336,19 +307,6 @@ namespace BuildVisualizer.Services
 					(int)__VSHPROPID.VSHPROPID_TypeGuid,
 					out Guid typeGuid) == VSConstants.S_OK
 				&& typeGuid == _solutionFolderGuid;
-		}
-	}
-
-
-	public class ProjectEventArgs : EventArgs
-	{
-		public string ProjectName { get; }
-		public IVsHierarchy Hierarchy { get; }
-
-		public ProjectEventArgs(string projectName, IVsHierarchy hierarchy)
-		{
-			ProjectName = projectName;
-			Hierarchy = hierarchy;
 		}
 	}
 }

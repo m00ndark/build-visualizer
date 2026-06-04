@@ -105,8 +105,6 @@ namespace BuildVisualizer.ViewModels
 			// Subscribe to solution events
 			_solutionEventsService.SolutionFullyLoaded += OnSolutionFullyLoaded;
 			_solutionEventsService.SolutionClosed += OnSolutionClosed;
-			_solutionEventsService.ProjectAdded += OnProjectAdded;
-			_solutionEventsService.ProjectRemoved += OnProjectRemoved;
 
 			// Subscribe to theme change events
 			_themeService.ThemeChanged += OnThemeChanged;
@@ -284,18 +282,6 @@ namespace BuildVisualizer.ViewModels
 				GraphNodes.Clear();
 				GraphRowGroups.Clear();
 			});
-		}
-
-		private void OnProjectAdded(object sender, ProjectEventArgs e)
-		{
-			// Reload all projects when a project is added
-			ThreadHelper.JoinableTaskFactory.Run(LoadProjectsAsync);
-		}
-
-		private void OnProjectRemoved(object sender, ProjectEventArgs e)
-		{
-			// Reload all projects when a project is removed
-			ThreadHelper.JoinableTaskFactory.Run(LoadProjectsAsync);
 		}
 
 		private void OnThemeChanged(object sender, EventArgs e)
