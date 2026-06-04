@@ -88,6 +88,9 @@
     <None Include="..\..\IMPLEMENTATION_PLAN.md">
       <Link>IMPLEMENTATION_PLAN.md</Link>
     </None>
+    <None Include="..\..\TODO.md">
+      <Link>TODO.md</Link>
+    </None>
     <None Include="source.extension.vsixmanifest">
       <SubType>Designer</SubType>
     </None>

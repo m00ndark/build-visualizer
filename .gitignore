@@ -5,3 +5,6 @@ obj/
 # Visual Studio generated files and folders
 .vs/
 *.user
+
+# Claude Code files
+.claude/
