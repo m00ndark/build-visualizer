@@ -15,4 +15,4 @@
 
 # Bugs
 
-- [ ] Test projects are often tagged as "Executable". It would be nice if it said e.g. "Test Library".
+- [x] Test projects are often tagged as "Executable". It would be nice if it said e.g. "Test Library".

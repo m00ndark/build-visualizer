@@ -109,14 +109,14 @@ namespace BuildVisualizer.Services
 				.ExportProvider
 				.GetExportedValue<IProjectSubscriptionService>();
 
-			// Get evaluation snapshot — declared ProjectReference items
+			// Get evaluation snapshot ï¿½ declared ProjectReference items
 			IProjectRuleSnapshot evaluationSnapshot =
 				await GetLatestSnapshotAsync(
 					subscriptionService.ProjectRuleSource,
 					"ProjectReference",
 					cancellationToken);
 
-			// Get resolved snapshot — all resolved project references
+			// Get resolved snapshot ï¿½ all resolved project references
 			IProjectRuleSnapshot resolvedSnapshot =
 				await GetLatestSnapshotAsync(
 					subscriptionService.JointRuleSource,
@@ -367,12 +367,16 @@ namespace BuildVisualizer.Services
 			(hierarchy as IVsBuildPropertyStorage)?
 				.GetPropertyValue("OutputType", null, (uint)_PersistStorageType.PST_PROJECT_FILE, out outputType);
 
+			bool isTestProject = IsTestProject(path);
+
 			return new ProjectMetadata
 				{
 					Name = nameObj as string ?? "(unknown)",
 					UniqueName = uniqueName ?? "(unknown)",
 					Path = path ?? string.Empty,
-					OutputType = ConvertOutputType(outputType) ?? "(unknown)"
+					OutputType = isTestProject
+						? "Test Library"
+						: ConvertOutputType(outputType) ?? "(unknown)"
 				};
 		}
 
@@ -386,6 +390,58 @@ namespace BuildVisualizer.Services
 				case "library": return "Library";
 				case "module": return "Module";
 				default: return outputType;
+			}
+		}
+
+		internal static bool IsTestProject(string projectPath)
+		{
+			if (string.IsNullOrEmpty(projectPath) || !File.Exists(projectPath))
+				return false;
+
+			try
+			{
+				XDocument doc = XDocument.Load(projectPath);
+				XNamespace ns = doc.Root.GetDefaultNamespace();
+
+				// Check for <IsTestProject>true</IsTestProject> (set by Microsoft.NET.Test.Sdk)
+				XElement isTestProp = doc.Root
+					.Descendants(ns + "IsTestProject")
+					.FirstOrDefault();
+
+				if (isTestProp != null
+					&& string.Equals(isTestProp.Value.Trim(), "true", StringComparison.OrdinalIgnoreCase))
+				{
+					return true;
+				}
+
+				// Check for test framework PackageReference entries
+				string[] testPackages = new[]
+					{
+						"Microsoft.NET.Test.Sdk",
+						"xunit",
+						"xunit.core",
+						"NUnit",
+						"NUnit3TestAdapter",
+						"MSTest.TestFramework",
+						"MSTest.TestAdapter"
+					};
+
+				bool hasTestPackage = doc.Root
+					.Descendants(ns + "PackageReference")
+					.Any(el =>
+						{
+							string include = (string)el.Attribute("Include");
+							return include != null
+								&& testPackages.Any(tp =>
+									string.Equals(include, tp, StringComparison.OrdinalIgnoreCase));
+						});
+
+				return hasTestPackage;
+			}
+			catch (Exception ex)
+			{
+				Debug.WriteLine($"[Snapshot] Could not detect test project for '{projectPath}': {ex.Message}");
+				return false;
 			}
 		}
 

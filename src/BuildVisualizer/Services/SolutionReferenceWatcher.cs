@@ -1,17 +1,14 @@
 using EnvDTE;
 using Microsoft.VisualStudio;
-using Microsoft.VisualStudio.OLE.Interop;
 using Microsoft.VisualStudio.ProjectSystem;
 using Microsoft.VisualStudio.Shell;
 using Microsoft.VisualStudio.Shell.Interop;
-using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Xml.Linq;
 
 namespace BuildVisualizer.Services
 {
@@ -182,12 +179,16 @@ namespace BuildVisualizer.Services
 			(hierarchy as IVsBuildPropertyStorage)?
 				.GetPropertyValue("OutputType", null, (uint)_PersistStorageType.PST_PROJECT_FILE, out outputType);
 
+			bool isTestProject = SolutionReferenceSnapshot.IsTestProject(path);
+
 			return new ProjectMetadata
 			{
 				Name = nameObj as string ?? "(unknown)",
 				UniqueName = uniqueName ?? "(unknown)",
 				Path = path ?? string.Empty,
-				OutputType = ConvertOutputType(outputType) ?? "(unknown)"
+				OutputType = isTestProject
+					? "Test Library"
+					: ConvertOutputType(outputType) ?? "(unknown)"
 			};
 		}
 
