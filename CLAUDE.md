@@ -36,10 +36,11 @@ src/BuildVisualizer/
 │   ├── SolutionService.cs              # Project discovery & dependency resolution
 │   ├── SolutionEventsService.cs        # Solution/project lifecycle (open/close/load/unload)
 │   ├── SolutionReferenceWatcher.cs     # Watches project dependencies (delegates to CPS or legacy watcher)
+│   ├── SolutionReferenceSnapshot.cs    # One-shot reference resolution (used by Refresh/catch-up)
 │   ├── ResolvedReferenceWatcher.cs     # SDK-style (CPS) project references
 │   ├── LegacyReferenceWatcher.cs       # Legacy .csproj project references
-│   ├── ThemeService.cs                 # VS theme detection (dark/light), fires ThemeChanged
-│   └── DependencyGraphBuilder.cs       # Build hierarchy (legacy, not used in graph view)
+│   ├── ProjectDataHelper.cs            # Shared helpers: project metadata, output type, test detection, enumeration
+│   └── ThemeService.cs                 # VS theme detection (dark/light), fires ThemeChanged
 ├── Layout/
 │   └── GraphLayoutEngine.cs            # Topological sort into layers + barycenter crossing minimization
 ├── Commands/
@@ -59,7 +60,7 @@ VS Build Event → BuildEventService → ProjectStatusChanged event
   → WPF data binding updates UI in real time
 
 Solution Opened → SolutionEventsService → SolutionReferenceWatcher resolves all refs
-  → SolutionFullyLoaded event → SolutionService caches project data
+  → ProjectsChanged event → SolutionService caches project data
   → ViewModel calls GetProjectsAsync() → GraphLayoutEngine computes layers
   → UI renders graph nodes grouped by dependency layer
 ```

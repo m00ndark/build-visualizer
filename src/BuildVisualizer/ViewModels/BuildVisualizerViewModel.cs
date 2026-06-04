@@ -20,7 +20,6 @@ namespace BuildVisualizer.ViewModels
 		private readonly BuildEventService _buildEventService;
 		private readonly SolutionEventsService _solutionEventsService;
 		private readonly ThemeService _themeService;
-		private readonly DependencyGraphBuilder _graphBuilder;
 		private readonly GraphLayoutEngine _layoutEngine;
 		private bool _isGraphView;
 		private string _sortProperty;
@@ -65,7 +64,6 @@ namespace BuildVisualizer.ViewModels
 			_solutionEventsService = solutionEventsService;
 			_themeService = themeService;
 			Resources.Colors.IsDarkTheme = themeService.IsDarkTheme;
-			_graphBuilder = new DependencyGraphBuilder();
 			_layoutEngine = new GraphLayoutEngine();
 			Projects = new ObservableCollection<ProjectInfo>();
 			SortedProjects = CollectionViewSource.GetDefaultView(Projects);
@@ -103,7 +101,7 @@ namespace BuildVisualizer.ViewModels
 			_buildEventService.ProjectStatusReset += OnProjectStatusReset;
 
 			// Subscribe to solution events
-			_solutionEventsService.SolutionFullyLoaded += OnSolutionFullyLoaded;
+			_solutionEventsService.ProjectsChanged += OnProjectsChanged;
 			_solutionEventsService.SolutionClosed += OnSolutionClosed;
 
 			// Subscribe to theme change events
@@ -111,16 +109,16 @@ namespace BuildVisualizer.ViewModels
 
 			// Catch up if the solution was already loaded before the tool window opened
 #pragma warning disable VSTHRD110, VSSDK007 // Intentional fire-and-forget for async initialization in constructor
-			if (_solutionEventsService.LastResolvedReferences != null)
+			if (_solutionEventsService.LastProjectReferences != null)
 			{
 				// Solution fully loaded with dependencies resolved — use the cached result
-				_solutionService.UpdateProjectReferences(_solutionEventsService.LastResolvedReferences);
+				_solutionService.UpdateProjectReferences(_solutionEventsService.LastProjectReferences);
 				ThreadHelper.JoinableTaskFactory.RunAsync(UpdateProjectsAsync);
 			}
 			else if (_solutionEventsService.IsSolutionOpen)
 			{
 				// Solution is open but dependencies are still loading — show projects without dependency info;
-				// the SolutionFullyLoaded event will refresh with full dependency data when ready
+				// the ProjectsChanged event will refresh with full dependency data when ready
 				ThreadHelper.JoinableTaskFactory.RunAsync(LoadProjectsAsync);
 			}
 #pragma warning restore VSTHRD110, VSSDK007
@@ -263,11 +261,9 @@ namespace BuildVisualizer.ViewModels
 			}
 		}
 
-		private void OnSolutionFullyLoaded(IReadOnlyList<ProjectReferences> projectReferences)
+		private void OnProjectsChanged(IReadOnlyList<ProjectReferences> projectReferences)
 		{
 			_solutionService.UpdateProjectReferences(projectReferences);
-
-			// Reload projects when solution is fully loaded with all dependencies ready
 			ThreadHelper.JoinableTaskFactory.Run(UpdateProjectsAsync);
 		}
 

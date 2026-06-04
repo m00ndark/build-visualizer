@@ -26,8 +26,6 @@ namespace BuildVisualizer.ViewModels
 
 		public ProjectInfo ProjectInfo { get; }
 
-		public ObservableCollection<ProjectNodeViewModel> Children { get; set; }
-
 		public ObservableCollection<ProjectNodeViewModel> DependencyNodes { get; set; }
 
 		public Thickness NormalBorderThickness
@@ -93,7 +91,6 @@ namespace BuildVisualizer.ViewModels
 		public ProjectNodeViewModel(ProjectInfo projectInfo)
 		{
 			ProjectInfo = projectInfo;
-			Children = new ObservableCollection<ProjectNodeViewModel>();
 			DependencyNodes = new ObservableCollection<ProjectNodeViewModel>();
 			_width = MeasureTextWidth(projectInfo.Name) + NodePadding;
 

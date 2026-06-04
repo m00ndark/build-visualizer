@@ -59,8 +59,8 @@
     <Compile Include="BuildVisualizerPackage.cs" />
     <Compile Include="Resources\Colors.cs" />
     <Compile Include="Services\BuildEventService.cs" />
-    <Compile Include="Services\DependencyGraphBuilder.cs" />
     <Compile Include="Services\LegacyReferenceWatcher.cs" />
+    <Compile Include="Services\ProjectDataHelper.cs" />
     <Compile Include="Services\ProjectMetadata.cs" />
     <Compile Include="Services\ProjectReferences.cs" />
     <Compile Include="Services\ReferenceInfo.cs" />

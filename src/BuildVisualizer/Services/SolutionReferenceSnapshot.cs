@@ -15,15 +15,12 @@ using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Threading.Tasks.Dataflow;
-using System.Xml.Linq;
 using VSLangProj;
 
 namespace BuildVisualizer.Services
 {
 	public sealed class SolutionReferenceSnapshot
 	{
-		private static readonly Guid SolutionFolderGuid = new Guid("2150E333-8FDC-42A3-9474-1A3956D46DE8");
-
 		private readonly IVsSolution _solution;
 
 		public SolutionReferenceSnapshot(IVsSolution solution)
@@ -36,14 +33,14 @@ namespace BuildVisualizer.Services
 		{
 			await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync(cancellationToken);
 
-			List<IVsHierarchy> hierarchies = EnumerateLoadedProjects();
+			List<IVsHierarchy> hierarchies = ProjectDataHelper.EnumerateLoadedProjects(_solution).ToList();
 			List<ProjectReferences> results = new List<ProjectReferences>();
 
 			foreach (IVsHierarchy hierarchy in hierarchies)
 			{
 				cancellationToken.ThrowIfCancellationRequested();
 
-				ProjectMetadata projectMetadata = GetProjectData(hierarchy);
+				ProjectMetadata projectMetadata = ProjectDataHelper.GetProjectData(hierarchy, _solution);
 
 				UnconfiguredProject unconfigured =
 					GetUnconfiguredProject(projectMetadata.Path);
@@ -109,14 +106,14 @@ namespace BuildVisualizer.Services
 				.ExportProvider
 				.GetExportedValue<IProjectSubscriptionService>();
 
-			// Get evaluation snapshot � declared ProjectReference items
+			// Get evaluation snapshot — declared ProjectReference items
 			IProjectRuleSnapshot evaluationSnapshot =
 				await GetLatestSnapshotAsync(
 					subscriptionService.ProjectRuleSource,
 					"ProjectReference",
 					cancellationToken);
 
-			// Get resolved snapshot � all resolved project references
+			// Get resolved snapshot — all resolved project references
 			IProjectRuleSnapshot resolvedSnapshot =
 				await GetLatestSnapshotAsync(
 					subscriptionService.JointRuleSource,
@@ -311,138 +308,6 @@ namespace BuildVisualizer.Services
 			}
 
 			return results;
-		}
-
-		private List<IVsHierarchy> EnumerateLoadedProjects()
-		{
-			ThreadHelper.ThrowIfNotOnUIThread();
-
-			Guid guid = Guid.Empty;
-			_solution.GetProjectEnum(
-				(uint)__VSENUMPROJFLAGS.EPF_LOADEDINSOLUTION,
-				ref guid,
-				out IEnumHierarchies enumerator);
-
-			List<IVsHierarchy> results = new List<IVsHierarchy>();
-			IVsHierarchy[] hierarchy = new IVsHierarchy[1];
-
-			while (enumerator.Next(1, hierarchy, out uint fetched) == VSConstants.S_OK
-				&& fetched == 1)
-			{
-				if (!IsSolutionFolder(hierarchy[0]))
-				{
-					results.Add(hierarchy[0]);
-				}
-			}
-
-			return results;
-		}
-
-		private static bool IsSolutionFolder(IVsHierarchy hierarchy)
-		{
-			ThreadHelper.ThrowIfNotOnUIThread();
-
-			return hierarchy.GetGuidProperty(
-					VSConstants.VSITEMID_ROOT,
-					(int)__VSHPROPID.VSHPROPID_TypeGuid,
-					out Guid typeGuid) == VSConstants.S_OK
-				&& typeGuid == SolutionFolderGuid;
-		}
-
-		private ProjectMetadata GetProjectData(IVsHierarchy hierarchy)
-		{
-			ThreadHelper.ThrowIfNotOnUIThread();
-
-			hierarchy.GetProperty(
-				VSConstants.VSITEMID_ROOT,
-				(int)__VSHPROPID.VSHPROPID_Name,
-				out object nameObj);
-
-			_solution.GetUniqueNameOfProject(hierarchy, out string uniqueName);
-
-			hierarchy.GetCanonicalName(
-				VSConstants.VSITEMID_ROOT, out string path);
-
-			string outputType = null;
-			(hierarchy as IVsBuildPropertyStorage)?
-				.GetPropertyValue("OutputType", null, (uint)_PersistStorageType.PST_PROJECT_FILE, out outputType);
-
-			bool isTestProject = IsTestProject(path);
-
-			return new ProjectMetadata
-				{
-					Name = nameObj as string ?? "(unknown)",
-					UniqueName = uniqueName ?? "(unknown)",
-					Path = path ?? string.Empty,
-					OutputType = isTestProject
-						? "Test Library"
-						: ConvertOutputType(outputType) ?? "(unknown)"
-				};
-		}
-
-		private static string ConvertOutputType(string outputType)
-		{
-			switch (outputType?.ToLowerInvariant())
-			{
-				case null: return null;
-				case "exe": return "Executable";
-				case "winexe": return "Windows App";
-				case "library": return "Library";
-				case "module": return "Module";
-				default: return outputType;
-			}
-		}
-
-		internal static bool IsTestProject(string projectPath)
-		{
-			if (string.IsNullOrEmpty(projectPath) || !File.Exists(projectPath))
-				return false;
-
-			try
-			{
-				XDocument doc = XDocument.Load(projectPath);
-				XNamespace ns = doc.Root.GetDefaultNamespace();
-
-				// Check for <IsTestProject>true</IsTestProject> (set by Microsoft.NET.Test.Sdk)
-				XElement isTestProp = doc.Root
-					.Descendants(ns + "IsTestProject")
-					.FirstOrDefault();
-
-				if (isTestProp != null
-					&& string.Equals(isTestProp.Value.Trim(), "true", StringComparison.OrdinalIgnoreCase))
-				{
-					return true;
-				}
-
-				// Check for test framework PackageReference entries
-				string[] testPackages = new[]
-					{
-						"Microsoft.NET.Test.Sdk",
-						"xunit",
-						"xunit.core",
-						"NUnit",
-						"NUnit3TestAdapter",
-						"MSTest.TestFramework",
-						"MSTest.TestAdapter"
-					};
-
-				bool hasTestPackage = doc.Root
-					.Descendants(ns + "PackageReference")
-					.Any(el =>
-						{
-							string include = (string)el.Attribute("Include");
-							return include != null
-								&& testPackages.Any(tp =>
-									string.Equals(include, tp, StringComparison.OrdinalIgnoreCase));
-						});
-
-				return hasTestPackage;
-			}
-			catch (Exception ex)
-			{
-				Debug.WriteLine($"[Snapshot] Could not detect test project for '{projectPath}': {ex.Message}");
-				return false;
-			}
 		}
 
 		private static UnconfiguredProject GetUnconfiguredProject(string projectPath)

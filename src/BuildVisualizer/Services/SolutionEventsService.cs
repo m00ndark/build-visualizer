@@ -7,14 +7,11 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
-using System.Threading.Tasks;
 
 namespace BuildVisualizer.Services
 {
 	public class SolutionEventsService : IVsSolutionEvents, IVsSolutionLoadEvents, IDisposable
 	{
-		private static readonly Guid _solutionFolderGuid = new Guid("2150E333-8FDC-42A3-9474-1A3956D46DE8");
-
 		private readonly IVsSolution _solution;
 		private uint _solutionEventsCookie;
 		private bool _disposed;
@@ -29,10 +26,9 @@ namespace BuildVisualizer.Services
 		/// The most recently resolved project references, or null if no solution
 		/// has been fully loaded yet (or the solution was closed).
 		/// </summary>
-		public IReadOnlyList<ProjectReferences> LastResolvedReferences { get; private set; }
+		public IReadOnlyList<ProjectReferences> LastProjectReferences { get; private set; }
 
-		public event EventHandler SolutionOpened;
-		public event Action<IReadOnlyList<ProjectReferences>> SolutionFullyLoaded;
+		public event Action<IReadOnlyList<ProjectReferences>> ProjectsChanged;
 		public event EventHandler SolutionClosed;
 
 		public SolutionEventsService(IVsSolution solution)
@@ -125,7 +121,6 @@ namespace BuildVisualizer.Services
 			// Solution was opened - but dependencies may not be ready yet
 			// We'll wait for OnAfterBackgroundSolutionLoadComplete instead
 			IsSolutionOpen = true;
-			SolutionOpened?.Invoke(this, EventArgs.Empty);
 			return VSConstants.S_OK;
 		}
 
@@ -139,7 +134,7 @@ namespace BuildVisualizer.Services
 			ThreadHelper.ThrowIfNotOnUIThread();
 
 			IsSolutionOpen = false;
-			LastResolvedReferences = null;
+			LastProjectReferences = null;
 			_watcher?.Dispose();
 			SolutionClosed?.Invoke(this, EventArgs.Empty);
 			return VSConstants.S_OK;
@@ -192,7 +187,8 @@ namespace BuildVisualizer.Services
 				{
 					await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
 
-					List<IVsHierarchy> hierarchies = EnumerateLoadedProjects()
+					List<IVsHierarchy> hierarchies = ProjectDataHelper
+						.EnumerateLoadedProjects(_solution)
 						.Where(h => h != excludeHierarchy)
 						.ToList();
 					IComponentModel componentModel = (IComponentModel)Package.GetGlobalService(typeof(SComponentModel));
@@ -202,7 +198,7 @@ namespace BuildVisualizer.Services
 					_watcher = new SolutionReferenceWatcher(_solution, accessor);
 
 					_watcher.AllReferencesReady += OnAllReady;
-					_watcher.ProjectReferencesChanged += OnProjectChanged;
+					_watcher.ProjectReferencesChanged += OnProjectReferencesChanged;
 
 					await _watcher.WatchAllProjectsAsync(hierarchies);
 				});
@@ -218,11 +214,11 @@ namespace BuildVisualizer.Services
 					Debug.WriteLine($"  {r}");
 			}
 
-			LastResolvedReferences = projectReferences;
-			SolutionFullyLoaded?.Invoke(projectReferences);
+			LastProjectReferences = projectReferences;
+			ProjectsChanged?.Invoke(projectReferences);
 		}
 
-		private void OnProjectChanged(
+		private void OnProjectReferencesChanged(
 			string projectName,
 			IReadOnlyList<ReferenceInfo> refs)
 		{
@@ -237,8 +233,8 @@ namespace BuildVisualizer.Services
 				{
 					await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
 					IReadOnlyList<ProjectReferences> allRefs = _watcher.CollectAllReferences();
-					LastResolvedReferences = allRefs;
-					SolutionFullyLoaded?.Invoke(allRefs);
+					LastProjectReferences = allRefs;
+					ProjectsChanged?.Invoke(allRefs);
 				});
 			}
 		}
@@ -274,39 +270,6 @@ namespace BuildVisualizer.Services
 			}
 
 			_disposed = true;
-		}
-
-		private IEnumerable<IVsHierarchy> EnumerateLoadedProjects()
-		{
-			ThreadHelper.ThrowIfNotOnUIThread();
-
-			Guid guid = Guid.Empty;
-			_solution.GetProjectEnum(
-				(uint)__VSENUMPROJFLAGS.EPF_LOADEDINSOLUTION,
-				ref guid,
-				out IEnumHierarchies enumerator);
-
-			IVsHierarchy[] hierarchy = new IVsHierarchy[1];
-			while (enumerator.Next(1, hierarchy, out uint fetched) == VSConstants.S_OK && fetched == 1)
-			{
-				// Skip solution folders — they show up as hierarchies
-				// but aren't real projects
-				if (IsSolutionFolder(hierarchy[0]))
-					continue;
-
-				yield return hierarchy[0];
-			}
-		}
-
-		private static bool IsSolutionFolder(IVsHierarchy hierarchy)
-		{
-			ThreadHelper.ThrowIfNotOnUIThread();
-
-			return hierarchy.GetGuidProperty(
-					VSConstants.VSITEMID_ROOT,
-					(int)__VSHPROPID.VSHPROPID_TypeGuid,
-					out Guid typeGuid) == VSConstants.S_OK
-				&& typeGuid == _solutionFolderGuid;
 		}
 	}
 }

@@ -55,7 +55,7 @@ namespace BuildVisualizer.Services
 			{
 				cancellationToken.ThrowIfCancellationRequested();
 
-				ProjectMetadata projectMetadata = GetProjectData(hierarchy);
+				ProjectMetadata projectMetadata = ProjectDataHelper.GetProjectData(hierarchy, _solution);
 
 				UnconfiguredProject unconfigured = GetUnconfiguredProject(hierarchy);
 
@@ -159,50 +159,6 @@ namespace BuildVisualizer.Services
 			return projectService?
 				.LoadedUnconfiguredProjects
 				.FirstOrDefault(p => StringComparer.OrdinalIgnoreCase.Equals((string)p.FullPath, projectPath));
-		}
-
-		private ProjectMetadata GetProjectData(IVsHierarchy hierarchy)
-		{
-			ThreadHelper.ThrowIfNotOnUIThread();
-
-			hierarchy.GetProperty(
-				VSConstants.VSITEMID_ROOT,
-				(int)__VSHPROPID.VSHPROPID_Name,
-				out object nameObj);
-
-			_solution.GetUniqueNameOfProject(hierarchy, out string uniqueName);
-
-			hierarchy.GetCanonicalName(
-				VSConstants.VSITEMID_ROOT, out string path);
-
-			string outputType = null;
-			(hierarchy as IVsBuildPropertyStorage)?
-				.GetPropertyValue("OutputType", null, (uint)_PersistStorageType.PST_PROJECT_FILE, out outputType);
-
-			bool isTestProject = SolutionReferenceSnapshot.IsTestProject(path);
-
-			return new ProjectMetadata
-			{
-				Name = nameObj as string ?? "(unknown)",
-				UniqueName = uniqueName ?? "(unknown)",
-				Path = path ?? string.Empty,
-				OutputType = isTestProject
-					? "Test Library"
-					: ConvertOutputType(outputType) ?? "(unknown)"
-			};
-		}
-
-		private static string ConvertOutputType(string outputType)
-		{
-			switch (outputType?.ToLowerInvariant())
-			{
-				case null: return null;
-				case "exe": return "Executable";
-				case "winexe": return "Windows App";
-				case "library": return "Library";
-				case "module": return "Module";
-				default: return outputType;
-			}
 		}
 
 		public void Dispose()
