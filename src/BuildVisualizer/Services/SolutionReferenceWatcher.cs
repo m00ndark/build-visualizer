@@ -108,7 +108,7 @@ namespace BuildVisualizer.Services
 			AllReferencesReady?.Invoke(allRefs);
 		}
 
-		private IReadOnlyList<ProjectReferences> CollectAllReferences()
+		internal IReadOnlyList<ProjectReferences> CollectAllReferences()
 		{
 			ThreadHelper.ThrowIfNotOnUIThread();
 

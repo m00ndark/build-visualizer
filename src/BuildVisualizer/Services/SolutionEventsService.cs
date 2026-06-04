@@ -258,6 +258,18 @@ namespace BuildVisualizer.Services
 			Debug.WriteLine($"References changed in {projectName}:");
 			foreach (ReferenceInfo r in refs)
 				Debug.WriteLine($"  {r}");
+
+			// Re-collect all references and notify listeners so the UI updates
+			if (_watcher != null)
+			{
+				ThreadHelper.JoinableTaskFactory.Run(async () =>
+				{
+					await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
+					IReadOnlyList<ProjectReferences> allRefs = _watcher.CollectAllReferences();
+					LastResolvedReferences = allRefs;
+					SolutionFullyLoaded?.Invoke(allRefs);
+				});
+			}
 		}
 
 		public void Dispose()

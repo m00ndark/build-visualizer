@@ -11,7 +11,7 @@
 - [ ] Add settings, available from toolbar:
   - [ ] Focus on build start?
   - [ ] List view column selection
-- [ ] Update project info when a project dependency is added/removed
+- [x] Update project info when a project dependency is added/removed
 
 # Bugs
 
