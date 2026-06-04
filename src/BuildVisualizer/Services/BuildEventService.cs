@@ -13,7 +13,8 @@ namespace BuildVisualizer.Services
 		private bool _disposed;
 		private vsBuildAction _currentBuildAction;
 
-		public event EventHandler BuildBegin;
+		public event EventHandler<BuildEventArgs> BuildBegin;
+		public event EventHandler<BuildEventArgs> BuildDone;
 		public event EventHandler<ProjectStatusChangedEventArgs> ProjectStatusChanged;
 
 		public BuildEventService(DTE2 dte)
@@ -33,7 +34,7 @@ namespace BuildVisualizer.Services
 		{
 			ThreadHelper.ThrowIfNotOnUIThread();
 			_currentBuildAction = action;
-			BuildBegin?.Invoke(this, EventArgs.Empty);
+			BuildBegin?.Invoke(this, new BuildEventArgs(scope, action));
 		}
 
 		private void OnBuildProjConfigBegin(string project, string projectConfig, string platform, string solutionConfig)
@@ -63,7 +64,7 @@ namespace BuildVisualizer.Services
 		private void OnBuildDone(vsBuildScope scope, vsBuildAction action)
 		{
 			ThreadHelper.ThrowIfNotOnUIThread();
-			// Build is complete
+			BuildDone?.Invoke(this, new BuildEventArgs(scope, action));
 		}
 
 		public void Dispose()

@@ -109,7 +109,7 @@ namespace BuildVisualizer
 			await ToolWindow.BuildVisualizerToolWindowCommand.InitializeAsync(this);
 		}
 
-		private void OnBuildBegin(object sender, EventArgs e)
+		private void OnBuildBegin(object sender, Models.BuildEventArgs e)
 		{
 			ThreadHelper.ThrowIfNotOnUIThread();
 

@@ -211,10 +211,22 @@
 	<Grid>
 		<Grid.RowDefinitions>
 			<RowDefinition Height="Auto"/>
+			<RowDefinition Height="Auto"/>
+			<RowDefinition Height="Auto"/>
 			<RowDefinition Height="*"/>
 		</Grid.RowDefinitions>
 
-		<Grid Grid.Row="0" Margin="10,10,10,10">
+		<!-- Build status -->
+		<TextBlock Grid.Row="0" Margin="10,10,10,0"
+				   Text="{Binding BuildStatusText}"
+				   Foreground="{DynamicResource {x:Static vsshell:VsBrushes.ToolWindowTextKey}}"
+				   FontSize="14"
+				   TextTrimming="CharacterEllipsis"/>
+
+		<Border Grid.Row="1" Height="1" Margin="10,10,10,0"
+				Background="{DynamicResource {x:Static vsshell:VsBrushes.ToolWindowBorderKey}}"/>
+
+		<Grid Grid.Row="2" Margin="10,10,10,10">
 			<StackPanel Orientation="Horizontal" HorizontalAlignment="Left">
 				<Button Command="{Binding ToggleViewCommand}" Padding="5, 3">
 					<StackPanel Orientation="Horizontal">
@@ -263,7 +275,7 @@
 		</Grid>
 
 		<!-- List View -->
-		<ListView x:Name="ProjectListView" Grid.Row="1" Margin="10,0,10,10"
+		<ListView x:Name="ProjectListView" Grid.Row="3" Margin="10,0,10,10"
 				  ItemsSource="{Binding SortedProjects}"
 				  SelectedItem="{Binding SelectedProject, Mode=TwoWay}"
 				  SizeChanged="ProjectListView_SizeChanged"
@@ -392,7 +404,12 @@
 		</ListView>
 
 		<!-- Graph View -->
-		<ScrollViewer Grid.Row="2" Margin="10,0,10,10"
+		<Border Grid.Row="3" Height="1" Margin="10,0,10,10"
+				Background="{DynamicResource {x:Static vsshell:VsBrushes.ToolWindowBorderKey}}"
+				VerticalAlignment="Top"
+				Visibility="{Binding IsGraphView, Converter={StaticResource BoolToVisibilityConverter}}"/>
+
+		<ScrollViewer Grid.Row="3" Margin="10,11,10,10"
 					  HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto"
 					  Visibility="{Binding IsGraphView, Converter={StaticResource BoolToVisibilityConverter}}">
 			<ItemsControl ItemsSource="{Binding GraphRowGroups}" Margin="0">

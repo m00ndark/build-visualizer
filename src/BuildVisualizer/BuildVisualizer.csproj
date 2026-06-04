@@ -52,6 +52,7 @@
     <Compile Include="Converters\NullableTimeSpanConverter.cs" />
     <Compile Include="Converters\SortIndicatorVisibilityConverter.cs" />
     <Compile Include="Layout\GraphLayoutEngine.cs" />
+    <Compile Include="Models\BuildEventArgs.cs" />
     <Compile Include="Models\BuildStatus.cs" />
     <Compile Include="Models\ProjectInfo.cs" />
     <Compile Include="Models\ProjectStatusChangedEventArgs.cs" />

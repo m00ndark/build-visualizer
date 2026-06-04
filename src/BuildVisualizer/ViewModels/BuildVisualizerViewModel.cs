@@ -2,6 +2,7 @@ using BuildVisualizer.Commands;
 using BuildVisualizer.Layout;
 using BuildVisualizer.Models;
 using BuildVisualizer.Services;
+using EnvDTE;
 using EnvDTE80;
 using Microsoft.VisualStudio;
 using Microsoft.VisualStudio.Shell;
@@ -15,11 +16,15 @@ using System.Linq;
 using System.Threading.Tasks;
 using System.Windows.Data;
 using System.Windows.Input;
+using System.Windows.Threading;
 
 namespace BuildVisualizer.ViewModels
 {
+#pragma warning disable VSTHRD010 // All COM access is marshaled to the UI thread via ThreadingHelper or DispatcherTimer
 	public class BuildVisualizerViewModel : ViewModelBase
 	{
+		private const string NoBuildInformationAvailableStatusText = "No build information available.";
+
 		private readonly SolutionService _solutionService;
 		private readonly BuildEventService _buildEventService;
 		private readonly SolutionEventsService _solutionEventsService;
@@ -28,14 +33,19 @@ namespace BuildVisualizer.ViewModels
 		private readonly IVsSolution _solution;
 		private readonly IVsSolutionBuildManager2 _buildManager;
 		private readonly GraphLayoutEngine _layoutEngine;
+		private readonly DispatcherTimer _buildTimer;
 		private bool _isGraphView;
 		private ProjectInfo _selectedProject;
 		private string _sortProperty;
 		private ListSortDirection _sortDirection = ListSortDirection.Ascending;
+		private string _buildStatusText;
+		private vsBuildScope _buildScope;
+		private vsBuildAction _buildAction;
+		private DateTime _buildStartTime;
 
 		public ObservableCollection<ProjectInfo> Projects { get; set; }
 
-		public ICollectionView SortedProjects { get; private set; }
+		public ICollectionView SortedProjects { get; }
 
 		public ObservableCollection<ProjectNodeViewModel> GraphNodes { get; set; }
 
@@ -58,6 +68,12 @@ namespace BuildVisualizer.ViewModels
 		public ICommand BuildSolutionCommand { get; }
 
 		public ICommand RebuildSolutionCommand { get; }
+
+		public string BuildStatusText
+		{
+			get => _buildStatusText;
+			private set => SetProperty(ref _buildStatusText, value);
+		}
 
 		public string SortProperty
 		{
@@ -109,6 +125,8 @@ namespace BuildVisualizer.ViewModels
 			_buildManager = buildManager;
 			Resources.Colors.IsDarkTheme = themeService.IsDarkTheme;
 			_layoutEngine = new GraphLayoutEngine();
+			_buildTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(1) };
+			_buildTimer.Tick += (s, _) => UpdateBuildStatusText();
 			Projects = new ObservableCollection<ProjectInfo>();
 			SortedProjects = CollectionViewSource.GetDefaultView(Projects);
 			if (SortedProjects is ICollectionViewLiveShaping liveShaping && liveShaping.CanChangeLiveSorting)
@@ -139,7 +157,6 @@ namespace BuildVisualizer.ViewModels
 				SortDirection = direction;
 			});
 
-#pragma warning disable VSTHRD010 // ThreadingHelper.RunOnMainThread ensures UI thread
 			Func<object, bool> canBuildProject = _ => !IsGraphView && SelectedProject != null;
 			CleanProjectCommand = new RelayCommand(_ => ThreadingHelper.RunOnMainThread(() => BuildProject(VSSOLNBUILDUPDATEFLAGS.SBF_OPERATION_CLEAN)), canBuildProject);
 			BuildProjectCommand = new RelayCommand(_ => ThreadingHelper.RunOnMainThread(() => BuildProject(VSSOLNBUILDUPDATEFLAGS.SBF_OPERATION_BUILD)), canBuildProject);
@@ -148,10 +165,10 @@ namespace BuildVisualizer.ViewModels
 			CleanSolutionCommand = new RelayCommand(_ => ThreadingHelper.RunOnMainThread(() => ExecuteCommand("Build.CleanSolution")));
 			BuildSolutionCommand = new RelayCommand(_ => ThreadingHelper.RunOnMainThread(() => ExecuteCommand("Build.BuildSolution")));
 			RebuildSolutionCommand = new RelayCommand(_ => ThreadingHelper.RunOnMainThread(() => ExecuteCommand("Build.RebuildSolution")));
-#pragma warning restore VSTHRD010
 
 			// Subscribe to build events
 			_buildEventService.BuildBegin += OnBuildBegin;
+			_buildEventService.BuildDone += OnBuildDone;
 			_buildEventService.ProjectStatusChanged += OnProjectStatusChanged;
 
 			// Subscribe to solution events
@@ -176,18 +193,59 @@ namespace BuildVisualizer.ViewModels
 				ThreadHelper.JoinableTaskFactory.RunAsync(LoadProjectsAsync);
 			}
 #pragma warning restore VSTHRD110, VSSDK007
+
+			BuildStatusText = NoBuildInformationAvailableStatusText;
 		}
 
-		private void OnBuildBegin(object sender, EventArgs e)
+		private void OnBuildBegin(object sender, BuildEventArgs e)
 		{
-			// Reset all projects when any build starts
 			ThreadingHelper.RunOnMainThread(() =>
 			{
+				// Reset all projects
 				foreach (ProjectInfo project in Projects)
 				{
 					project.Status = BuildStatus.NotBuilt;
 					project.BuildStart = null;
 					project.BuildFinish = null;
+				}
+
+				// Start tracking overall build status
+				_buildScope = e.Scope;
+				_buildAction = e.Action;
+				_buildStartTime = DateTime.Now;
+				UpdateBuildStatusText();
+				_buildTimer.Start();
+			});
+		}
+
+		private void OnBuildDone(object sender, BuildEventArgs e)
+		{
+			ThreadingHelper.RunOnMainThread(() =>
+			{
+				_buildTimer.Stop();
+
+				TimeSpan elapsed = DateTime.Now - _buildStartTime;
+				string scope = _buildScope == vsBuildScope.vsBuildScopeProject ? "project in solution" : "solution";
+				string duration = FormatDuration(elapsed);
+				int failedCount = GetLastBuildFailedCount();
+
+				switch (_buildAction)
+				{
+					case vsBuildAction.vsBuildActionClean:
+						BuildStatusText = $"Cleaned {scope} successfully. Started at {_buildStartTime:HH:mm:ss} and lasted {duration}.";
+						break;
+
+					case vsBuildAction.vsBuildActionRebuildAll:
+						BuildStatusText = failedCount > 0
+							? $"Rebuild of {scope} failed. Started at {_buildStartTime:HH:mm:ss} and lasted {duration}."
+							: $"Rebuilt {scope} successfully. Started at {_buildStartTime:HH:mm:ss} and lasted {duration}.";
+						break;
+
+					default:
+						BuildStatusText = failedCount > 0
+							? $"Build of {scope} failed. Started at {_buildStartTime:HH:mm:ss} and lasted {duration}."
+							: $"Built {scope} successfully. Started at {_buildStartTime:HH:mm:ss} and lasted {duration}.";
+						break;
 				}
 			});
 		}
@@ -322,20 +380,69 @@ namespace BuildVisualizer.ViewModels
 			_dte.ExecuteCommand(commandName);
 		}
 
+		private void UpdateBuildStatusText()
+		{
+			TimeSpan elapsed = DateTime.Now - _buildStartTime;
+			string scope = _buildScope == vsBuildScope.vsBuildScopeProject ? "project in solution" : "solution";
+			string duration = FormatDuration(elapsed);
+			string task;
+
+			switch (_buildAction)
+			{
+				case vsBuildAction.vsBuildActionClean:
+					task = "Cleaning";
+					break;
+				case vsBuildAction.vsBuildActionRebuildAll:
+					task = "Rebuilding";
+					break;
+				default:
+					task = "Building";
+					break;
+			}
+
+			BuildStatusText = $"{task} {scope}. Started at {_buildStartTime:HH:mm:ss} and has been ongoing for {duration}.";
+		}
+
+		private int GetLastBuildFailedCount()
+		{
+			ThreadHelper.ThrowIfNotOnUIThread();
+			return _dte.Solution?.SolutionBuild?.LastBuildInfo ?? 0;
+		}
+
+		private static string FormatDuration(TimeSpan elapsed)
+		{
+			int totalSeconds = (int)elapsed.TotalSeconds;
+			int minutes = totalSeconds / 60;
+			int seconds = totalSeconds % 60;
+
+			if (minutes == 0)
+				return seconds == 1 ? "1 second" : $"{seconds} seconds";
+
+			string minutePart = minutes == 1 ? "1 minute" : $"{minutes} minutes";
+			string secondPart = seconds == 1 ? "1 second" : $"{seconds} seconds";
+			return $"{minutePart} and {secondPart}";
+		}
+
 		private void OnProjectsChanged(IReadOnlyList<ProjectReferences> projectReferences)
 		{
 			_solutionService.UpdateProjectReferences(projectReferences);
-			ThreadingHelper.RunOnMainThread(UpdateProjectsAsync);
+			ThreadingHelper.RunOnMainThread(async () =>
+			{
+				await UpdateProjectsAsync();
+				if (!_buildTimer.IsEnabled)
+					BuildStatusText = NoBuildInformationAvailableStatusText;
+			});
 		}
 
 		private void OnSolutionClosed(object sender, EventArgs e)
 		{
-			// Clear all visualizations when solution closes
 			ThreadingHelper.RunOnMainThread(() =>
 			{
+				_buildTimer.Stop();
 				Projects.Clear();
 				GraphNodes.Clear();
 				GraphRowGroups.Clear();
+				BuildStatusText = NoBuildInformationAvailableStatusText;
 			});
 		}
 

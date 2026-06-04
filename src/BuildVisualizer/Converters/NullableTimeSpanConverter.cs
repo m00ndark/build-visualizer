@@ -8,8 +8,8 @@ namespace BuildVisualizer.Converters
 	{
 		public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
 		{
-			if (value is TimeSpan ts)
-				return $"{ts.TotalSeconds:0.000}s";
+			if (value is TimeSpan timeSpan)
+				return $"{timeSpan.TotalSeconds:0.0}s";
 
 			return string.Empty;
 		}
