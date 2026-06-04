@@ -1,24 +1,24 @@
 # Improvements
 
-- [x] Load projects when window is opened
-- [ ] Add a metadata view (popup or sidebar?) for a hovered node
-- [ ] Show which project the build was started for, if not entire solution?
-- [ ] Show overall build start time and duration, continuously updated
-- [ ] Show error/warning/information counts for each project
-- [ ] Sort dependency lists
-- [ ] Continuously update project build duration
-- [ ] Consider build duration with lower resolution
-- [ ] Use a toolbar instead of regular buttons
-- [ ] Add settings, available from toolbar:
+- [x] 1. Load projects when window is opened
+- [ ] 2. Add a metadata view (popup or sidebar?) for a hovered node
+- [ ] 3. Show which project the build was started for, if not entire solution?
+- [ ] 4. Show overall build start time and duration, continuously updated
+- [ ] 5. Show error/warning/information counts for each project
+- [ ] 6. Sort dependency lists
+- [ ] 7. Continuously update project build duration
+- [ ] 8. Consider build duration with lower resolution
+- [ ] 9. Add settings, available from "toolbar":
   - [ ] Focus on build start?
   - [ ] List view column selection
-- [x] Update project info when a project dependency is added/removed
-- [ ] Add context menu to graph nodes and list rows:
+- [x] 10. Update project info when a project dependency is added/removed
+- [ ] 11. Make list view rows selectable and add clean/build/rebuild buttons to "toolbar" (disabled in graph view)
+- [ ] 12. Add context menu to graph nodes and list rows:
   - [ ] Clean Project
   - [ ] Build Project
   - [ ] Rebuild Project
-- [ ] Add "Show in Solution Explorer" to context menus
-- [ ] Add column-based layout option for graph view (toggle between row/column)
+- [ ] 13. Add "Reveal in Solution Explorer" to context menus
+- [ ] 14. Add column-based layout option for graph view (toggle between row/column)
 
 # Bugs
 
