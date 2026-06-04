@@ -4,6 +4,7 @@ namespace BuildVisualizer.Models
 	{
 		NotBuilt,
 		Building,
+		Cleaning,
 		Success,
 		Failed,
 		Skipped

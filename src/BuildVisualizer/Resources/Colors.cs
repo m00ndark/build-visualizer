@@ -155,7 +155,8 @@ namespace BuildVisualizer.Resources
 			{
 				switch (status)
 				{
-					case BuildStatus.Building: return DarkBuildingBrush;
+					case BuildStatus.Building:
+					case BuildStatus.Cleaning: return DarkBuildingBrush;
 					case BuildStatus.Success:  return DarkSuccessBrush;
 					case BuildStatus.Failed:   return DarkFailedBrush;
 					case BuildStatus.Skipped:  return DarkSkippedBrush;
@@ -164,7 +165,8 @@ namespace BuildVisualizer.Resources
 			}
 			switch (status)
 			{
-				case BuildStatus.Building: return BuildingBrush;
+				case BuildStatus.Building:
+				case BuildStatus.Cleaning: return BuildingBrush;
 				case BuildStatus.Success:  return SuccessBrush;
 				case BuildStatus.Failed:   return FailedBrush;
 				case BuildStatus.Skipped:  return SkippedBrush;
@@ -178,7 +180,8 @@ namespace BuildVisualizer.Resources
 			{
 				switch (status)
 				{
-					case BuildStatus.Building: return DarkBuildingHighlightBrush;
+					case BuildStatus.Building:
+					case BuildStatus.Cleaning: return DarkBuildingHighlightBrush;
 					case BuildStatus.Success:  return DarkSuccessHighlightBrush;
 					case BuildStatus.Failed:   return DarkFailedHighlightBrush;
 					case BuildStatus.Skipped:  return DarkSkippedHighlightBrush;
@@ -187,7 +190,8 @@ namespace BuildVisualizer.Resources
 			}
 			switch (status)
 			{
-				case BuildStatus.Building: return BuildingHighlightBrush;
+				case BuildStatus.Building:
+				case BuildStatus.Cleaning: return BuildingHighlightBrush;
 				case BuildStatus.Success:  return SuccessHighlightBrush;
 				case BuildStatus.Failed:   return FailedHighlightBrush;
 				case BuildStatus.Skipped:  return SkippedHighlightBrush;
@@ -201,7 +205,8 @@ namespace BuildVisualizer.Resources
 			{
 				switch (status)
 				{
-					case BuildStatus.Building: return DarkBuildingDependencyBorderBrush;
+					case BuildStatus.Building:
+					case BuildStatus.Cleaning: return DarkBuildingDependencyBorderBrush;
 					case BuildStatus.Success:  return DarkSuccessDependencyBorderBrush;
 					case BuildStatus.Failed:   return DarkFailedDependencyBorderBrush;
 					case BuildStatus.Skipped:  return DarkSkippedDependencyBorderBrush;
@@ -210,7 +215,8 @@ namespace BuildVisualizer.Resources
 			}
 			switch (status)
 			{
-				case BuildStatus.Building: return BuildingDependencyBorderBrush;
+				case BuildStatus.Building:
+				case BuildStatus.Cleaning: return BuildingDependencyBorderBrush;
 				case BuildStatus.Success:  return SuccessDependencyBorderBrush;
 				case BuildStatus.Failed:   return FailedDependencyBorderBrush;
 				case BuildStatus.Skipped:  return SkippedDependencyBorderBrush;
@@ -224,7 +230,8 @@ namespace BuildVisualizer.Resources
 			{
 				switch (status)
 				{
-					case BuildStatus.Building: return DarkBuildingDependencyBackgroundBrush;
+					case BuildStatus.Building:
+					case BuildStatus.Cleaning: return DarkBuildingDependencyBackgroundBrush;
 					case BuildStatus.Success:  return DarkSuccessDependencyBackgroundBrush;
 					case BuildStatus.Failed:   return DarkFailedDependencyBackgroundBrush;
 					case BuildStatus.Skipped:  return DarkSkippedDependencyBackgroundBrush;
@@ -233,7 +240,8 @@ namespace BuildVisualizer.Resources
 			}
 			switch (status)
 			{
-				case BuildStatus.Building: return BuildingDependencyBackgroundBrush;
+				case BuildStatus.Building:
+				case BuildStatus.Cleaning: return BuildingDependencyBackgroundBrush;
 				case BuildStatus.Success:  return SuccessDependencyBackgroundBrush;
 				case BuildStatus.Failed:   return FailedDependencyBackgroundBrush;
 				case BuildStatus.Skipped:  return SkippedDependencyBackgroundBrush;
@@ -247,7 +255,8 @@ namespace BuildVisualizer.Resources
 			{
 				switch (status)
 				{
-					case BuildStatus.Building: return DarkBuildingTextBrush;
+					case BuildStatus.Building:
+					case BuildStatus.Cleaning: return DarkBuildingTextBrush;
 					case BuildStatus.Success:  return DarkSuccessTextBrush;
 					case BuildStatus.Failed:   return DarkFailedTextBrush;
 					case BuildStatus.Skipped:  return DarkSkippedTextBrush;
@@ -256,7 +265,8 @@ namespace BuildVisualizer.Resources
 			}
 			switch (status)
 			{
-				case BuildStatus.Building: return BuildingTextBrush;
+				case BuildStatus.Building:
+				case BuildStatus.Cleaning: return BuildingTextBrush;
 				case BuildStatus.Success:  return SuccessTextBrush;
 				case BuildStatus.Failed:   return FailedTextBrush;
 				case BuildStatus.Skipped:  return SkippedTextBrush;

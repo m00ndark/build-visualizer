@@ -74,6 +74,7 @@ namespace BuildVisualizer.Models
 				{
 					case BuildStatus.NotBuilt:  return "Not Built";
 					case BuildStatus.Building:  return "Building";
+					case BuildStatus.Cleaning:  return "Cleaning";
 					case BuildStatus.Success:   return "Success";
 					case BuildStatus.Failed:    return "Failed";
 					case BuildStatus.Skipped:   return "Skipped";

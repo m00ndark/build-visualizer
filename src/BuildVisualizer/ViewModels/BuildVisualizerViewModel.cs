@@ -201,7 +201,7 @@ namespace BuildVisualizer.ViewModels
 				{
 					project.Status = e.NewStatus;
 
-					if (e.NewStatus == BuildStatus.Building)
+					if (e.NewStatus == BuildStatus.Building || e.NewStatus == BuildStatus.Cleaning)
 					{
 						project.BuildStart = e.Timestamp;
 						project.BuildFinish = null;

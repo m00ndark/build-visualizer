@@ -11,6 +11,7 @@ namespace BuildVisualizer.Services
 		private readonly DTE2 _dte;
 		private readonly BuildEvents _buildEvents;
 		private bool _disposed;
+		private vsBuildAction _currentBuildAction;
 
 		public event EventHandler BuildBegin;
 		public event EventHandler<ProjectStatusChangedEventArgs> ProjectStatusChanged;
@@ -31,6 +32,7 @@ namespace BuildVisualizer.Services
 		private void OnBuildBegin(vsBuildScope scope, vsBuildAction action)
 		{
 			ThreadHelper.ThrowIfNotOnUIThread();
+			_currentBuildAction = action;
 			BuildBegin?.Invoke(this, EventArgs.Empty);
 		}
 
@@ -40,7 +42,10 @@ namespace BuildVisualizer.Services
 
 			if (!string.IsNullOrEmpty(project))
 			{
-				ProjectStatusChanged?.Invoke(this, new ProjectStatusChangedEventArgs(project, BuildStatus.Building, DateTime.Now));
+				BuildStatus status = _currentBuildAction == vsBuildAction.vsBuildActionClean
+					? BuildStatus.Cleaning
+					: BuildStatus.Building;
+				ProjectStatusChanged?.Invoke(this, new ProjectStatusChangedEventArgs(project, status, DateTime.Now));
 			}
 		}
 
