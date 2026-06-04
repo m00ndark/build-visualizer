@@ -5,7 +5,7 @@
 - [ ] ~~3. Show which project the build was started for, if not entire solution?~~
 - [x] 4. Show overall build start time and duration, continuously updated
 - [ ] 5. Show error/warning/information counts for each project
-- [ ] 6. Sort dependency lists
+- [x] 6. Sort dependency lists
 - [ ] 7. Continuously update project build duration
 - [x] 8. Consider build duration with lower resolution
 - [ ] 9. Add settings, available from "toolbar":

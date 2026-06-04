@@ -19,6 +19,7 @@
 		<converters:InverseBooleanToVisibilityConverter x:Key="BoolToVisibilityInverseConverter"/>
 		<converters:NullableTimeSpanConverter x:Key="NullableTimeSpanConverter"/>
 		<converters:SortIndicatorVisibilityConverter x:Key="SortIndicatorVisibilityConverter"/>
+		<converters:SortedCollectionConverter x:Key="SortByNameConverter" SortProperty="Name"/>
 
 		<!-- Resize gripper for column headers -->
 		<Style x:Key="ColumnHeaderGripperStyle" TargetType="Thumb">
@@ -377,7 +378,7 @@
 						</GridViewColumn.HeaderContainerStyle>
 						<GridViewColumn.CellTemplate>
 							<DataTemplate>
-								<ItemsControl ItemsSource="{Binding Dependencies}">
+								<ItemsControl ItemsSource="{Binding Dependencies, Converter={StaticResource SortByNameConverter}}">
 									<ItemsControl.ItemsPanel>
 										<ItemsPanelTemplate>
 											<StackPanel Orientation="Horizontal"/>
