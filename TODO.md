@@ -1,6 +1,6 @@
 # Ideas and things to do
 
-- [ ] Load projects when window is opened
+- [x] Load projects when window is opened
 - [ ] Add a metadata view (popup or sidebar?) for a hovered node
 - [ ] Show which project the build was started for, if not entire solution?
 - [ ] Show overall build start time and duration, continuously updated

@@ -1,5 +1,6 @@
 ﻿using BuildVisualizer.Services;
 using EnvDTE80;
+using Microsoft.VisualStudio;
 using Microsoft.VisualStudio.Shell;
 using Microsoft.VisualStudio.Shell.Interop;
 using System;
@@ -30,6 +31,7 @@ namespace BuildVisualizer
 	[Guid(PackageGuidString)]
 	[ProvideMenuResource("Menus.ctmenu", 1)]
 	[ProvideToolWindow(typeof(ToolWindow.BuildVisualizerToolWindow))]
+	[ProvideAutoLoad(VSConstants.UICONTEXT.SolutionOpening_string, PackageAutoLoadFlags.BackgroundLoad)]
 	public sealed class BuildVisualizerPackage : AsyncPackage
 	{
 		/// <summary>

@@ -19,6 +19,17 @@ namespace BuildVisualizer.Services
 		private bool _disposed;
 		private SolutionReferenceWatcher _watcher;
 
+		/// <summary>
+		/// True when a solution is open (set on open, cleared on close).
+		/// </summary>
+		public bool IsSolutionOpen { get; private set; }
+
+		/// <summary>
+		/// The most recently resolved project references, or null if no solution
+		/// has been fully loaded yet (or the solution was closed).
+		/// </summary>
+		public IReadOnlyList<ProjectReferences> LastResolvedReferences { get; private set; }
+
 		public event EventHandler SolutionOpened;
 		public event Action<IReadOnlyList<ProjectReferences>> SolutionFullyLoaded;
 		public event EventHandler SolutionClosed;
@@ -35,6 +46,23 @@ namespace BuildVisualizer.Services
 			// Since we also implement IVsSolutionLoadEvents, VS should detect this
 			// and call those methods as well when appropriate
 			_solution.AdviseSolutionEvents(this, out _solutionEventsCookie);
+
+			// If a solution is already open (e.g. package loaded asynchronously after
+			// solution events already fired), catch up by triggering the same logic
+			// that OnAfterBackgroundSolutionLoadComplete would have run.
+			if (IsSolutionAlreadyOpen())
+			{
+				IsSolutionOpen = true;
+				OnAfterBackgroundSolutionLoadComplete();
+			}
+		}
+
+		private bool IsSolutionAlreadyOpen()
+		{
+			ThreadHelper.ThrowIfNotOnUIThread();
+
+			_solution.GetProperty((int)__VSPROPID.VSPROPID_IsSolutionOpen, out object value);
+			return value is bool isOpen && isOpen;
 		}
 
 		public int OnAfterOpenProject(IVsHierarchy pHierarchy, int fAdded)
@@ -133,6 +161,7 @@ namespace BuildVisualizer.Services
 		{
 			// Solution was opened - but dependencies may not be ready yet
 			// We'll wait for OnAfterBackgroundSolutionLoadComplete instead
+			IsSolutionOpen = true;
 			SolutionOpened?.Invoke(this, EventArgs.Empty);
 			return VSConstants.S_OK;
 		}
@@ -146,6 +175,8 @@ namespace BuildVisualizer.Services
 		{
 			ThreadHelper.ThrowIfNotOnUIThread();
 
+			IsSolutionOpen = false;
+			LastResolvedReferences = null;
 			_watcher?.Dispose();
 			SolutionClosed?.Invoke(this, EventArgs.Empty);
 			return VSConstants.S_OK;
@@ -216,6 +247,7 @@ namespace BuildVisualizer.Services
 					Debug.WriteLine($"  {r}");
 			}
 
+			LastResolvedReferences = projectReferences;
 			SolutionFullyLoaded?.Invoke(projectReferences);
 		}
 

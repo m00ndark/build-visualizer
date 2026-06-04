@@ -111,11 +111,21 @@ namespace BuildVisualizer.ViewModels
 			// Subscribe to theme change events
 			_themeService.ThemeChanged += OnThemeChanged;
 
-//			// Fire and forget - load projects asynchronously without blocking constructor
-//#pragma warning disable VSSDK007 // Avoid fire-and-forget in analyzers (intentional for async initialization)
-//			var loadTask = ThreadHelper.JoinableTaskFactory.RunAsync(LoadProjectsAsync);
-//#pragma warning restore VSSDK007
-//			loadTask.Task.FileAndForget("BuildVisualizer/LoadProjects");
+			// Catch up if the solution was already loaded before the tool window opened
+#pragma warning disable VSTHRD110, VSSDK007 // Intentional fire-and-forget for async initialization in constructor
+			if (_solutionEventsService.LastResolvedReferences != null)
+			{
+				// Solution fully loaded with dependencies resolved — use the cached result
+				_solutionService.UpdateProjectReferences(_solutionEventsService.LastResolvedReferences);
+				ThreadHelper.JoinableTaskFactory.RunAsync(UpdateProjectsAsync);
+			}
+			else if (_solutionEventsService.IsSolutionOpen)
+			{
+				// Solution is open but dependencies are still loading — show projects without dependency info;
+				// the SolutionFullyLoaded event will refresh with full dependency data when ready
+				ThreadHelper.JoinableTaskFactory.RunAsync(LoadProjectsAsync);
+			}
+#pragma warning restore VSTHRD110, VSSDK007
 		}
 
 		private void OnAllProjectsStatusReset(object sender, System.EventArgs e)
