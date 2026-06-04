@@ -85,9 +85,6 @@
     </Compile>
   </ItemGroup>
   <ItemGroup>
-    <None Include="..\..\IMPLEMENTATION_PLAN.md">
-      <Link>IMPLEMENTATION_PLAN.md</Link>
-    </None>
     <None Include="..\..\TODO.md">
       <Link>TODO.md</Link>
     </None>

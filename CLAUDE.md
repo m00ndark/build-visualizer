@@ -76,13 +76,7 @@ Solution Opened → SolutionEventsService → SolutionReferenceWatcher resolves 
 
 ## Development Status
 
-See `IMPLEMENTATION_PLAN.md` for detailed task tracking and `TODO.md` for ideas/bugs.
-
-**Completed:** Solution events & UI cleanup, graph node sizing, responsive row layout, VS theme support (increments 1–3, 6)
-
-**Remaining:** Context menu with build/rebuild operations (inc. 4), "Show in Solution Explorer" (inc. 5), column-based layout option (inc. 7)
-
-**Known bug:** Test projects often tagged as "Executable" instead of "Test Library"
+See `TODO.md` for improvements, ideas and known bugs.
 
 ## Building & Debugging
 
