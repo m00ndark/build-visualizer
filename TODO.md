@@ -1,3 +1,7 @@
+# Features
+- [ ] 1. Add a timeline view (like in Chrome DevTools Network view)
+- [ ] 2. Add a "Build History" view, showing previous builds and their durations, errors/warnings/information counts, etc.
+
 # Improvements
 
 - [x] 1. Load projects when window is opened
@@ -9,20 +13,24 @@
 - [x] 7. Continuously update project build duration
 - [x] 8. Consider build duration with lower resolution
 - [ ] 9. Add settings, available from "toolbar":
-  - [ ] Focus on build start?
-  - [ ] List view column selection
+	- [ ] Focus on build start?
+	- [ ] List view column selection
 - [x] 10. Update project info when a project dependency is added/removed
 - [x] 11. Make list view rows selectable and add clean/build/rebuild buttons to "toolbar" (disabled in graph view)
 - [x] 12. Add context menu to graph nodes and list rows:
-  - [x] Clean Project
-  - [x] Build Project
-  - [x] Rebuild Project
+	- [x] Clean Project
+	- [x] Build Project
+	- [x] Rebuild Project
 - [x] 13. Add "Reveal in Solution Explorer" to context menus
 - [ ] 14. Add column-based layout option for graph view (toggle between row/column)
 - [ ] 15. Store user settings/choices to remember state between starts
-
-# Features
-- [ ] 1. Add a timeline view (like in Chrome DevTools Network view)
+- [ ] 16. Add additional columns to list view
+	- [ ] Configuration
+	- [ ] Platform
+	- [ ] Error count
+	- [ ] Warning count
+	- [ ] Information count
+- [ ] 17. Add a Cancel build toolbar button
 
 # Bugs
 
