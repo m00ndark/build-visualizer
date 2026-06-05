@@ -137,7 +137,7 @@ namespace BuildVisualizer.ViewModels
 			Resources.Colors.IsDarkTheme = themeService.IsDarkTheme;
 			_layoutEngine = new GraphLayoutEngine();
 			_buildTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(1) };
-			_buildTimer.Tick += (s, _) => UpdateBuildStatusText();
+			_buildTimer.Tick += (s, _) => OnBuildTimerTick();
 			Projects = new ObservableCollection<ProjectInfo>();
 			SortedProjects = CollectionViewSource.GetDefaultView(Projects);
 			if (SortedProjects is ICollectionViewLiveShaping liveShaping && liveShaping.CanChangeLiveSorting)
@@ -424,6 +424,17 @@ namespace BuildVisualizer.ViewModels
 					hierarchy as IVsUIHierarchy,
 					VSConstants.VSITEMID_ROOT,
 					EXPANDFLAGS.EXPF_SelectItem);
+			}
+		}
+
+		private void OnBuildTimerTick()
+		{
+			UpdateBuildStatusText();
+
+			foreach (ProjectInfo project in Projects)
+			{
+				if (project.Status == BuildStatus.Building || project.Status == BuildStatus.Cleaning)
+					project.NotifyBuildDurationChanged();
 			}
 		}
 

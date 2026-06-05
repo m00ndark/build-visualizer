@@ -6,7 +6,7 @@
 - [x] 4. Show overall build start time and duration, continuously updated
 - [ ] 5. Show error/warning/information counts for each project
 - [x] 6. Sort dependency lists
-- [ ] 7. Continuously update project build duration
+- [x] 7. Continuously update project build duration
 - [x] 8. Consider build duration with lower resolution
 - [ ] 9. Add settings, available from "toolbar":
   - [ ] Focus on build start?
@@ -21,6 +21,9 @@
 - [ ] 14. Add column-based layout option for graph view (toggle between row/column)
 - [ ] 15. Store user settings/choices to remember state between starts
 
+# Features
+- [ ] 1. Add a timeline view (like in Chrome DevTools Network view)
+
 # Bugs
 
-- [x] Test projects are often tagged as "Executable". It would be nice if it said e.g. "Test Library".
+- [x] 1. Test projects are often tagged as "Executable". It would be nice if it said e.g. "Test Library".

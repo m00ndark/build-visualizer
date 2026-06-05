@@ -89,6 +89,11 @@ namespace BuildVisualizer.Models
 		public SolidColorBrush StatusDependencyBackgroundColor => Resources.Colors.GetStatusDependencyBackgroundBrush(Status);
 		public SolidColorBrush StatusTextColor                 => Resources.Colors.GetStatusTextBrush(Status);
 
+		public void NotifyBuildDurationChanged()
+		{
+			OnPropertyChanged(nameof(BuildDuration));
+		}
+
 		public void NotifyColorPropertiesChanged()
 		{
 			OnPropertyChanged(nameof(StatusColor));
@@ -119,8 +124,8 @@ namespace BuildVisualizer.Models
 		}
 
 		public TimeSpan? BuildDuration =>
-			_buildStart.HasValue && _buildFinish.HasValue
-				? _buildFinish.Value - _buildStart.Value
+			_buildStart.HasValue
+				? (_buildFinish ?? DateTime.Now) - _buildStart.Value
 				: (TimeSpan?)null;
 
 		public ObservableCollection<ProjectInfo> Dependencies { get; set; }
