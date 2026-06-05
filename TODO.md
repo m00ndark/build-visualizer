@@ -13,12 +13,13 @@
   - [ ] List view column selection
 - [x] 10. Update project info when a project dependency is added/removed
 - [x] 11. Make list view rows selectable and add clean/build/rebuild buttons to "toolbar" (disabled in graph view)
-- [ ] 12. Add context menu to graph nodes and list rows:
-  - [ ] Clean Project
-  - [ ] Build Project
-  - [ ] Rebuild Project
-- [ ] 13. Add "Reveal in Solution Explorer" to context menus
+- [x] 12. Add context menu to graph nodes and list rows:
+  - [x] Clean Project
+  - [x] Build Project
+  - [x] Rebuild Project
+- [x] 13. Add "Reveal in Solution Explorer" to context menus
 - [ ] 14. Add column-based layout option for graph view (toggle between row/column)
+- [ ] 15. Store user settings/choices to remember state between starts
 
 # Bugs
 

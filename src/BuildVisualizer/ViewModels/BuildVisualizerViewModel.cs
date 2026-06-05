@@ -32,6 +32,7 @@ namespace BuildVisualizer.ViewModels
 		private readonly DTE2 _dte;
 		private readonly IVsSolution _solution;
 		private readonly IVsSolutionBuildManager2 _buildManager;
+		private readonly IVsUIShell _uiShell;
 		private readonly GraphLayoutEngine _layoutEngine;
 		private readonly DispatcherTimer _buildTimer;
 		private bool _isGraphView;
@@ -68,6 +69,14 @@ namespace BuildVisualizer.ViewModels
 		public ICommand BuildSolutionCommand { get; }
 
 		public ICommand RebuildSolutionCommand { get; }
+
+		public ICommand ContextBuildCommand { get; }
+
+		public ICommand ContextRebuildCommand { get; }
+
+		public ICommand ContextCleanCommand { get; }
+
+		public ICommand RevealInSolutionExplorerCommand { get; }
 
 		public string BuildStatusText
 		{
@@ -114,7 +123,8 @@ namespace BuildVisualizer.ViewModels
 			ThemeService themeService,
 			DTE2 dte,
 			IVsSolution solution,
-			IVsSolutionBuildManager2 buildManager)
+			IVsSolutionBuildManager2 buildManager,
+			IVsUIShell uiShell)
 		{
 			_solutionService = solutionService;
 			_buildEventService = buildEventService;
@@ -123,6 +133,7 @@ namespace BuildVisualizer.ViewModels
 			_dte = dte;
 			_solution = solution;
 			_buildManager = buildManager;
+			_uiShell = uiShell;
 			Resources.Colors.IsDarkTheme = themeService.IsDarkTheme;
 			_layoutEngine = new GraphLayoutEngine();
 			_buildTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(1) };
@@ -158,13 +169,19 @@ namespace BuildVisualizer.ViewModels
 			});
 
 			Func<object, bool> canBuildProject = _ => !IsGraphView && SelectedProject != null;
-			CleanProjectCommand = new RelayCommand(_ => ThreadingHelper.RunOnMainThread(() => BuildProject(VSSOLNBUILDUPDATEFLAGS.SBF_OPERATION_CLEAN)), canBuildProject);
-			BuildProjectCommand = new RelayCommand(_ => ThreadingHelper.RunOnMainThread(() => BuildProject(VSSOLNBUILDUPDATEFLAGS.SBF_OPERATION_BUILD)), canBuildProject);
-			RebuildProjectCommand = new RelayCommand(_ => ThreadingHelper.RunOnMainThread(() => BuildProject(VSSOLNBUILDUPDATEFLAGS.SBF_OPERATION_BUILD | VSSOLNBUILDUPDATEFLAGS.SBF_OPERATION_FORCE_UPDATE)), canBuildProject);
+			CleanProjectCommand = new RelayCommand(_ => ThreadingHelper.RunOnMainThread(() => BuildProject(VSSOLNBUILDUPDATEFLAGS.SBF_OPERATION_CLEAN, SelectedProject)), canBuildProject);
+			BuildProjectCommand = new RelayCommand(_ => ThreadingHelper.RunOnMainThread(() => BuildProject(VSSOLNBUILDUPDATEFLAGS.SBF_OPERATION_BUILD, SelectedProject)), canBuildProject);
+			RebuildProjectCommand = new RelayCommand(_ => ThreadingHelper.RunOnMainThread(() => BuildProject(VSSOLNBUILDUPDATEFLAGS.SBF_OPERATION_BUILD | VSSOLNBUILDUPDATEFLAGS.SBF_OPERATION_FORCE_UPDATE, SelectedProject)), canBuildProject);
 
 			CleanSolutionCommand = new RelayCommand(_ => ThreadingHelper.RunOnMainThread(() => ExecuteCommand("Build.CleanSolution")));
 			BuildSolutionCommand = new RelayCommand(_ => ThreadingHelper.RunOnMainThread(() => ExecuteCommand("Build.BuildSolution")));
 			RebuildSolutionCommand = new RelayCommand(_ => ThreadingHelper.RunOnMainThread(() => ExecuteCommand("Build.RebuildSolution")));
+
+			Func<object, bool> hasProjectParam = p => p is ProjectInfo;
+			ContextBuildCommand = new RelayCommand(p => ThreadingHelper.RunOnMainThread(() => BuildProject(VSSOLNBUILDUPDATEFLAGS.SBF_OPERATION_BUILD, (ProjectInfo)p)), hasProjectParam);
+			ContextRebuildCommand = new RelayCommand(p => ThreadingHelper.RunOnMainThread(() => BuildProject(VSSOLNBUILDUPDATEFLAGS.SBF_OPERATION_BUILD | VSSOLNBUILDUPDATEFLAGS.SBF_OPERATION_FORCE_UPDATE, (ProjectInfo)p)), hasProjectParam);
+			ContextCleanCommand = new RelayCommand(p => ThreadingHelper.RunOnMainThread(() => BuildProject(VSSOLNBUILDUPDATEFLAGS.SBF_OPERATION_CLEAN, (ProjectInfo)p)), hasProjectParam);
+			RevealInSolutionExplorerCommand = new RelayCommand(p => ThreadingHelper.RunOnMainThread(() => RevealInSolutionExplorer((ProjectInfo)p)), hasProjectParam);
 
 			// Subscribe to build events
 			_buildEventService.BuildBegin += OnBuildBegin;
@@ -356,11 +373,10 @@ namespace BuildVisualizer.ViewModels
 			}
 		}
 
-		private void BuildProject(VSSOLNBUILDUPDATEFLAGS flags)
+		private void BuildProject(VSSOLNBUILDUPDATEFLAGS flags, ProjectInfo project)
 		{
 			ThreadHelper.ThrowIfNotOnUIThread();
 
-			ProjectInfo project = SelectedProject;
 			if (project == null)
 				return;
 
@@ -379,6 +395,36 @@ namespace BuildVisualizer.ViewModels
 		{
 			ThreadHelper.ThrowIfNotOnUIThread();
 			_dte.ExecuteCommand(commandName);
+		}
+
+		private static readonly Guid SolutionExplorerGuid = new Guid("3AE79031-E1BC-11D0-8F78-00A0C9110057");
+
+		private void RevealInSolutionExplorer(ProjectInfo project)
+		{
+			ThreadHelper.ThrowIfNotOnUIThread();
+
+			if (project == null)
+				return;
+
+			int hr = _solution.GetProjectOfUniqueName(project.UniqueName, out IVsHierarchy hierarchy);
+			if (hr != VSConstants.S_OK || hierarchy == null)
+				return;
+
+			Guid guid = SolutionExplorerGuid;
+			_uiShell.FindToolWindow((uint)__VSFINDTOOLWIN.FTW_fForceCreate, ref guid, out IVsWindowFrame frame);
+			if (frame == null)
+				return;
+
+			frame.Show();
+
+			if (frame.GetProperty((int)__VSFPROPID.VSFPROPID_DocView, out object docView) == VSConstants.S_OK
+				&& docView is IVsUIHierarchyWindow hierarchyWindow)
+			{
+				hierarchyWindow.ExpandItem(
+					hierarchy as IVsUIHierarchy,
+					VSConstants.VSITEMID_ROOT,
+					EXPANDFLAGS.EXPF_SelectItem);
+			}
 		}
 
 		private void UpdateBuildStatusText()

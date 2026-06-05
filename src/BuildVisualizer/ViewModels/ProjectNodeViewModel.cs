@@ -22,6 +22,7 @@ namespace BuildVisualizer.ViewModels
 		private double _height = NodeHeight;
 		private Thickness _normalBorderThickness = new Thickness(NormalBorderThicknessValue);
 		private Thickness _highlightedBorderThickness = new Thickness(HighlightedBorderThicknessValue);
+		private bool _isHighlighted;
 		private bool _isDependencyHighlighted;
 
 		public ProjectInfo ProjectInfo { get; }
@@ -38,6 +39,12 @@ namespace BuildVisualizer.ViewModels
 		{
 			get => _highlightedBorderThickness;
 			set => SetProperty(ref _highlightedBorderThickness, value);
+		}
+
+		public bool IsHighlighted
+		{
+			get => _isHighlighted;
+			set => SetProperty(ref _isHighlighted, value);
 		}
 
 		public bool IsDependencyHighlighted
@@ -111,6 +118,7 @@ namespace BuildVisualizer.ViewModels
 
 		public void SetHovered(bool isHovered)
 		{
+			IsHighlighted = isHovered;
 			foreach (ProjectNodeViewModel dependency in DependencyNodes)
 				dependency.IsDependencyHighlighted = isHovered;
 		}

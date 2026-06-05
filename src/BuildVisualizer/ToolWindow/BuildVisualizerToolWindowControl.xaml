@@ -21,6 +21,20 @@
 		<converters:SortIndicatorVisibilityConverter x:Key="SortIndicatorVisibilityConverter"/>
 		<converters:SortedCollectionConverter x:Key="SortByNameConverter" SortProperty="Name"/>
 
+		<!-- Menu separator: a non-interactive MenuItem that renders as a themed line -->
+		<Style x:Key="MenuSeparator" TargetType="MenuItem">
+			<Setter Property="IsHitTestVisible" Value="False"/>
+			<Setter Property="Focusable" Value="False"/>
+			<Setter Property="Template">
+				<Setter.Value>
+					<ControlTemplate>
+						<Border Height="1" Margin="2" SnapsToDevicePixels="true"
+								Background="{DynamicResource {x:Static vsshell:VsBrushes.CommandBarMenuBorderKey}}"/>
+					</ControlTemplate>
+				</Setter.Value>
+			</Setter>
+		</Style>
+
 		<!-- Resize gripper for column headers -->
 		<Style x:Key="ColumnHeaderGripperStyle" TargetType="Thumb">
 			<Setter Property="Width" Value="18"/>
@@ -120,6 +134,30 @@
 			<Setter Property="HorizontalContentAlignment" Value="Stretch"/>
 			<Setter Property="Foreground" Value="{DynamicResource {x:Static vsshell:VsBrushes.ToolWindowTextKey}}"/>
 			<Setter Property="Padding" Value="0"/>
+			<Setter Property="ContextMenu">
+				<Setter.Value>
+					<ContextMenu>
+						<MenuItem Header="Build"
+								  Command="{Binding PlacementTarget.Tag.ContextBuildCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+								  CommandParameter="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource AncestorType=ContextMenu}}">
+							<MenuItem.Icon>
+								<imaging:CrispImage Moniker="{x:Static catalog:KnownMonikers.BuildSelection}" Width="16" Height="16"/>
+							</MenuItem.Icon>
+						</MenuItem>
+						<MenuItem Header="Rebuild"
+								  Command="{Binding PlacementTarget.Tag.ContextRebuildCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+								  CommandParameter="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
+						<MenuItem Header="Clean"
+								  Command="{Binding PlacementTarget.Tag.ContextCleanCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+								  CommandParameter="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
+						<MenuItem Style="{DynamicResource MenuSeparator}"/>
+						<MenuItem Header="Reveal in Solution Explorer"
+								  Command="{Binding PlacementTarget.Tag.RevealInSolutionExplorerCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+								  CommandParameter="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
+					</ContextMenu>
+				</Setter.Value>
+			</Setter>
+			<Setter Property="Tag" Value="{Binding DataContext, RelativeSource={RelativeSource AncestorType=ListView}}"/>
 			<Setter Property="Template">
 				<Setter.Value>
 					<ControlTemplate TargetType="ListViewItem">
@@ -140,6 +178,71 @@
 							<Trigger Property="IsSelected" Value="True">
 								<Setter TargetName="Bd" Property="Background" Value="{DynamicResource {x:Static vsshell:VsBrushes.HighlightKey}}"/>
 								<Setter Property="Foreground" Value="{DynamicResource {x:Static vsshell:VsBrushes.HighlightTextKey}}"/>
+							</Trigger>
+						</ControlTemplate.Triggers>
+					</ControlTemplate>
+				</Setter.Value>
+			</Setter>
+		</Style>
+
+		<!-- ContextMenu style: VS-themed with continuous icon gutter -->
+		<Style TargetType="ContextMenu">
+			<Setter Property="Background" Value="{DynamicResource {x:Static vsshell:VsBrushes.CommandBarMenuBackgroundGradientBeginKey}}"/>
+			<Setter Property="BorderThickness" Value="0"/>
+			<Setter Property="Foreground" Value="{DynamicResource {x:Static vsshell:VsBrushes.CommandBarTextActiveKey}}"/>
+			<Setter Property="Padding" Value="3"/>
+			<Setter Property="Grid.IsSharedSizeScope" Value="True"/>
+			<Setter Property="Template">
+				<Setter.Value>
+					<ControlTemplate TargetType="ContextMenu">
+						<Border Background="{TemplateBinding Background}"
+								BorderBrush="{TemplateBinding BorderBrush}"
+								BorderThickness="{TemplateBinding BorderThickness}"
+								CornerRadius="4"
+								Padding="{TemplateBinding Padding}"
+								SnapsToDevicePixels="true">
+							<Grid>
+								<!-- Continuous icon gutter background -->
+								<Border Width="28" HorizontalAlignment="Left" Margin="-3,-3,0,-3"
+										CornerRadius="3,0,0,3"
+										Background="{DynamicResource {x:Static vsshell:VsBrushes.CommandBarMenuIconBackgroundKey}}"/>
+								<StackPanel IsItemsHost="True" KeyboardNavigation.DirectionalNavigation="Cycle"/>
+							</Grid>
+						</Border>
+					</ControlTemplate>
+				</Setter.Value>
+			</Setter>
+		</Style>
+
+		<!-- MenuItem style: VS-themed -->
+		<Style TargetType="MenuItem">
+			<Setter Property="Background" Value="Transparent"/>
+			<Setter Property="Foreground" Value="{DynamicResource {x:Static vsshell:VsBrushes.CommandBarTextActiveKey}}"/>
+			<Setter Property="Template">
+				<Setter.Value>
+					<ControlTemplate TargetType="MenuItem">
+						<Border x:Name="Bd" Background="{TemplateBinding Background}" SnapsToDevicePixels="true"
+								CornerRadius="3" UseLayoutRounding="True">
+							<Grid>
+								<Grid.ColumnDefinitions>
+									<ColumnDefinition Width="28"/>
+									<ColumnDefinition Width="*"/>
+									<ColumnDefinition Width="16"/>
+								</Grid.ColumnDefinitions>
+								<ContentPresenter Grid.Column="0" ContentSource="Icon"
+												  HorizontalAlignment="Center" VerticalAlignment="Center"/>
+								<ContentPresenter Grid.Column="1" ContentSource="Header"
+												  RecognizesAccessKey="True" VerticalAlignment="Center"
+												  Margin="6,4"/>
+							</Grid>
+						</Border>
+						<ControlTemplate.Triggers>
+							<Trigger Property="IsHighlighted" Value="True">
+								<Setter TargetName="Bd" Property="Background" Value="{DynamicResource {x:Static vsshell:VsBrushes.CommandBarMouseOverBackgroundBeginKey}}"/>
+								<Setter Property="Foreground" Value="{DynamicResource {x:Static vsshell:VsBrushes.CommandBarTextHoverKey}}"/>
+							</Trigger>
+							<Trigger Property="IsEnabled" Value="False">
+								<Setter Property="Foreground" Value="{DynamicResource {x:Static vsshell:VsBrushes.GrayTextKey}}"/>
 							</Trigger>
 						</ControlTemplate.Triggers>
 					</ControlTemplate>

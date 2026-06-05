@@ -76,6 +76,11 @@ namespace BuildVisualizer
 		public static DTE2 Dte { get; private set; }
 
 		/// <summary>
+		/// Gets the IVsUIShell service for accessing tool windows.
+		/// </summary>
+		public static IVsUIShell UiShell { get; private set; }
+
+		/// <summary>
 		/// Initialization of the package; this method is called right after the package is sited, so this is the place
 		/// where you can put all the initialization code that rely on services provided by VisualStudio.
 		/// </summary>
@@ -91,7 +96,8 @@ namespace BuildVisualizer
 			// Get DTE2 and IVsSolution services
 			if (!(await GetServiceAsync(typeof(EnvDTE.DTE)) is DTE2 dte)
 				|| !(await GetServiceAsync(typeof(SVsSolution)) is IVsSolution solution)
-				|| !(await GetServiceAsync(typeof(SVsSolutionBuildManager)) is IVsSolutionBuildManager buildManager))
+				|| !(await GetServiceAsync(typeof(SVsSolutionBuildManager)) is IVsSolutionBuildManager buildManager)
+				|| !(await GetServiceAsync(typeof(SVsUIShell)) is IVsUIShell uiShell))
 			{
 				throw new InvalidOperationException("Failed to get required services.");
 			}
@@ -99,6 +105,7 @@ namespace BuildVisualizer
 			Dte = dte;
 			Solution = solution;
 			SolutionBuildManager = buildManager;
+			UiShell = uiShell;
 			BuildEventService = new BuildEventService(dte);
 			SolutionService = new SolutionService(new SolutionReferenceSnapshot(solution));
 			SolutionEventsService = new SolutionEventsService(solution);

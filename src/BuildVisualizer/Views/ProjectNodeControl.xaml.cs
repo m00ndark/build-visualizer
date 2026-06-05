@@ -12,6 +12,9 @@ namespace BuildVisualizer.Views
 			InitializeComponent();
 			MouseEnter += OnMouseEnter;
 			MouseLeave += OnMouseLeave;
+
+			if (ContextMenu != null)
+				ContextMenu.Closed += OnContextMenuClosed;
 		}
 
 		private void OnMouseEnter(object sender, MouseEventArgs e)
@@ -22,7 +25,18 @@ namespace BuildVisualizer.Views
 
 		private void OnMouseLeave(object sender, MouseEventArgs e)
 		{
+			// Don't unhighlight while context menu is open
+			if (ContextMenu != null && ContextMenu.IsOpen)
+				return;
+
 			if (DataContext is ProjectNodeViewModel vm)
+				vm.SetHovered(false);
+		}
+
+		private void OnContextMenuClosed(object sender, RoutedEventArgs e)
+		{
+			// Clear highlight when context menu closes (unless mouse is still over the node)
+			if (!IsMouseOver && DataContext is ProjectNodeViewModel vm)
 				vm.SetHovered(false);
 		}
 	}
