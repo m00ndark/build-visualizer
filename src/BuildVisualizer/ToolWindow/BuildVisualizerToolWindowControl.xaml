@@ -279,6 +279,7 @@
 		<ListView x:Name="ProjectListView" Grid.Row="3" Margin="10,0,10,10"
 				  ItemsSource="{Binding SortedProjects}"
 				  SelectedItem="{Binding SelectedProject, Mode=TwoWay}"
+				  SelectionMode="Single"
 				  SizeChanged="ProjectListView_SizeChanged"
 				  Visibility="{Binding IsGraphView, Converter={StaticResource BoolToVisibilityInverseConverter}}">
 			<ListView.View>

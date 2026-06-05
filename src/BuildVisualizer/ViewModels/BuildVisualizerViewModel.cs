@@ -278,6 +278,7 @@ namespace BuildVisualizer.ViewModels
 
 			await _solutionService.LoadProjectReferencesAsync();
 			await UpdateProjectsAsync();
+			BuildStatusText = NoBuildInformationAvailableStatusText;
 		}
 
 		private async Task UpdateProjectsAsync()
