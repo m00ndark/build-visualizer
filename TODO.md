@@ -8,7 +8,7 @@
 - [ ] 2. Add a metadata view (popup or sidebar?) for a hovered node
 - [ ] ~~3. Show which project the build was started for, if not entire solution?~~
 - [x] 4. Show overall build start time and duration, continuously updated
-- [ ] 5. Show error/warning/information counts for each project
+- [x] 5. Show error/warning/information counts for each project and totals in the toolbar
 - [x] 6. Sort dependency lists
 - [x] 7. Continuously update project build duration
 - [x] 8. Consider build duration with lower resolution

@@ -27,11 +27,12 @@ namespace BuildVisualizer.ToolWindow
 			DTE2 dte,
 			IVsSolution solution,
 			IVsSolutionBuildManager2 buildManager,
-			IVsUIShell uiShell)
+			IVsUIShell uiShell,
+			BuildDiagnosticsService diagnosticsService)
 		{
 			InitializeComponent();
 
-			DataContext = new BuildVisualizerViewModel(solutionService, buildEventService, solutionEventsService, themeService, dte, solution, buildManager, uiShell);
+			DataContext = new BuildVisualizerViewModel(solutionService, buildEventService, solutionEventsService, themeService, dte, solution, buildManager, uiShell, diagnosticsService);
 		}
 
 		private void ProjectListView_SizeChanged(object sender, SizeChangedEventArgs e)

@@ -33,6 +33,7 @@ namespace BuildVisualizer.ViewModels
 		private readonly IVsSolution _solution;
 		private readonly IVsSolutionBuildManager2 _buildManager;
 		private readonly IVsUIShell _uiShell;
+		private readonly BuildDiagnosticsService _diagnosticsService;
 		private readonly GraphLayoutEngine _layoutEngine;
 		private readonly DispatcherTimer _buildTimer;
 		private bool _isGraphView;
@@ -43,6 +44,9 @@ namespace BuildVisualizer.ViewModels
 		private vsBuildScope _buildScope;
 		private vsBuildAction _buildAction;
 		private DateTime _buildStartTime;
+		private int _errorCount;
+		private int _warningCount;
+		private int _messageCount;
 
 		public ObservableCollection<ProjectInfo> Projects { get; set; }
 
@@ -82,6 +86,24 @@ namespace BuildVisualizer.ViewModels
 		{
 			get => _buildStatusText;
 			private set => SetProperty(ref _buildStatusText, value);
+		}
+
+		public int ErrorCount
+		{
+			get => _errorCount;
+			private set => SetProperty(ref _errorCount, value);
+		}
+
+		public int WarningCount
+		{
+			get => _warningCount;
+			private set => SetProperty(ref _warningCount, value);
+		}
+
+		public int MessageCount
+		{
+			get => _messageCount;
+			private set => SetProperty(ref _messageCount, value);
 		}
 
 		public string SortProperty
@@ -124,7 +146,8 @@ namespace BuildVisualizer.ViewModels
 			DTE2 dte,
 			IVsSolution solution,
 			IVsSolutionBuildManager2 buildManager,
-			IVsUIShell uiShell)
+			IVsUIShell uiShell,
+			BuildDiagnosticsService diagnosticsService)
 		{
 			_solutionService = solutionService;
 			_buildEventService = buildEventService;
@@ -134,6 +157,7 @@ namespace BuildVisualizer.ViewModels
 			_solution = solution;
 			_buildManager = buildManager;
 			_uiShell = uiShell;
+			_diagnosticsService = diagnosticsService;
 			Resources.Colors.IsDarkTheme = themeService.IsDarkTheme;
 			_layoutEngine = new GraphLayoutEngine();
 			_buildTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(1) };
@@ -187,6 +211,7 @@ namespace BuildVisualizer.ViewModels
 			_buildEventService.BuildBegin += OnBuildBegin;
 			_buildEventService.BuildDone += OnBuildDone;
 			_buildEventService.ProjectStatusChanged += OnProjectStatusChanged;
+			_diagnosticsService.DiagnosticsChanged += OnDiagnosticsChanged;
 
 			// Subscribe to solution events
 			_solutionEventsService.ProjectsChanged += OnProjectsChanged;
@@ -216,6 +241,8 @@ namespace BuildVisualizer.ViewModels
 
 		private void OnBuildBegin(object sender, BuildEventArgs e)
 		{
+			_diagnosticsService.Clear();
+
 			ThreadingHelper.RunOnMainThread(() =>
 			{
 				// Reset all projects
@@ -436,6 +463,16 @@ namespace BuildVisualizer.ViewModels
 				if (project.Status == BuildStatus.Building || project.Status == BuildStatus.Cleaning)
 					project.NotifyBuildDurationChanged();
 			}
+		}
+
+		private void OnDiagnosticsChanged()
+		{
+			ThreadingHelper.RunOnMainThread(() =>
+			{
+				ErrorCount = _diagnosticsService.ErrorCount;
+				WarningCount = _diagnosticsService.WarningCount;
+				MessageCount = _diagnosticsService.MessageCount;
+			});
 		}
 
 		private void UpdateBuildStatusText()

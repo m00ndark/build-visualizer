@@ -368,6 +368,24 @@
 				<Button Command="{Binding CleanSolutionCommand}" Padding="5, 3">
 					<TextBlock Text="Clean Solution" VerticalAlignment="Center"/>
 				</Button>
+
+				<Border Width="1" Margin="8,2" Background="{DynamicResource {x:Static vsshell:VsBrushes.CommandBarBorderKey}}"/>
+
+				<StackPanel Orientation="Horizontal" Margin="5,0,9,0">
+					<imaging:CrispImage Moniker="{x:Static catalog:KnownMonikers.StatusError}" Width="16" Height="16"/>
+					<TextBlock Text="{Binding ErrorCount}" Margin="4,0,0,0" VerticalAlignment="Center"/>
+					<TextBlock Text=" Errors" VerticalAlignment="Center" Foreground="{DynamicResource {x:Static vsshell:VsBrushes.GrayTextKey}}"/>
+				</StackPanel>
+				<StackPanel Orientation="Horizontal" Margin="5,0,9,0">
+					<imaging:CrispImage Moniker="{x:Static catalog:KnownMonikers.StatusWarning}" Width="16" Height="16"/>
+					<TextBlock Text="{Binding WarningCount}" Margin="4,0,0,0" VerticalAlignment="Center"/>
+					<TextBlock Text=" Warnings" VerticalAlignment="Center" Foreground="{DynamicResource {x:Static vsshell:VsBrushes.GrayTextKey}}"/>
+				</StackPanel>
+				<StackPanel Orientation="Horizontal" Margin="5,0">
+					<imaging:CrispImage Moniker="{x:Static catalog:KnownMonikers.StatusInformation}" Width="16" Height="16"/>
+					<TextBlock Text="{Binding MessageCount}" Margin="4,0,0,0" VerticalAlignment="Center"/>
+					<TextBlock Text=" Messages" VerticalAlignment="Center" Foreground="{DynamicResource {x:Static vsshell:VsBrushes.GrayTextKey}}"/>
+				</StackPanel>
 			</StackPanel>
 
 			<Button Command="{Binding RefreshCommand}" Padding="5, 3" HorizontalAlignment="Right">
