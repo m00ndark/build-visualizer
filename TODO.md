@@ -24,7 +24,7 @@
 	- [x] Rebuild Project
 - [x] 13. Add "Reveal in Solution Explorer" to context menus
 - [ ] 14. Add column-based layout option for graph view (toggle between row/column)
-- [ ] 15. Store user settings/choices to remember state between starts
+- [x] 15. Store user settings/choices to remember state between starts
 - [x] 16. Add additional columns to list view
 	- [x] Configuration
 	- [x] Platform

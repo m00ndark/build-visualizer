@@ -6,6 +6,7 @@ using System;
 using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Data;
 
 namespace BuildVisualizer.ToolWindow
 {
@@ -29,11 +30,15 @@ namespace BuildVisualizer.ToolWindow
 			IVsSolutionBuildManager2 buildManager,
 			IVsUIShell uiShell,
 			BuildDiagnosticsService diagnosticsService,
-			ProjectConfigurationService projectConfigurationService)
+			ProjectConfigurationService projectConfigurationService,
+			UserSettingsService userSettingsService)
 		{
 			InitializeComponent();
 
 			DataContext = new BuildVisualizerViewModel(solutionService, buildEventService, solutionEventsService, themeService, dte, solution, buildManager, uiShell, diagnosticsService, projectConfigurationService);
+
+			GridView gridView = (GridView)ProjectListView.View;
+			new ListViewStateService(userSettingsService).Attach(gridView);
 		}
 
 		private void ProjectListView_SizeChanged(object sender, SizeChangedEventArgs e)

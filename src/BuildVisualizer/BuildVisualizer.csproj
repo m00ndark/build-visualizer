@@ -48,6 +48,7 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="Commands\RelayCommand.cs" />
+    <Compile Include="Converters\GridViewColumnTag.cs" />
     <Compile Include="Converters\InverseBooleanToVisibilityConverter.cs" />
     <Compile Include="Converters\NullableTimeSpanConverter.cs" />
     <Compile Include="Converters\SortedCollectionConverter.cs" />
@@ -67,6 +68,7 @@
     <Compile Include="Services\BuildDiagnosticsService.cs" />
     <Compile Include="Services\BuildEventService.cs" />
     <Compile Include="Services\LegacyReferenceWatcher.cs" />
+    <Compile Include="Services\ListViewStateService.cs" />
     <Compile Include="Services\ProjectConfigurationService.cs" />
     <Compile Include="Services\ProjectDataHelper.cs" />
     <Compile Include="Services\ProjectMetadata.cs" />
@@ -76,6 +78,7 @@
     <Compile Include="Services\ResolvedReferenceWatcher.cs" />
     <Compile Include="Services\SolutionEventsService.cs" />
     <Compile Include="Services\ThreadingHelper.cs" />
+    <Compile Include="Services\UserSettingsService.cs" />
     <Compile Include="Services\ThemeService.cs" />
     <Compile Include="Services\SolutionReferenceSnapshot.cs" />
     <Compile Include="Services\SolutionReferenceWatcher.cs" />

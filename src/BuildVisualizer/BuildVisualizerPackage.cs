@@ -91,6 +91,11 @@ namespace BuildVisualizer
 		public static ProjectConfigurationService ProjectConfigurationService { get; private set; }
 
 		/// <summary>
+		/// Gets the UserSettingsService for persisting user preferences.
+		/// </summary>
+		public static UserSettingsService UserSettingsService { get; private set; }
+
+		/// <summary>
 		/// Initialization of the package; this method is called right after the package is sited, so this is the place
 		/// where you can put all the initialization code that rely on services provided by VisualStudio.
 		/// </summary>
@@ -112,10 +117,14 @@ namespace BuildVisualizer
 			if (!(await GetServiceAsync(typeof(EnvDTE.DTE)) is DTE2 dte)
 				|| !(await GetServiceAsync(typeof(SVsSolution)) is IVsSolution solution)
 				|| !(await GetServiceAsync(typeof(SVsSolutionBuildManager)) is IVsSolutionBuildManager buildManager)
-				|| !(await GetServiceAsync(typeof(SVsUIShell)) is IVsUIShell uiShell))
+				|| !(await GetServiceAsync(typeof(SVsUIShell)) is IVsUIShell uiShell)
+				|| !(await GetServiceAsync(typeof(SVsSettingsManager)) is IVsSettingsManager settingsManager))
 			{
 				throw new InvalidOperationException("Failed to get required services.");
 			}
+
+			settingsManager.GetWritableSettingsStore((uint)__VsSettingsScope.SettingsScope_UserSettings, out IVsWritableSettingsStore settingsStore);
+			UserSettingsService = new UserSettingsService(settingsStore);
 
 			Dte = dte;
 			Solution = solution;
