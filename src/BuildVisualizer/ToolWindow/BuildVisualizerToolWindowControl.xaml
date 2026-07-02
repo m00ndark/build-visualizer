@@ -371,6 +371,15 @@
 
 				<Border Width="1" Margin="8,2" Background="{DynamicResource {x:Static vsshell:VsBrushes.CommandBarBorderKey}}"/>
 
+				<Button Command="{Binding CancelBuildCommand}" Padding="5, 3">
+					<StackPanel Orientation="Horizontal">
+						<imaging:CrispImage Moniker="{x:Static catalog:KnownMonikers.CancelBuild}" Width="16" Height="16"/>
+						<TextBlock Text="Cancel" Margin="4,0,0,0" VerticalAlignment="Center"/>
+					</StackPanel>
+				</Button>
+
+				<Border Width="1" Margin="8,2" Background="{DynamicResource {x:Static vsshell:VsBrushes.CommandBarBorderKey}}"/>
+
 				<StackPanel Orientation="Horizontal" Margin="5,0,9,0">
 					<imaging:CrispImage Moniker="{x:Static catalog:KnownMonikers.StatusError}" Width="16" Height="16"/>
 					<TextBlock Text="{Binding ErrorCount}" Margin="4,0,0,0" VerticalAlignment="Center"/>

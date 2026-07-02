@@ -31,13 +31,13 @@
 	- [x] Error count
 	- [x] Warning count
 	- [x] Information count
-- [ ] 17. Add a Cancel build toolbar button
+- [x] 17. Add a Cancel build toolbar button
 - [ ] 18. Make it possible to switch between showing all dependencies and only direct dependencies (like it is currently) in graph view (only?)
 - [ ] 19. Make row backgrounds in graph view darker
 
 # Bugs
 
 - [x] 1. Test projects are often tagged as "Executable". It would be nice if it said e.g. "Test Library".
-- [ ] 2. Build/rebuild/clean solution toolbar buttons are enabled when a build is ongoing
+- [x] 2. Build/rebuild/clean solution toolbar buttons are enabled when a build is ongoing
 - [ ] 3. Overall build status at the top of the window showed "Started at 00:00:00 and lasted -35791394 minutes and -8 seconds."
 - [ ] 4. Overall build status at the top of the window did not update when building, showed "No build information available."

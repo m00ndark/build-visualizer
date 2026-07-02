@@ -50,6 +50,7 @@ namespace BuildVisualizer.ViewModels
 		private int _warningCount;
 		private int _messageCount;
 		private bool _focusOnBuildStart;
+		private bool _isBuilding;
 
 		public ObservableCollection<ProjectInfo> Projects { get; set; }
 
@@ -70,6 +71,8 @@ namespace BuildVisualizer.ViewModels
 		public ICommand BuildProjectCommand { get; }
 
 		public ICommand RebuildProjectCommand { get; }
+
+		public ICommand CancelBuildCommand { get; }
 
 		public ICommand CleanSolutionCommand { get; }
 
@@ -117,6 +120,12 @@ namespace BuildVisualizer.ViewModels
 				if (SetProperty(ref _focusOnBuildStart, value))
 					_userSettingsService?.SetString(UserSettings.Collections.Settings, UserSettings.Keys.FocusOnBuildStart, value ? "1" : "0");
 			}
+		}
+
+		public bool IsBuilding
+		{
+			get => _isBuilding;
+			private set => SetProperty(ref _isBuilding, value);
 		}
 
 		public string SortProperty
@@ -210,20 +219,25 @@ namespace BuildVisualizer.ViewModels
 				SortDirection = direction;
 			});
 
-			Func<object, bool> canBuildProject = _ => !IsGraphView && SelectedProject != null;
+			Func<object, bool> canBuildProject = _ => !IsBuilding && !IsGraphView && SelectedProject != null;
 			CleanProjectCommand = new RelayCommand(_ => ThreadingHelper.RunOnMainThread(() => BuildProject(VSSOLNBUILDUPDATEFLAGS.SBF_OPERATION_CLEAN, SelectedProject)), canBuildProject);
 			BuildProjectCommand = new RelayCommand(_ => ThreadingHelper.RunOnMainThread(() => BuildProject(VSSOLNBUILDUPDATEFLAGS.SBF_OPERATION_BUILD, SelectedProject)), canBuildProject);
 			RebuildProjectCommand = new RelayCommand(_ => ThreadingHelper.RunOnMainThread(() => BuildProject(VSSOLNBUILDUPDATEFLAGS.SBF_OPERATION_BUILD | VSSOLNBUILDUPDATEFLAGS.SBF_OPERATION_FORCE_UPDATE, SelectedProject)), canBuildProject);
 
-			CleanSolutionCommand = new RelayCommand(_ => ThreadingHelper.RunOnMainThread(() => ExecuteCommand("Build.CleanSolution")));
-			BuildSolutionCommand = new RelayCommand(_ => ThreadingHelper.RunOnMainThread(() => ExecuteCommand("Build.BuildSolution")));
-			RebuildSolutionCommand = new RelayCommand(_ => ThreadingHelper.RunOnMainThread(() => ExecuteCommand("Build.RebuildSolution")));
+			Func<object, bool> canBuildSolution = _ => !IsBuilding;
+			CleanSolutionCommand = new RelayCommand(_ => ThreadingHelper.RunOnMainThread(() => ExecuteCommand("Build.CleanSolution")), canBuildSolution);
+			BuildSolutionCommand = new RelayCommand(_ => ThreadingHelper.RunOnMainThread(() => ExecuteCommand("Build.BuildSolution")), canBuildSolution);
+			RebuildSolutionCommand = new RelayCommand(_ => ThreadingHelper.RunOnMainThread(() => ExecuteCommand("Build.RebuildSolution")), canBuildSolution);
 
-			Func<object, bool> hasProjectParam = p => p is ProjectInfo;
-			ContextBuildCommand = new RelayCommand(p => ThreadingHelper.RunOnMainThread(() => BuildProject(VSSOLNBUILDUPDATEFLAGS.SBF_OPERATION_BUILD, (ProjectInfo)p)), hasProjectParam);
-			ContextRebuildCommand = new RelayCommand(p => ThreadingHelper.RunOnMainThread(() => BuildProject(VSSOLNBUILDUPDATEFLAGS.SBF_OPERATION_BUILD | VSSOLNBUILDUPDATEFLAGS.SBF_OPERATION_FORCE_UPDATE, (ProjectInfo)p)), hasProjectParam);
-			ContextCleanCommand = new RelayCommand(p => ThreadingHelper.RunOnMainThread(() => BuildProject(VSSOLNBUILDUPDATEFLAGS.SBF_OPERATION_CLEAN, (ProjectInfo)p)), hasProjectParam);
-			RevealInSolutionExplorerCommand = new RelayCommand(p => ThreadingHelper.RunOnMainThread(() => RevealInSolutionExplorer((ProjectInfo)p)), hasProjectParam);
+			CancelBuildCommand = new RelayCommand(
+				_ => ThreadingHelper.RunOnMainThread(() => { ThreadHelper.ThrowIfNotOnUIThread(); _buildManager.CancelUpdateSolutionConfiguration(); }),
+				_ => { ThreadHelper.ThrowIfNotOnUIThread(); return _buildManager.CanCancelUpdateSolutionConfiguration(out int canCancel) == VSConstants.S_OK && canCancel != 0; });
+
+			Func<object, bool> canContextBuildProject = p => !IsBuilding && p is ProjectInfo;
+			ContextBuildCommand = new RelayCommand(p => ThreadingHelper.RunOnMainThread(() => BuildProject(VSSOLNBUILDUPDATEFLAGS.SBF_OPERATION_BUILD, (ProjectInfo)p)), canContextBuildProject);
+			ContextRebuildCommand = new RelayCommand(p => ThreadingHelper.RunOnMainThread(() => BuildProject(VSSOLNBUILDUPDATEFLAGS.SBF_OPERATION_BUILD | VSSOLNBUILDUPDATEFLAGS.SBF_OPERATION_FORCE_UPDATE, (ProjectInfo)p)), canContextBuildProject);
+			ContextCleanCommand = new RelayCommand(p => ThreadingHelper.RunOnMainThread(() => BuildProject(VSSOLNBUILDUPDATEFLAGS.SBF_OPERATION_CLEAN, (ProjectInfo)p)), canContextBuildProject);
+			RevealInSolutionExplorerCommand = new RelayCommand(p => ThreadingHelper.RunOnMainThread(() => RevealInSolutionExplorer((ProjectInfo)p)), canContextBuildProject);
 
 			// Subscribe to build events
 			_buildEventService.BuildBegin += OnBuildBegin;
@@ -264,6 +278,9 @@ namespace BuildVisualizer.ViewModels
 
 			ThreadingHelper.RunOnMainThread(() =>
 			{
+				IsBuilding = true;
+				CommandManager.InvalidateRequerySuggested();
+
 				// Reset all projects
 				foreach (ProjectInfo project in Projects)
 				{
@@ -286,6 +303,8 @@ namespace BuildVisualizer.ViewModels
 			ThreadingHelper.RunOnMainThread(() =>
 			{
 				_buildTimer.Stop();
+				IsBuilding = false;
+				CommandManager.InvalidateRequerySuggested();
 
 				TimeSpan elapsed = DateTime.Now - _buildStartTime;
 				string scope = _buildScope == vsBuildScope.vsBuildScopeProject ? "project in solution" : "solution";
