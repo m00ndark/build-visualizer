@@ -35,6 +35,7 @@ namespace BuildVisualizer.ViewModels
 		private readonly IVsUIShell _uiShell;
 		private readonly BuildDiagnosticsService _diagnosticsService;
 		private readonly ProjectConfigurationService _projectConfigurationService;
+		private readonly UserSettingsService _userSettingsService;
 		private readonly GraphLayoutEngine _layoutEngine;
 		private readonly DispatcherTimer _buildTimer;
 		private bool _isGraphView;
@@ -48,6 +49,7 @@ namespace BuildVisualizer.ViewModels
 		private int _errorCount;
 		private int _warningCount;
 		private int _messageCount;
+		private bool _focusOnBuildStart;
 
 		public ObservableCollection<ProjectInfo> Projects { get; set; }
 
@@ -107,6 +109,16 @@ namespace BuildVisualizer.ViewModels
 			private set => SetProperty(ref _messageCount, value);
 		}
 
+		public bool FocusOnBuildStart
+		{
+			get => _focusOnBuildStart;
+			set
+			{
+				if (SetProperty(ref _focusOnBuildStart, value))
+					_userSettingsService?.SetString(UserSettings.Collections.Settings, UserSettings.Keys.FocusOnBuildStart, value ? "1" : "0");
+			}
+		}
+
 		public string SortProperty
 		{
 			get => _sortProperty;
@@ -149,7 +161,8 @@ namespace BuildVisualizer.ViewModels
 			IVsSolutionBuildManager2 buildManager,
 			IVsUIShell uiShell,
 			BuildDiagnosticsService diagnosticsService,
-			ProjectConfigurationService projectConfigurationService)
+			ProjectConfigurationService projectConfigurationService,
+			UserSettingsService userSettingsService)
 		{
 			_solutionService = solutionService;
 			_buildEventService = buildEventService;
@@ -161,6 +174,8 @@ namespace BuildVisualizer.ViewModels
 			_uiShell = uiShell;
 			_diagnosticsService = diagnosticsService;
 			_projectConfigurationService = projectConfigurationService;
+			_userSettingsService = userSettingsService;
+			_focusOnBuildStart = userSettingsService?.GetString(UserSettings.Collections.Settings, UserSettings.Keys.FocusOnBuildStart) != "0";
 			Resources.Colors.IsDarkTheme = themeService.IsDarkTheme;
 			_layoutEngine = new GraphLayoutEngine();
 			_buildTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(1) };

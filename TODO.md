@@ -13,9 +13,9 @@
 - [x] 6. Sort dependency lists
 - [x] 7. Continuously update project build duration
 - [x] 8. Consider build duration with lower resolution
-- [ ] 9. Add settings, available from "toolbar":
-	- [ ] Focus on build start?
-	- [ ] List view column selection
+- [x] 9. Add settings, available from "toolbar":
+	- [x] Focus on build start?
+	- [x] List view column selection
 - [x] 10. Update project info when a project dependency is added/removed
 - [x] 11. Make list view rows selectable and add clean/build/rebuild buttons to "toolbar" (disabled in graph view)
 - [x] 12. Add context menu to graph nodes and list rows:
