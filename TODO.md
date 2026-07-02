@@ -7,6 +7,7 @@
 - [x] 1. Load projects when window is opened
 - [ ] 2. Add a metadata view (popup or sidebar?) for a hovered node
 - [ ] ~~3. Show which project the build was started for, if not entire solution?~~
+	- [ ] Revisit this - investigate if there is any way to find out for which project the build was started (could then be visualized in graph view)
 - [x] 4. Show overall build start time and duration, continuously updated
 - [x] 5. Show error/warning/information counts for each project and totals in the toolbar
 - [x] 6. Sort dependency lists
@@ -31,7 +32,12 @@
 	- [ ] Warning count
 	- [ ] Information count
 - [ ] 17. Add a Cancel build toolbar button
+- [ ] 18. Make it possible to switch between showing all dependencies and only direct dependencies (like it is currently) in graph view (only?)
+- [ ] 19. Make row backgrounds in graph view darker
 
 # Bugs
 
 - [x] 1. Test projects are often tagged as "Executable". It would be nice if it said e.g. "Test Library".
+- [ ] 2. Build/rebuild/clean solution toolbar buttons are enabled when a build is ongoing
+- [ ] 3. Overall build status at the top of the window showed "Started at 00:00:00 and lasted -35791394 minutes and -8 seconds."
+- [ ] 4. Overall build status at the top of the window did not update when building, showed "No build information available."
