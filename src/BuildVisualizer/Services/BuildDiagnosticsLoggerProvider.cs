@@ -15,10 +15,6 @@ namespace BuildVisualizer.Services
 	[Export(typeof(IVsBuildLoggerProvider))]
 	public class BuildDiagnosticsLoggerProvider : IBuildLoggerProviderAsync, IVsBuildLoggerProvider
 	{
-		public BuildDiagnosticsLoggerProvider()
-		{
-		}
-
 		/// <summary>
 		/// The shared diagnostics service that aggregates data from all logger instances.
 		/// Set by the package during initialization.

@@ -435,6 +435,57 @@
 						</GridViewColumn.CellTemplate>
 					</GridViewColumn>
 
+					<GridViewColumn Width="30">
+						<GridViewColumn.Header>
+							<imaging:CrispImage Moniker="{x:Static catalog:KnownMonikers.StatusError}" Width="16" Height="16"/>
+						</GridViewColumn.Header>
+						<GridViewColumn.HeaderContainerStyle>
+							<Style TargetType="GridViewColumnHeader" BasedOn="{StaticResource SortableColumnHeaderStyle}">
+								<Setter Property="Command" Value="{Binding DataContext.SortCommand, RelativeSource={RelativeSource AncestorType=ListView}}"/>
+								<Setter Property="CommandParameter" Value="ErrorCount"/>
+							</Style>
+						</GridViewColumn.HeaderContainerStyle>
+						<GridViewColumn.CellTemplate>
+							<DataTemplate>
+								<TextBlock Text="{Binding ErrorCount}"/>
+							</DataTemplate>
+						</GridViewColumn.CellTemplate>
+					</GridViewColumn>
+
+					<GridViewColumn Width="30">
+						<GridViewColumn.Header>
+							<imaging:CrispImage Moniker="{x:Static catalog:KnownMonikers.StatusWarning}" Width="16" Height="16"/>
+						</GridViewColumn.Header>
+						<GridViewColumn.HeaderContainerStyle>
+							<Style TargetType="GridViewColumnHeader" BasedOn="{StaticResource SortableColumnHeaderStyle}">
+								<Setter Property="Command" Value="{Binding DataContext.SortCommand, RelativeSource={RelativeSource AncestorType=ListView}}"/>
+								<Setter Property="CommandParameter" Value="WarningCount"/>
+							</Style>
+						</GridViewColumn.HeaderContainerStyle>
+						<GridViewColumn.CellTemplate>
+							<DataTemplate>
+								<TextBlock Text="{Binding WarningCount}"/>
+							</DataTemplate>
+						</GridViewColumn.CellTemplate>
+					</GridViewColumn>
+
+					<GridViewColumn Width="30">
+						<GridViewColumn.Header>
+							<imaging:CrispImage Moniker="{x:Static catalog:KnownMonikers.StatusInformation}" Width="16" Height="16"/>
+						</GridViewColumn.Header>
+						<GridViewColumn.HeaderContainerStyle>
+							<Style TargetType="GridViewColumnHeader" BasedOn="{StaticResource SortableColumnHeaderStyle}">
+								<Setter Property="Command" Value="{Binding DataContext.SortCommand, RelativeSource={RelativeSource AncestorType=ListView}}"/>
+								<Setter Property="CommandParameter" Value="MessageCount"/>
+							</Style>
+						</GridViewColumn.HeaderContainerStyle>
+						<GridViewColumn.CellTemplate>
+							<DataTemplate>
+								<TextBlock Text="{Binding MessageCount}"/>
+							</DataTemplate>
+						</GridViewColumn.CellTemplate>
+					</GridViewColumn>
+
 					<GridViewColumn Header="Build Start" HeaderTemplate="{StaticResource ColumnHeaderTemplate}" Width="80">
 						<GridViewColumn.HeaderContainerStyle>
 							<Style TargetType="GridViewColumnHeader" BasedOn="{StaticResource SortableColumnHeaderStyle}">

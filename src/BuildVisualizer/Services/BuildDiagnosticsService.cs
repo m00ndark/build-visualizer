@@ -18,9 +18,10 @@ namespace BuildVisualizer.Services
 
 		/// <summary>
 		/// Fired whenever diagnostics change.
+		/// The string parameter is the ProjectFile that was updated, or null when cleared.
 		/// May fire on any thread — subscribers should marshal to UI thread.
 		/// </summary>
-		public event Action DiagnosticsChanged;
+		public event Action<string> DiagnosticsChanged;
 
 		/// <summary>
 		/// Clears all diagnostics and resets counts. Call at build start.
@@ -36,7 +37,7 @@ namespace BuildVisualizer.Services
 				MessageCount = 0;
 			}
 
-			DiagnosticsChanged?.Invoke();
+			DiagnosticsChanged?.Invoke(null);
 		}
 
 		/// <summary>
@@ -54,6 +55,44 @@ namespace BuildVisualizer.Services
 				}
 
 				return Array.Empty<BuildDiagnostic>();
+			}
+		}
+
+		/// <summary>
+		/// Returns the error, warning, and message counts for a specific project file.
+		/// Thread-safe. More efficient than GetDiagnosticsForProject when only counts are needed.
+		/// </summary>
+		public (int Errors, int Warnings, int Messages) GetDiagnosticCountsForProject(string projectFile)
+		{
+			lock (_lock)
+			{
+				if (projectFile == null
+					|| !_diagnosticsByProject.TryGetValue(projectFile, out List<BuildDiagnostic> list))
+				{
+					return (0, 0, 0);
+				}
+
+				int errors = 0;
+				int warnings = 0;
+				int messages = 0;
+
+				foreach (BuildDiagnostic diagnostic in list)
+				{
+					switch (diagnostic.Severity)
+					{
+						case DiagnosticSeverity.Error:
+							errors++;
+							break;
+						case DiagnosticSeverity.Warning:
+							warnings++;
+							break;
+						case DiagnosticSeverity.Message:
+							messages++;
+							break;
+					}
+				}
+
+				return (errors, warnings, messages);
 			}
 		}
 
@@ -92,7 +131,7 @@ namespace BuildVisualizer.Services
 				}
 			}
 
-			DiagnosticsChanged?.Invoke();
+			DiagnosticsChanged?.Invoke(diagnostic.ProjectFile);
 		}
 	}
 }

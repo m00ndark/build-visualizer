@@ -465,13 +465,39 @@ namespace BuildVisualizer.ViewModels
 			}
 		}
 
-		private void OnDiagnosticsChanged()
+		private void OnDiagnosticsChanged(string projectFile)
 		{
 			ThreadingHelper.RunOnMainThread(() =>
 			{
+				// Update global counts
 				ErrorCount = _diagnosticsService.ErrorCount;
 				WarningCount = _diagnosticsService.WarningCount;
 				MessageCount = _diagnosticsService.MessageCount;
+
+				if (projectFile != null)
+				{
+					// Update only the affected project
+					ProjectInfo project = Projects.FirstOrDefault(
+						p => string.Equals(p.ProjectPath, projectFile, StringComparison.OrdinalIgnoreCase));
+
+					if (project != null)
+					{
+						(int errors, int warnings, int messages) = _diagnosticsService.GetDiagnosticCountsForProject(projectFile);
+						project.ErrorCount = errors;
+						project.WarningCount = warnings;
+						project.MessageCount = messages;
+					}
+				}
+				else
+				{
+					// Clear was called — reset all projects
+					foreach (ProjectInfo project in Projects)
+					{
+						project.ErrorCount = 0;
+						project.WarningCount = 0;
+						project.MessageCount = 0;
+					}
+				}
 			});
 		}
 

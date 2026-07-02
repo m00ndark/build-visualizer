@@ -18,6 +18,9 @@ namespace BuildVisualizer.Models
 		private BuildStatus _status;
 		private DateTime? _buildStart;
 		private DateTime? _buildFinish;
+		private int _errorCount;
+		private int _warningCount;
+		private int _messageCount;
 
 		public string Name
 		{
@@ -127,6 +130,24 @@ namespace BuildVisualizer.Models
 			_buildStart.HasValue
 				? (_buildFinish ?? DateTime.Now) - _buildStart.Value
 				: (TimeSpan?)null;
+
+		public int ErrorCount
+		{
+			get => _errorCount;
+			set => SetProperty(ref _errorCount, value);
+		}
+
+		public int WarningCount
+		{
+			get => _warningCount;
+			set => SetProperty(ref _warningCount, value);
+		}
+
+		public int MessageCount
+		{
+			get => _messageCount;
+			set => SetProperty(ref _messageCount, value);
+		}
 
 		public ObservableCollection<ProjectInfo> Dependencies { get; set; }
 
