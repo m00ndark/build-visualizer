@@ -18,6 +18,8 @@ namespace BuildVisualizer.Models
 		private BuildStatus _status;
 		private DateTime? _buildStart;
 		private DateTime? _buildFinish;
+		private string _configuration;
+		private string _platform;
 		private int _errorCount;
 		private int _warningCount;
 		private int _messageCount;
@@ -131,6 +133,18 @@ namespace BuildVisualizer.Models
 				? (_buildFinish ?? DateTime.Now) - _buildStart.Value
 				: (TimeSpan?)null;
 
+		public string Configuration
+		{
+			get => _configuration;
+			set => SetProperty(ref _configuration, value);
+		}
+
+		public string Platform
+		{
+			get => _platform;
+			set => SetProperty(ref _platform, value);
+		}
+
 		public int ErrorCount
 		{
 			get => _errorCount;
@@ -163,13 +177,15 @@ namespace BuildVisualizer.Models
 			}
 		}
 
-		public ProjectInfo(string name, string uniqueName, string projectPath, string projectType = null)
+		public ProjectInfo(string name, string uniqueName, string projectPath, string projectType, string configuration, string platform)
 		{
 			_name = name;
 			_uniqueName = uniqueName;
 			_projectPath = projectPath;
 			_projectDirectory = Path.GetDirectoryName(projectPath);
 			_projectType = projectType;
+			_configuration = configuration;
+			_platform = platform;
 			_status = BuildStatus.NotBuilt;
 
 			Dependencies = new ObservableCollection<ProjectInfo>();

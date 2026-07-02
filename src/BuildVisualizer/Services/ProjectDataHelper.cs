@@ -34,6 +34,23 @@ namespace BuildVisualizer.Services
 
 			bool isTestProject = IsTestProject(path);
 
+			string configuration = null;
+			string platform = null;
+			if (hierarchy.GetProperty(VSConstants.VSITEMID_ROOT, (int)__VSHPROPID.VSHPROPID_ExtObject, out object extObj) == VSConstants.S_OK
+				&& extObj is EnvDTE.Project dteProject)
+			{
+				try
+				{
+					EnvDTE.Configuration activeConfig = dteProject.ConfigurationManager?.ActiveConfiguration;
+					configuration = activeConfig?.ConfigurationName;
+					platform = activeConfig?.PlatformName;
+				}
+				catch (Exception ex)
+				{
+					Debug.WriteLine($"[ProjectData] Could not read active configuration for '{path}': {ex.Message}");
+				}
+			}
+
 			return new ProjectMetadata
 				{
 					Name = nameObj as string ?? "(unknown)",
@@ -41,7 +58,9 @@ namespace BuildVisualizer.Services
 					Path = path ?? string.Empty,
 					OutputType = isTestProject
 						? "Test Library"
-						: ConvertOutputType(outputType) ?? "(unknown)"
+						: ConvertOutputType(outputType) ?? "(unknown)",
+					Configuration = configuration,
+					Platform = platform
 				};
 		}
 

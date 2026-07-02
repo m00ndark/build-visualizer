@@ -121,6 +121,8 @@ namespace BuildVisualizer.Services
 						ProjectPath = watcher.ProjectMetadata.Path,
 						ProjectStyle = "SDK",
 						OutputType = watcher.ProjectMetadata.OutputType,
+						Configuration = watcher.ProjectMetadata.Configuration,
+						Platform = watcher.ProjectMetadata.Platform,
 						References = watcher.GetCurrentReferences()
 					});
 				i++;
@@ -135,6 +137,8 @@ namespace BuildVisualizer.Services
 						ProjectPath = watcher.ProjectMetadata.Path,
 						ProjectStyle = "Legacy",
 						OutputType = watcher.ProjectMetadata.OutputType,
+						Configuration = watcher.ProjectMetadata.Configuration,
+						Platform = watcher.ProjectMetadata.Platform,
 						References = watcher.GetCurrentReferences()
 					});
 				i++;

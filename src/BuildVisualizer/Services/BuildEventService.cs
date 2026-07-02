@@ -46,7 +46,7 @@ namespace BuildVisualizer.Services
 				BuildStatus status = _currentBuildAction == vsBuildAction.vsBuildActionClean
 					? BuildStatus.Cleaning
 					: BuildStatus.Building;
-				ProjectStatusChanged?.Invoke(this, new ProjectStatusChangedEventArgs(project, status, DateTime.Now));
+				ProjectStatusChanged?.Invoke(this, new ProjectStatusChangedEventArgs(project, status, DateTime.Now, projectConfig, platform));
 			}
 		}
 
@@ -57,7 +57,7 @@ namespace BuildVisualizer.Services
 			if (!string.IsNullOrEmpty(project))
 			{
 				BuildStatus status = success ? BuildStatus.Success : BuildStatus.Failed;
-				ProjectStatusChanged?.Invoke(this, new ProjectStatusChangedEventArgs(project, status, DateTime.Now));
+				ProjectStatusChanged?.Invoke(this, new ProjectStatusChangedEventArgs(project, status, DateTime.Now, projectConfig, platform));
 			}
 		}
 

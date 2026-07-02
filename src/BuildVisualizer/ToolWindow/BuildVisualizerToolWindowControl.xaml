@@ -447,7 +447,7 @@
 						</GridViewColumn.HeaderContainerStyle>
 						<GridViewColumn.CellTemplate>
 							<DataTemplate>
-								<TextBlock Text="{Binding ErrorCount}"/>
+								<TextBlock Text="{Binding ErrorCount}" TextAlignment="Right"/>
 							</DataTemplate>
 						</GridViewColumn.CellTemplate>
 					</GridViewColumn>
@@ -464,7 +464,7 @@
 						</GridViewColumn.HeaderContainerStyle>
 						<GridViewColumn.CellTemplate>
 							<DataTemplate>
-								<TextBlock Text="{Binding WarningCount}"/>
+								<TextBlock Text="{Binding WarningCount}" TextAlignment="Right"/>
 							</DataTemplate>
 						</GridViewColumn.CellTemplate>
 					</GridViewColumn>
@@ -481,7 +481,7 @@
 						</GridViewColumn.HeaderContainerStyle>
 						<GridViewColumn.CellTemplate>
 							<DataTemplate>
-								<TextBlock Text="{Binding MessageCount}"/>
+								<TextBlock Text="{Binding MessageCount}" TextAlignment="Right"/>
 							</DataTemplate>
 						</GridViewColumn.CellTemplate>
 					</GridViewColumn>
@@ -524,6 +524,34 @@
 						<GridViewColumn.CellTemplate>
 							<DataTemplate>
 								<TextBlock Text="{Binding BuildDuration, Converter={StaticResource NullableTimeSpanConverter}}"/>
+							</DataTemplate>
+						</GridViewColumn.CellTemplate>
+					</GridViewColumn>
+
+					<GridViewColumn Header="Configuration" HeaderTemplate="{StaticResource ColumnHeaderTemplate}" Width="90">
+						<GridViewColumn.HeaderContainerStyle>
+							<Style TargetType="GridViewColumnHeader" BasedOn="{StaticResource SortableColumnHeaderStyle}">
+								<Setter Property="Command" Value="{Binding DataContext.SortCommand, RelativeSource={RelativeSource AncestorType=ListView}}"/>
+								<Setter Property="CommandParameter" Value="Configuration"/>
+							</Style>
+						</GridViewColumn.HeaderContainerStyle>
+						<GridViewColumn.CellTemplate>
+							<DataTemplate>
+								<TextBlock Text="{Binding Configuration}" TextTrimming="CharacterEllipsis"/>
+							</DataTemplate>
+						</GridViewColumn.CellTemplate>
+					</GridViewColumn>
+
+					<GridViewColumn Header="Platform" HeaderTemplate="{StaticResource ColumnHeaderTemplate}" Width="80">
+						<GridViewColumn.HeaderContainerStyle>
+							<Style TargetType="GridViewColumnHeader" BasedOn="{StaticResource SortableColumnHeaderStyle}">
+								<Setter Property="Command" Value="{Binding DataContext.SortCommand, RelativeSource={RelativeSource AncestorType=ListView}}"/>
+								<Setter Property="CommandParameter" Value="Platform"/>
+							</Style>
+						</GridViewColumn.HeaderContainerStyle>
+						<GridViewColumn.CellTemplate>
+							<DataTemplate>
+								<TextBlock Text="{Binding Platform}" TextTrimming="CharacterEllipsis"/>
 							</DataTemplate>
 						</GridViewColumn.CellTemplate>
 					</GridViewColumn>

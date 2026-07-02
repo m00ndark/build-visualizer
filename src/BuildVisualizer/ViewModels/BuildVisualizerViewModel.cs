@@ -34,6 +34,7 @@ namespace BuildVisualizer.ViewModels
 		private readonly IVsSolutionBuildManager2 _buildManager;
 		private readonly IVsUIShell _uiShell;
 		private readonly BuildDiagnosticsService _diagnosticsService;
+		private readonly ProjectConfigurationService _projectConfigurationService;
 		private readonly GraphLayoutEngine _layoutEngine;
 		private readonly DispatcherTimer _buildTimer;
 		private bool _isGraphView;
@@ -147,7 +148,8 @@ namespace BuildVisualizer.ViewModels
 			IVsSolution solution,
 			IVsSolutionBuildManager2 buildManager,
 			IVsUIShell uiShell,
-			BuildDiagnosticsService diagnosticsService)
+			BuildDiagnosticsService diagnosticsService,
+			ProjectConfigurationService projectConfigurationService)
 		{
 			_solutionService = solutionService;
 			_buildEventService = buildEventService;
@@ -158,6 +160,7 @@ namespace BuildVisualizer.ViewModels
 			_buildManager = buildManager;
 			_uiShell = uiShell;
 			_diagnosticsService = diagnosticsService;
+			_projectConfigurationService = projectConfigurationService;
 			Resources.Colors.IsDarkTheme = themeService.IsDarkTheme;
 			_layoutEngine = new GraphLayoutEngine();
 			_buildTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(1) };
@@ -212,6 +215,7 @@ namespace BuildVisualizer.ViewModels
 			_buildEventService.BuildDone += OnBuildDone;
 			_buildEventService.ProjectStatusChanged += OnProjectStatusChanged;
 			_diagnosticsService.DiagnosticsChanged += OnDiagnosticsChanged;
+			_projectConfigurationService.ActiveConfigurationChanged += OnActiveConfigurationChanged;
 
 			// Subscribe to solution events
 			_solutionEventsService.ProjectsChanged += OnProjectsChanged;
@@ -307,11 +311,26 @@ namespace BuildVisualizer.ViewModels
 					{
 						project.BuildStart = e.Timestamp;
 						project.BuildFinish = null;
+						if (e.Configuration != null) project.Configuration = e.Configuration;
+						if (e.Platform != null) project.Platform = e.Platform;
 					}
 					else if (e.NewStatus == BuildStatus.Success || e.NewStatus == BuildStatus.Failed || e.NewStatus == BuildStatus.Skipped)
 					{
 						project.BuildFinish = e.Timestamp;
 					}
+				}
+			});
+		}
+
+		private void OnActiveConfigurationChanged(string projectPath, string configuration, string platform)
+		{
+			ThreadingHelper.RunOnMainThread(() =>
+			{
+				ProjectInfo project = Projects.FirstOrDefault(p => string.Equals(p.ProjectPath, projectPath, StringComparison.OrdinalIgnoreCase));
+				if (project != null)
+				{
+					project.Configuration = configuration;
+					project.Platform = platform;
 				}
 			});
 		}

@@ -25,12 +25,12 @@
 - [x] 13. Add "Reveal in Solution Explorer" to context menus
 - [ ] 14. Add column-based layout option for graph view (toggle between row/column)
 - [ ] 15. Store user settings/choices to remember state between starts
-- [ ] 16. Add additional columns to list view
-	- [ ] Configuration
-	- [ ] Platform
-	- [ ] Error count
-	- [ ] Warning count
-	- [ ] Information count
+- [x] 16. Add additional columns to list view
+	- [x] Configuration
+	- [x] Platform
+	- [x] Error count
+	- [x] Warning count
+	- [x] Information count
 - [ ] 17. Add a Cancel build toolbar button
 - [ ] 18. Make it possible to switch between showing all dependencies and only direct dependencies (like it is currently) in graph view (only?)
 - [ ] 19. Make row backgrounds in graph view darker

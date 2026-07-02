@@ -67,6 +67,7 @@
     <Compile Include="Services\BuildDiagnosticsService.cs" />
     <Compile Include="Services\BuildEventService.cs" />
     <Compile Include="Services\LegacyReferenceWatcher.cs" />
+    <Compile Include="Services\ProjectConfigurationService.cs" />
     <Compile Include="Services\ProjectDataHelper.cs" />
     <Compile Include="Services\ProjectMetadata.cs" />
     <Compile Include="Services\ProjectReferences.cs" />

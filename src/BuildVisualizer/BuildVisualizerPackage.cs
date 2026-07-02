@@ -86,6 +86,11 @@ namespace BuildVisualizer
 		public static BuildDiagnosticsService DiagnosticsService { get; private set; }
 
 		/// <summary>
+		/// Gets the ProjectConfigurationService for tracking active configuration/platform changes.
+		/// </summary>
+		public static ProjectConfigurationService ProjectConfigurationService { get; private set; }
+
+		/// <summary>
 		/// Initialization of the package; this method is called right after the package is sited, so this is the place
 		/// where you can put all the initialization code that rely on services provided by VisualStudio.
 		/// </summary>
@@ -120,6 +125,7 @@ namespace BuildVisualizer
 			SolutionService = new SolutionService(new SolutionReferenceSnapshot(solution));
 			SolutionEventsService = new SolutionEventsService(solution);
 			ThemeService = new ThemeService();
+			ProjectConfigurationService = new ProjectConfigurationService(solution, buildManager);
 
 			BuildEventService.BuildBegin += OnBuildBegin;
 
@@ -149,6 +155,7 @@ namespace BuildVisualizer
 					BuildEventService.Dispose();
 				}
 				SolutionEventsService?.Dispose();
+				ProjectConfigurationService?.Dispose();
 			}
 
 			base.Dispose(disposing);

@@ -58,6 +58,8 @@ namespace BuildVisualizer.Services
 							ProjectPath = projectMetadata.Path,
 							ProjectStyle = "SDK",
 							OutputType = projectMetadata.OutputType,
+							Configuration = projectMetadata.Configuration,
+							Platform = projectMetadata.Platform,
 							References = refs
 						});
 
@@ -77,6 +79,8 @@ namespace BuildVisualizer.Services
 								ProjectPath = projectMetadata.Path,
 								ProjectStyle = "Legacy",
 								OutputType = projectMetadata.OutputType,
+								Configuration = projectMetadata.Configuration,
+								Platform = projectMetadata.Platform,
 								References = refs
 							});
 
