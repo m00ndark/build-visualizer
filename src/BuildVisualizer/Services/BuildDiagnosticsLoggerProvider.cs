@@ -1,12 +1,19 @@
 using Microsoft.Build.Framework;
+using Microsoft.VisualStudio.ProjectSystem;
+using Microsoft.VisualStudio.ProjectSystem.Build;
 using Microsoft.VisualStudio.Shell.BuildLogging;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.ComponentModel.Composition;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace BuildVisualizer.Services
 {
+	[AppliesTo(ProjectCapabilities.AlwaysApplicable)]
+	[Export(typeof(IBuildLoggerProviderAsync))]
 	[Export(typeof(IVsBuildLoggerProvider))]
-	public class BuildDiagnosticsLoggerProvider : IVsBuildLoggerProvider
+	public class BuildDiagnosticsLoggerProvider : IBuildLoggerProviderAsync, IVsBuildLoggerProvider
 	{
 		public BuildDiagnosticsLoggerProvider()
 		{
@@ -39,7 +46,37 @@ namespace BuildVisualizer.Services
 			BuildLoggerEvents.ProjectEvaluationFinishedEvent |
 			BuildLoggerEvents.CustomEvent;
 
+		/// <summary>
+		/// Called for legacy (non-SDK-style) projects.
+		/// </summary>
 		public ILogger GetLogger(string projectPath, IEnumerable<string> targets, IDictionary<string, string> properties, bool isDesignTimeBuild)
+		{
+			return CreateLogger(isDesignTimeBuild);
+		}
+
+		/// <summary>
+		/// Called for CPS-based (SDK-style) projects.
+		/// </summary>
+		public Task<IImmutableSet<ILogger>> GetLoggersAsync(
+			IReadOnlyList<string> targets,
+			IImmutableDictionary<string, string> properties,
+			CancellationToken cancellationToken)
+		{
+			bool isDesignTimeBuild = properties.TryGetValue("DesignTimeBuild", out string value)
+				&& string.Equals(value, "true", System.StringComparison.OrdinalIgnoreCase);
+
+			ILogger logger = CreateLogger(isDesignTimeBuild);
+
+			if (logger == null)
+			{
+				return Task.FromResult<IImmutableSet<ILogger>>(ImmutableHashSet<ILogger>.Empty);
+			}
+
+			IImmutableSet<ILogger> loggers = ImmutableHashSet<ILogger>.Empty.Add(logger);
+			return Task.FromResult(loggers);
+		}
+
+		private ILogger CreateLogger(bool isDesignTimeBuild)
 		{
 			if (isDesignTimeBuild || DiagnosticsService == null)
 				return null;
