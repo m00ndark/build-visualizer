@@ -5,8 +5,8 @@ namespace BuildVisualizer.ViewModels
 {
 	public class GraphRowGroupViewModel : ViewModelBase
 	{
-		private const byte GrayscaleLightValue = 200;
-		private const byte GrayscaleDarkValue  = 100;
+		private const byte GrayscaleLightValue = 100;
+		private const byte GrayscaleDarkValue  = 75;
 		private const byte BackgroundAlphaLight = 40;
 		private const byte BackgroundAlphaDark  = 65;
 
