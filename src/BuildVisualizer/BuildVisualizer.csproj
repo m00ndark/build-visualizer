@@ -49,6 +49,7 @@
   <ItemGroup>
     <Compile Include="Commands\RelayCommand.cs" />
     <Compile Include="Converters\GridViewColumnTag.cs" />
+    <Compile Include="Converters\ZeroToEmptyConverter.cs" />
     <Compile Include="Converters\InverseBooleanToVisibilityConverter.cs" />
     <Compile Include="Converters\NullableTimeSpanConverter.cs" />
     <Compile Include="Converters\SortedCollectionConverter.cs" />

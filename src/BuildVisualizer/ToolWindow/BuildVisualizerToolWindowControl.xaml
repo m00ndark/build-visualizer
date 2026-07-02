@@ -20,6 +20,7 @@
 		<converters:NullableTimeSpanConverter x:Key="NullableTimeSpanConverter"/>
 		<converters:SortIndicatorVisibilityConverter x:Key="SortIndicatorVisibilityConverter"/>
 		<converters:SortedCollectionConverter x:Key="SortByNameConverter" SortProperty="Name"/>
+		<converters:ZeroToEmptyConverter x:Key="ZeroToEmptyConverter"/>
 
 		<!-- Menu separator: a non-interactive MenuItem that renders as a themed line -->
 		<Style x:Key="MenuSeparator" TargetType="MenuItem">
@@ -470,7 +471,7 @@
 						</GridViewColumn.HeaderContainerStyle>
 						<GridViewColumn.CellTemplate>
 							<DataTemplate>
-								<TextBlock Text="{Binding ErrorCount}" TextAlignment="Right"/>
+								<TextBlock Text="{Binding ErrorCount, Converter={StaticResource ZeroToEmptyConverter}}" TextAlignment="Right"/>
 							</DataTemplate>
 						</GridViewColumn.CellTemplate>
 					</GridViewColumn>
@@ -487,7 +488,7 @@
 						</GridViewColumn.HeaderContainerStyle>
 						<GridViewColumn.CellTemplate>
 							<DataTemplate>
-								<TextBlock Text="{Binding WarningCount}" TextAlignment="Right"/>
+								<TextBlock Text="{Binding WarningCount, Converter={StaticResource ZeroToEmptyConverter}}" TextAlignment="Right"/>
 							</DataTemplate>
 						</GridViewColumn.CellTemplate>
 					</GridViewColumn>
@@ -504,7 +505,7 @@
 						</GridViewColumn.HeaderContainerStyle>
 						<GridViewColumn.CellTemplate>
 							<DataTemplate>
-								<TextBlock Text="{Binding MessageCount}" TextAlignment="Right"/>
+								<TextBlock Text="{Binding MessageCount, Converter={StaticResource ZeroToEmptyConverter}}" TextAlignment="Right"/>
 							</DataTemplate>
 						</GridViewColumn.CellTemplate>
 					</GridViewColumn>
