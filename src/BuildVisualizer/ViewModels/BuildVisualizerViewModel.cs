@@ -17,6 +17,7 @@ using System.Threading.Tasks;
 using System.Windows.Data;
 using System.Windows.Input;
 using System.Windows.Threading;
+using static BuildVisualizer.Services.UserSettings;
 
 namespace BuildVisualizer.ViewModels
 {
@@ -119,7 +120,7 @@ namespace BuildVisualizer.ViewModels
 			set
 			{
 				if (SetProperty(ref _showWindowOnBuildStart, value))
-					_userSettingsService?.SetString(UserSettings.Collections.Settings, UserSettings.Keys.ShowWindowOnBuildStart, value ? "1" : "0");
+					_userSettingsService?.SetString(Collections.Settings, Keys.ShowWindowOnBuildStart, value ? Values.On : Values.Off);
 			}
 		}
 
@@ -130,7 +131,7 @@ namespace BuildVisualizer.ViewModels
 			{
 				if (SetProperty(ref _showTransitiveDependencies, value))
 				{
-					_userSettingsService?.SetString(UserSettings.Collections.Settings, UserSettings.Keys.ShowTransitiveDependencies, value ? "1" : "0");
+					_userSettingsService?.SetString(Collections.Settings, Keys.ShowTransitiveDependencies, value ? Values.On : Values.Off);
 					foreach (ProjectNodeViewModel node in GraphNodes)
 						node.SetShowTransitiveDependencies(value);
 				}
@@ -171,7 +172,10 @@ namespace BuildVisualizer.ViewModels
 			set
 			{
 				if (SetProperty(ref _isGraphView, value))
+				{
 					CommandManager.InvalidateRequerySuggested();
+					_userSettingsService?.SetString(Collections.Settings, Keys.LastView, value ? Values.GraphView : Values.ListView);
+				}
 			}
 		}
 
@@ -199,8 +203,9 @@ namespace BuildVisualizer.ViewModels
 			_diagnosticsService = diagnosticsService;
 			_projectConfigurationService = projectConfigurationService;
 			_userSettingsService = userSettingsService;
-			_showWindowOnBuildStart = userSettingsService?.GetString(UserSettings.Collections.Settings, UserSettings.Keys.ShowWindowOnBuildStart) != "0";
-			_showTransitiveDependencies = userSettingsService?.GetString(UserSettings.Collections.Settings, UserSettings.Keys.ShowTransitiveDependencies) != "0";
+			_showWindowOnBuildStart = userSettingsService?.GetString(Collections.Settings, Keys.ShowWindowOnBuildStart) != Values.Off;
+			_showTransitiveDependencies = userSettingsService?.GetString(Collections.Settings, Keys.ShowTransitiveDependencies) != Values.Off;
+			_isGraphView = userSettingsService?.GetString(Collections.Settings, Keys.LastView) == Values.GraphView;
 			Resources.Colors.IsDarkTheme = themeService.IsDarkTheme;
 			_layoutEngine = new GraphLayoutEngine();
 			_buildTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(1) };

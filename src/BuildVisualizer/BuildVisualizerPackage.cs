@@ -6,6 +6,7 @@ using Microsoft.VisualStudio.Shell.Interop;
 using System;
 using System.Runtime.InteropServices;
 using System.Threading;
+using static BuildVisualizer.Services.UserSettings;
 using IVsSolutionBuildManager = Microsoft.VisualStudio.Shell.Interop.IVsSolutionBuildManager2;
 using Task = System.Threading.Tasks.Task;
 
@@ -145,7 +146,7 @@ namespace BuildVisualizer
 		{
 			ThreadHelper.ThrowIfNotOnUIThread();
 
-			if (UserSettingsService?.GetString(UserSettings.Collections.Settings, UserSettings.Keys.ShowWindowOnBuildStart) != "1")
+			if (UserSettingsService?.GetString(Collections.Settings, Keys.ShowWindowOnBuildStart) != Values.On)
 				return;
 
 			ToolWindowPane window = FindToolWindow(typeof(ToolWindow.BuildVisualizerToolWindow), 0, true);

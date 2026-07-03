@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
 using System.Windows.Controls;
+using static BuildVisualizer.Services.UserSettings;
 
 namespace BuildVisualizer.Services
 {
@@ -113,7 +114,7 @@ namespace BuildVisualizer.Services
 					string key = GridViewColumnTag.GetTag(column);
 					if (string.IsNullOrEmpty(key)) continue;
 
-					string raw = _settings.GetString(UserSettings.Collections.ListView, UserSettings.Keys.WidthPrefix + key);
+					string raw = _settings.GetString(Collections.ListView, Keys.WidthPrefix + key);
 					if (raw != null && double.TryParse(raw, System.Globalization.NumberStyles.Float,
 						System.Globalization.CultureInfo.InvariantCulture, out double width) && width > 0)
 					{
@@ -122,7 +123,7 @@ namespace BuildVisualizer.Services
 				}
 
 				// Restore column order (applies to the visible set)
-				string orderRaw = _settings.GetString(UserSettings.Collections.ListView, UserSettings.Keys.ColumnOrder);
+				string orderRaw = _settings.GetString(Collections.ListView, Keys.ColumnOrder);
 				if (!string.IsNullOrEmpty(orderRaw))
 				{
 					string[] keys = orderRaw.Split(',');
@@ -147,7 +148,7 @@ namespace BuildVisualizer.Services
 				}
 
 				// Apply hidden columns — remove from GridView
-				string hiddenRaw = _settings.GetString(UserSettings.Collections.ListView, UserSettings.Keys.HiddenColumns);
+				string hiddenRaw = _settings.GetString(Collections.ListView, Keys.HiddenColumns);
 				HashSet<string> hiddenKeys = string.IsNullOrEmpty(hiddenRaw)
 					? new HashSet<string>()
 					: new HashSet<string>(hiddenRaw.Split(','), StringComparer.Ordinal);
@@ -188,7 +189,7 @@ namespace BuildVisualizer.Services
 			string key = GridViewColumnTag.GetTag(column);
 			if (string.IsNullOrEmpty(key) || double.IsNaN(column.Width)) return;
 
-			_settings.SetString(UserSettings.Collections.ListView, UserSettings.Keys.WidthPrefix + key,
+			_settings.SetString(Collections.ListView, Keys.WidthPrefix + key,
 				column.Width.ToString(System.Globalization.CultureInfo.InvariantCulture));
 		}
 
@@ -214,7 +215,7 @@ namespace BuildVisualizer.Services
 				.Select(c => GridViewColumnTag.GetTag(c))
 				.Where(k => !string.IsNullOrEmpty(k)));
 
-			_settings.SetString(UserSettings.Collections.ListView, UserSettings.Keys.ColumnOrder, order);
+			_settings.SetString(Collections.ListView, Keys.ColumnOrder, order);
 		}
 
 		private void SaveHiddenColumns(GridView gridView)
@@ -224,7 +225,7 @@ namespace BuildVisualizer.Services
 				.Where(k => !string.IsNullOrEmpty(k))
 				.Where(k => !gridView.Columns.Any(c => GridViewColumnTag.GetTag(c) == k));
 
-			_settings.SetString(UserSettings.Collections.ListView, UserSettings.Keys.HiddenColumns, string.Join(",", hiddenKeys));
+			_settings.SetString(Collections.ListView, Keys.HiddenColumns, string.Join(",", hiddenKeys));
 		}
 	}
 }

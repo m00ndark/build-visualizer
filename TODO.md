@@ -34,7 +34,7 @@
 - [x] 17. Add a Cancel build toolbar button
 - [x] 18. Make it possible to switch between showing all dependencies and only direct dependencies (like it is currently) in graph view (only?)
 - [x] 19. Make row backgrounds in graph view darker
-- [ ] 20. Store chosen view
+- [x] 20. Store chosen view
 
 # Bugs
 
