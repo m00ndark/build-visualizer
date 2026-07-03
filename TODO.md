@@ -40,5 +40,5 @@
 
 - [x] 1. Test projects are often tagged as "Executable". It would be nice if it said e.g. "Test Library".
 - [x] 2. Build/rebuild/clean solution toolbar buttons are enabled when a build is ongoing
-- [ ] 3. Overall build status at the top of the window showed "Started at 00:00:00 and lasted -35791394 minutes and -8 seconds."
-- [ ] 4. Overall build status at the top of the window did not update when building, showed "No build information available."
+- [x] 3. Overall build status at the top of the window showed "Started at 00:00:00 and lasted -35791394 minutes and -8 seconds."
+- [x] 4. Overall build status at the top of the window did not update when building, showed "No build information available."

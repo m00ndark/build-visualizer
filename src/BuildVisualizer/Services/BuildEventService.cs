@@ -13,6 +13,11 @@ namespace BuildVisualizer.Services
 		private bool _disposed;
 		private vsBuildAction _currentBuildAction;
 
+		public bool IsBuildInProgress { get; private set; }
+		public vsBuildScope CurrentBuildScope { get; private set; }
+		public vsBuildAction CurrentBuildAction { get; private set; }
+		public DateTime BuildStartTime { get; private set; }
+
 		public event EventHandler<BuildEventArgs> BuildBegin;
 		public event EventHandler<BuildEventArgs> BuildDone;
 		public event EventHandler<ProjectStatusChangedEventArgs> ProjectStatusChanged;
@@ -34,6 +39,10 @@ namespace BuildVisualizer.Services
 		{
 			ThreadHelper.ThrowIfNotOnUIThread();
 			_currentBuildAction = action;
+			IsBuildInProgress = true;
+			CurrentBuildScope = scope;
+			CurrentBuildAction = action;
+			BuildStartTime = DateTime.Now;
 			BuildBegin?.Invoke(this, new BuildEventArgs(scope, action));
 		}
 
@@ -64,6 +73,7 @@ namespace BuildVisualizer.Services
 		private void OnBuildDone(vsBuildScope scope, vsBuildAction action)
 		{
 			ThreadHelper.ThrowIfNotOnUIThread();
+			IsBuildInProgress = false;
 			BuildDone?.Invoke(this, new BuildEventArgs(scope, action));
 		}
 

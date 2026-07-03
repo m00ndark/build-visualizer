@@ -290,7 +290,21 @@ namespace BuildVisualizer.ViewModels
 			}
 #pragma warning restore VSTHRD110, VSSDK007
 
-			BuildStatusText = NoBuildInformationAvailableStatusText;
+			// Catch up if a build is already in progress (the tool window was opened mid-build,
+			// so we missed the BuildBegin event for this build)
+			if (_buildEventService.IsBuildInProgress)
+			{
+				IsBuilding = true;
+				_buildScope = _buildEventService.CurrentBuildScope;
+				_buildAction = _buildEventService.CurrentBuildAction;
+				_buildStartTime = _buildEventService.BuildStartTime;
+				UpdateBuildStatusText();
+				_buildTimer.Start();
+			}
+			else
+			{
+				BuildStatusText = NoBuildInformationAvailableStatusText;
+			}
 		}
 
 		private void OnBuildBegin(object sender, BuildEventArgs e)
@@ -402,12 +416,24 @@ namespace BuildVisualizer.ViewModels
 
 			await _solutionService.LoadProjectReferencesAsync();
 			await UpdateProjectsAsync();
-			BuildStatusText = NoBuildInformationAvailableStatusText;
+			if (!_buildTimer.IsEnabled)
+				BuildStatusText = NoBuildInformationAvailableStatusText;
 		}
 
 		private async Task UpdateProjectsAsync()
 		{
 			await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
+
+			// Preserve build state from existing projects so a mid-build project
+			// reload doesn't lose accumulated status, timing, and diagnostics
+			Dictionary<string, ProjectInfo> previousState = new Dictionary<string, ProjectInfo>(StringComparer.OrdinalIgnoreCase);
+			if (_buildTimer.IsEnabled)
+			{
+				foreach (ProjectInfo existing in Projects)
+				{
+					previousState[existing.UniqueName] = existing;
+				}
+			}
 
 			Projects.Clear();
 
@@ -416,6 +442,18 @@ namespace BuildVisualizer.ViewModels
 
 			foreach (ProjectInfo project in projects)
 			{
+				if (previousState.TryGetValue(project.UniqueName, out ProjectInfo previous))
+				{
+					project.Status = previous.Status;
+					project.BuildStart = previous.BuildStart;
+					project.BuildFinish = previous.BuildFinish;
+					project.Configuration = previous.Configuration;
+					project.Platform = previous.Platform;
+					project.ErrorCount = previous.ErrorCount;
+					project.WarningCount = previous.WarningCount;
+					project.MessageCount = previous.MessageCount;
+				}
+
 				Projects.Add(project);
 			}
 
@@ -617,9 +655,9 @@ namespace BuildVisualizer.ViewModels
 
 		private static string FormatDuration(TimeSpan elapsed)
 		{
-			int totalSeconds = (int)elapsed.TotalSeconds;
-			int minutes = totalSeconds / 60;
-			int seconds = totalSeconds % 60;
+			long totalSeconds = Math.Max(0, (long)elapsed.TotalSeconds);
+			long minutes = totalSeconds / 60;
+			long seconds = totalSeconds % 60;
 
 			if (minutes == 0)
 				return seconds == 1 ? "1 second" : $"{seconds} seconds";
