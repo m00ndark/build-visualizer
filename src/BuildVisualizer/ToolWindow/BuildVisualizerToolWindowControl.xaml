@@ -451,7 +451,7 @@
 					<imaging:CrispImage Moniker="{x:Static catalog:KnownMonikers.Settings}" Width="16" Height="16"/>
 					<Button.ContextMenu>
 						<ContextMenu>
-							<MenuItem Header="Focus on build start" IsCheckable="True" IsChecked="{Binding FocusOnBuildStart}"/>
+							<MenuItem Header="Show window when build starts" IsCheckable="True" IsChecked="{Binding ShowWindowOnBuildStart}"/>
 							<MenuItem Header="Graph view">
 								<MenuItem Header="Show transitive dependencies on hover" IsCheckable="True" IsChecked="{Binding ShowTransitiveDependencies}"/>
 							</MenuItem>

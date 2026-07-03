@@ -10,7 +10,7 @@ namespace BuildVisualizer.Services
 
 		public static class Keys
 		{
-			public const string FocusOnBuildStart = "FocusOnBuildStart";
+			public const string ShowWindowOnBuildStart = "ShowWindowOnBuildStart";
 			public const string ShowTransitiveDependencies = "ShowTransitiveDependencies";
 			public const string WidthPrefix = "Width_";
 			public const string ColumnOrder = "ColumnOrder";

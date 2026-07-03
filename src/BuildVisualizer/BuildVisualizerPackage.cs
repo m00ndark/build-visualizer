@@ -145,7 +145,7 @@ namespace BuildVisualizer
 		{
 			ThreadHelper.ThrowIfNotOnUIThread();
 
-			if (UserSettingsService?.GetString(UserSettings.Collections.Settings, UserSettings.Keys.FocusOnBuildStart) != "1")
+			if (UserSettingsService?.GetString(UserSettings.Collections.Settings, UserSettings.Keys.ShowWindowOnBuildStart) != "1")
 				return;
 
 			ToolWindowPane window = FindToolWindow(typeof(ToolWindow.BuildVisualizerToolWindow), 0, true);

@@ -49,7 +49,7 @@ namespace BuildVisualizer.ViewModels
 		private int _errorCount;
 		private int _warningCount;
 		private int _messageCount;
-		private bool _focusOnBuildStart;
+		private bool _showWindowOnBuildStart;
 		private bool _showTransitiveDependencies;
 		private bool _isBuilding;
 
@@ -113,13 +113,13 @@ namespace BuildVisualizer.ViewModels
 			private set => SetProperty(ref _messageCount, value);
 		}
 
-		public bool FocusOnBuildStart
+		public bool ShowWindowOnBuildStart
 		{
-			get => _focusOnBuildStart;
+			get => _showWindowOnBuildStart;
 			set
 			{
-				if (SetProperty(ref _focusOnBuildStart, value))
-					_userSettingsService?.SetString(UserSettings.Collections.Settings, UserSettings.Keys.FocusOnBuildStart, value ? "1" : "0");
+				if (SetProperty(ref _showWindowOnBuildStart, value))
+					_userSettingsService?.SetString(UserSettings.Collections.Settings, UserSettings.Keys.ShowWindowOnBuildStart, value ? "1" : "0");
 			}
 		}
 
@@ -199,7 +199,7 @@ namespace BuildVisualizer.ViewModels
 			_diagnosticsService = diagnosticsService;
 			_projectConfigurationService = projectConfigurationService;
 			_userSettingsService = userSettingsService;
-			_focusOnBuildStart = userSettingsService?.GetString(UserSettings.Collections.Settings, UserSettings.Keys.FocusOnBuildStart) != "0";
+			_showWindowOnBuildStart = userSettingsService?.GetString(UserSettings.Collections.Settings, UserSettings.Keys.ShowWindowOnBuildStart) != "0";
 			_showTransitiveDependencies = userSettingsService?.GetString(UserSettings.Collections.Settings, UserSettings.Keys.ShowTransitiveDependencies) != "0";
 			Resources.Colors.IsDarkTheme = themeService.IsDarkTheme;
 			_layoutEngine = new GraphLayoutEngine();
