@@ -65,10 +65,22 @@ namespace BuildVisualizer.ToolWindow
 		{
 			ContextMenu menu = SettingsButton.ContextMenu;
 			menu.DataContext = DataContext;
-			menu.Style = TryFindResource(typeof(ContextMenu)) as Style;
-			foreach (MenuItem item in menu.Items.OfType<MenuItem>())
-				item.Style = TryFindResource(typeof(MenuItem)) as Style;
+			ApplyMenuStyles(menu);
 			menu.IsOpen = true;
+		}
+
+		private void ApplyMenuStyles(ItemsControl menu)
+		{
+			if (menu is ContextMenu contextMenu)
+				contextMenu.Style = TryFindResource(typeof(ContextMenu)) as Style;
+
+			Style menuItemStyle = TryFindResource(typeof(MenuItem)) as Style;
+			foreach (MenuItem item in menu.Items.OfType<MenuItem>())
+			{
+				item.Style = menuItemStyle;
+				if (item.Items.Count > 0)
+					ApplyMenuStyles(item);
+			}
 		}
 
 		private void ProjectListView_PreviewMouseRightButtonUp(object sender, MouseButtonEventArgs e)

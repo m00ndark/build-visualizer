@@ -1,4 +1,6 @@
 using BuildVisualizer.Models;
+using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Globalization;
 using System.Windows;
@@ -24,6 +26,10 @@ namespace BuildVisualizer.ViewModels
 		private Thickness _highlightedBorderThickness = new Thickness(HighlightedBorderThicknessValue);
 		private bool _isHighlighted;
 		private bool _isDependencyHighlighted;
+		private bool _isTransitiveDependencyHighlighted;
+		private bool _isDimmed;
+		private bool _isHovered;
+		private bool _showTransitiveDependencies;
 
 		public ProjectInfo ProjectInfo { get; }
 
@@ -52,6 +58,24 @@ namespace BuildVisualizer.ViewModels
 			get => _isDependencyHighlighted;
 			set => SetProperty(ref _isDependencyHighlighted, value);
 		}
+
+		public bool IsTransitiveDependencyHighlighted
+		{
+			get => _isTransitiveDependencyHighlighted;
+			set => SetProperty(ref _isTransitiveDependencyHighlighted, value);
+		}
+
+		public bool IsDimmed
+		{
+			get => _isDimmed;
+			set => SetProperty(ref _isDimmed, value);
+		}
+
+		/// <summary>
+		/// Fired by ApplyHighlight so the owning ViewModel can dim/undim unrelated nodes.
+		/// Parameter is the set of nodes involved in the current highlight (null when unhovered).
+		/// </summary>
+		public event Action<HashSet<ProjectNodeViewModel>> HighlightChanged;
 
 		// Layout properties
 		public double X
@@ -118,9 +142,83 @@ namespace BuildVisualizer.ViewModels
 
 		public void SetHovered(bool isHovered)
 		{
-			IsHighlighted = isHovered;
-			foreach (ProjectNodeViewModel dependency in DependencyNodes)
-				dependency.IsDependencyHighlighted = isHovered;
+			_isHovered = isHovered;
+			ApplyHighlight();
+		}
+
+		public void SetShowTransitiveDependencies(bool show)
+		{
+			_showTransitiveDependencies = show;
+			if (_isHovered)
+				ApplyHighlight();
+		}
+
+		private void ApplyHighlight()
+		{
+			IsHighlighted = _isHovered;
+
+			// Clear all dependency states first
+			foreach (ProjectNodeViewModel dep in DependencyNodes)
+				dep.IsDependencyHighlighted = false;
+
+			foreach (ProjectNodeViewModel dep in GetAllTransitiveDependencies())
+				dep.IsTransitiveDependencyHighlighted = false;
+
+			if (!_isHovered)
+			{
+				HighlightChanged?.Invoke(null);
+				return;
+			}
+
+			HashSet<ProjectNodeViewModel> involved = new HashSet<ProjectNodeViewModel> { this };
+
+			if (_showTransitiveDependencies)
+			{
+				HashSet<ProjectNodeViewModel> direct = new HashSet<ProjectNodeViewModel>(DependencyNodes);
+				foreach (ProjectNodeViewModel dep in direct)
+				{
+					dep.IsDependencyHighlighted = true;
+					involved.Add(dep);
+				}
+
+				foreach (ProjectNodeViewModel dep in GetAllTransitiveDependencies())
+				{
+					if (!direct.Contains(dep))
+						dep.IsTransitiveDependencyHighlighted = true;
+					involved.Add(dep);
+				}
+			}
+			else
+			{
+				foreach (ProjectNodeViewModel dep in DependencyNodes)
+				{
+					dep.IsDependencyHighlighted = true;
+					involved.Add(dep);
+				}
+			}
+
+			HighlightChanged?.Invoke(involved);
+		}
+
+		private HashSet<ProjectNodeViewModel> GetAllTransitiveDependencies()
+		{
+			HashSet<ProjectNodeViewModel> visited = new HashSet<ProjectNodeViewModel>();
+			Queue<ProjectNodeViewModel> queue = new Queue<ProjectNodeViewModel>();
+
+			foreach (ProjectNodeViewModel dep in DependencyNodes)
+				queue.Enqueue(dep);
+
+			while (queue.Count > 0)
+			{
+				ProjectNodeViewModel current = queue.Dequeue();
+				if (!visited.Add(current))
+					continue;
+
+				foreach (ProjectNodeViewModel dep in current.DependencyNodes)
+					queue.Enqueue(dep);
+			}
+
+			return visited;
 		}
 
 		private static double MeasureTextWidth(string text)

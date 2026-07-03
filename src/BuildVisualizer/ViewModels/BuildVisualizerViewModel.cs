@@ -50,6 +50,7 @@ namespace BuildVisualizer.ViewModels
 		private int _warningCount;
 		private int _messageCount;
 		private bool _focusOnBuildStart;
+		private bool _showTransitiveDependencies;
 		private bool _isBuilding;
 
 		public ObservableCollection<ProjectInfo> Projects { get; set; }
@@ -122,6 +123,20 @@ namespace BuildVisualizer.ViewModels
 			}
 		}
 
+		public bool ShowTransitiveDependencies
+		{
+			get => _showTransitiveDependencies;
+			set
+			{
+				if (SetProperty(ref _showTransitiveDependencies, value))
+				{
+					_userSettingsService?.SetString(UserSettings.Collections.Settings, UserSettings.Keys.ShowTransitiveDependencies, value ? "1" : "0");
+					foreach (ProjectNodeViewModel node in GraphNodes)
+						node.SetShowTransitiveDependencies(value);
+				}
+			}
+		}
+
 		public bool IsBuilding
 		{
 			get => _isBuilding;
@@ -185,6 +200,7 @@ namespace BuildVisualizer.ViewModels
 			_projectConfigurationService = projectConfigurationService;
 			_userSettingsService = userSettingsService;
 			_focusOnBuildStart = userSettingsService?.GetString(UserSettings.Collections.Settings, UserSettings.Keys.FocusOnBuildStart) != "0";
+			_showTransitiveDependencies = userSettingsService?.GetString(UserSettings.Collections.Settings, UserSettings.Keys.ShowTransitiveDependencies) != "0";
 			Resources.Colors.IsDarkTheme = themeService.IsDarkTheme;
 			_layoutEngine = new GraphLayoutEngine();
 			_buildTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(1) };
@@ -356,6 +372,12 @@ namespace BuildVisualizer.ViewModels
 			});
 		}
 
+		private void OnHighlightChangedHandler(HashSet<ProjectNodeViewModel> involved)
+		{
+			foreach (ProjectNodeViewModel node in GraphNodes)
+				node.IsDimmed = involved != null && !involved.Contains(node);
+		}
+
 		private void OnActiveConfigurationChanged(string projectPath, string configuration, string platform)
 		{
 			ThreadingHelper.RunOnMainThread(() =>
@@ -398,6 +420,9 @@ namespace BuildVisualizer.ViewModels
 
 		private void BuildGraphLayout()
 		{
+			foreach (ProjectNodeViewModel node in GraphNodes)
+				node.HighlightChanged -= OnHighlightChangedHandler;
+
 			GraphNodes.Clear();
 			GraphRowGroups.Clear();
 
@@ -412,6 +437,8 @@ namespace BuildVisualizer.ViewModels
 			foreach (ProjectInfo project in Projects)
 			{
 				ProjectNodeViewModel node = new ProjectNodeViewModel(project);
+				node.HighlightChanged += OnHighlightChangedHandler;
+				node.SetShowTransitiveDependencies(_showTransitiveDependencies);
 				allNodes.Add(node);
 				nodeMap[node.ProjectPath] = node;
 			}

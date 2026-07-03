@@ -222,27 +222,54 @@
 			<Setter Property="Template">
 				<Setter.Value>
 					<ControlTemplate TargetType="MenuItem">
-						<Border x:Name="Bd" Background="{TemplateBinding Background}" SnapsToDevicePixels="true"
-								CornerRadius="3" UseLayoutRounding="True">
-							<Grid>
-								<Grid.ColumnDefinitions>
-									<ColumnDefinition Width="28"/>
-									<ColumnDefinition Width="*"/>
-									<ColumnDefinition Width="16"/>
-								</Grid.ColumnDefinitions>
-								<TextBlock x:Name="CheckMark" Grid.Column="0"
-										   Text="✓" FontSize="12"
-										   HorizontalAlignment="Center" VerticalAlignment="Center"
-										   Foreground="{TemplateBinding Foreground}"
-										   Visibility="Collapsed"/>
-								<ContentPresenter x:Name="Icon" Grid.Column="0" ContentSource="Icon"
-												  HorizontalAlignment="Center" VerticalAlignment="Center"/>
-								<ContentPresenter Grid.Column="1" ContentSource="Header"
-												  RecognizesAccessKey="True" VerticalAlignment="Center"
-												  Margin="6,4"/>
-							</Grid>
-						</Border>
+						<Grid>
+							<Border x:Name="Bd" Background="{TemplateBinding Background}" SnapsToDevicePixels="true"
+									CornerRadius="3" UseLayoutRounding="True">
+								<Grid>
+									<Grid.ColumnDefinitions>
+										<ColumnDefinition Width="28"/>
+										<ColumnDefinition Width="*"/>
+										<ColumnDefinition Width="16"/>
+									</Grid.ColumnDefinitions>
+									<Path x:Name="CheckMark" Grid.Column="0"
+										  Data="M 2,6 L 5,9 L 10,2"
+										  Stroke="{TemplateBinding Foreground}" StrokeThickness="1.5"
+										  StrokeStartLineCap="Round" StrokeEndLineCap="Round" StrokeLineJoin="Round"
+										  HorizontalAlignment="Center" VerticalAlignment="Center"
+										  Visibility="Collapsed"/>
+									<ContentPresenter x:Name="Icon" Grid.Column="0" ContentSource="Icon"
+													  HorizontalAlignment="Center" VerticalAlignment="Center"/>
+									<ContentPresenter Grid.Column="1" ContentSource="Header"
+													  RecognizesAccessKey="True" VerticalAlignment="Center"
+													  Margin="6,4"/>
+									<Path x:Name="Arrow" Grid.Column="2"
+										  Data="M 0,0 L 4,4 L 0,8"
+										  Stroke="{TemplateBinding Foreground}" StrokeThickness="1.5"
+										  StrokeStartLineCap="Round" StrokeEndLineCap="Round" StrokeLineJoin="Round"
+										  HorizontalAlignment="Center" VerticalAlignment="Center"
+										  Visibility="Collapsed"/>
+								</Grid>
+							</Border>
+							<Popup x:Name="SubMenuPopup"
+								   IsOpen="{TemplateBinding IsSubmenuOpen}"
+								   Placement="Right"
+								   AllowsTransparency="True" Focusable="False">
+								<Border Background="{DynamicResource {x:Static vsshell:VsBrushes.CommandBarMenuBackgroundGradientBeginKey}}"
+										BorderThickness="0" CornerRadius="4" Padding="3"
+										SnapsToDevicePixels="True">
+									<Grid>
+										<Border Width="28" HorizontalAlignment="Left" Margin="-3,-3,0,-3"
+												CornerRadius="3,0,0,3"
+												Background="{DynamicResource {x:Static vsshell:VsBrushes.CommandBarMenuIconBackgroundKey}}"/>
+										<ItemsPresenter/>
+									</Grid>
+								</Border>
+							</Popup>
+						</Grid>
 						<ControlTemplate.Triggers>
+							<Trigger Property="HasItems" Value="True">
+								<Setter TargetName="Arrow" Property="Visibility" Value="Visible"/>
+							</Trigger>
 							<Trigger Property="IsChecked" Value="True">
 								<Setter TargetName="CheckMark" Property="Visibility" Value="Visible"/>
 								<Setter TargetName="Icon" Property="Visibility" Value="Collapsed"/>
@@ -250,6 +277,9 @@
 							<Trigger Property="IsHighlighted" Value="True">
 								<Setter TargetName="Bd" Property="Background" Value="{DynamicResource {x:Static vsshell:VsBrushes.CommandBarMouseOverBackgroundBeginKey}}"/>
 								<Setter Property="Foreground" Value="{DynamicResource {x:Static vsshell:VsBrushes.CommandBarTextHoverKey}}"/>
+							</Trigger>
+							<Trigger Property="IsSubmenuOpen" Value="True">
+								<Setter TargetName="Bd" Property="Background" Value="{DynamicResource {x:Static vsshell:VsBrushes.CommandBarMouseOverBackgroundBeginKey}}"/>
 							</Trigger>
 							<Trigger Property="IsEnabled" Value="False">
 								<Setter Property="Foreground" Value="{DynamicResource {x:Static vsshell:VsBrushes.GrayTextKey}}"/>
@@ -422,6 +452,9 @@
 					<Button.ContextMenu>
 						<ContextMenu>
 							<MenuItem Header="Focus on build start" IsCheckable="True" IsChecked="{Binding FocusOnBuildStart}"/>
+							<MenuItem Header="Graph view">
+								<MenuItem Header="Show transitive dependencies on hover" IsCheckable="True" IsChecked="{Binding ShowTransitiveDependencies}"/>
+							</MenuItem>
 						</ContextMenu>
 					</Button.ContextMenu>
 				</Button>

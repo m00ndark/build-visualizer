@@ -32,7 +32,7 @@
 	- [x] Warning count
 	- [x] Information count
 - [x] 17. Add a Cancel build toolbar button
-- [ ] 18. Make it possible to switch between showing all dependencies and only direct dependencies (like it is currently) in graph view (only?)
+- [x] 18. Make it possible to switch between showing all dependencies and only direct dependencies (like it is currently) in graph view (only?)
 - [x] 19. Make row backgrounds in graph view darker
 
 # Bugs

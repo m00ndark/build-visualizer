@@ -12,6 +12,25 @@
              Tag="{Binding DataContext, RelativeSource={RelativeSource AncestorType=UserControl, AncestorLevel=1}}"
              Width="{Binding Width}"
              Height="{Binding Height}">
+    <UserControl.Style>
+        <Style TargetType="UserControl">
+            <Setter Property="Opacity" Value="1"/>
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding IsDimmed}" Value="True">
+                    <Setter Property="Opacity" Value="0.25"/>
+                </DataTrigger>
+                <DataTrigger Binding="{Binding IsTransitiveDependencyHighlighted}" Value="True">
+                    <Setter Property="Opacity" Value="0.5"/>
+                </DataTrigger>
+                <DataTrigger Binding="{Binding IsDependencyHighlighted}" Value="True">
+                    <Setter Property="Opacity" Value="1"/>
+                </DataTrigger>
+                <DataTrigger Binding="{Binding IsHighlighted}" Value="True">
+                    <Setter Property="Opacity" Value="1"/>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+    </UserControl.Style>
     <UserControl.ContextMenu>
         <ContextMenu>
             <MenuItem Header="Build"
@@ -40,6 +59,10 @@
                 <Setter Property="BorderBrush" Value="{Binding HighlightBorderColor}"/>
                 <Setter Property="BorderThickness" Value="{Binding NormalBorderThickness}"/>
             <Style.Triggers>
+                    <DataTrigger Binding="{Binding IsTransitiveDependencyHighlighted}" Value="True">
+                        <Setter Property="Background" Value="{Binding DependencyBackgroundColor}"/>
+                        <Setter Property="BorderBrush" Value="{Binding DependencyBorderColor}"/>
+                    </DataTrigger>
                     <DataTrigger Binding="{Binding IsDependencyHighlighted}" Value="True">
                         <Setter Property="Background" Value="{Binding DependencyBackgroundColor}"/>
                         <Setter Property="BorderBrush" Value="{Binding DependencyBorderColor}"/>
