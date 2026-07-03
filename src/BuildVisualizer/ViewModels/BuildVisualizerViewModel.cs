@@ -52,6 +52,15 @@ namespace BuildVisualizer.ViewModels
 		private int _messageCount;
 		private bool _showWindowOnBuildStart;
 		private bool _showTransitiveDependencies;
+		private bool _showProjectDetails;
+		private bool _showErrors = true;
+		private bool _showWarnings = true;
+		private bool _showMessages = true;
+		private bool _groupBySeverity;
+		private int _selectedErrorCount;
+		private int _selectedWarningCount;
+		private int _selectedMessageCount;
+		private ProjectNodeViewModel _selectedGraphNode;
 		private bool _isBuilding;
 
 		public ObservableCollection<ProjectInfo> Projects { get; set; }
@@ -138,6 +147,94 @@ namespace BuildVisualizer.ViewModels
 			}
 		}
 
+		public bool ShowProjectDetails
+		{
+			get => _showProjectDetails;
+			set
+			{
+				if (SetProperty(ref _showProjectDetails, value))
+					_userSettingsService?.SetString(Collections.Settings, Keys.ShowProjectDetails, value ? Values.On : Values.Off);
+			}
+		}
+
+		public bool ShowErrors
+		{
+			get => _showErrors;
+			set
+			{
+				if (SetProperty(ref _showErrors, value))
+				{
+					_userSettingsService?.SetString(Collections.Settings, Keys.ShowErrors, value ? Values.On : Values.Off);
+					RefreshDiagnosticsFilter();
+				}
+			}
+		}
+
+		public bool ShowWarnings
+		{
+			get => _showWarnings;
+			set
+			{
+				if (SetProperty(ref _showWarnings, value))
+				{
+					_userSettingsService?.SetString(Collections.Settings, Keys.ShowWarnings, value ? Values.On : Values.Off);
+					RefreshDiagnosticsFilter();
+				}
+			}
+		}
+
+		public bool ShowMessages
+		{
+			get => _showMessages;
+			set
+			{
+				if (SetProperty(ref _showMessages, value))
+				{
+					_userSettingsService?.SetString(Collections.Settings, Keys.ShowMessages, value ? Values.On : Values.Off);
+					RefreshDiagnosticsFilter();
+				}
+			}
+		}
+
+		public bool GroupBySeverity
+		{
+			get => _groupBySeverity;
+			set
+			{
+				if (SetProperty(ref _groupBySeverity, value))
+				{
+					_userSettingsService?.SetString(Collections.Settings, Keys.GroupBySeverity, value ? Values.On : Values.Off);
+					RefreshDiagnosticsFilter();
+				}
+			}
+		}
+
+		public int SelectedErrorCount
+		{
+			get => _selectedErrorCount;
+			private set => SetProperty(ref _selectedErrorCount, value);
+		}
+
+		public int SelectedWarningCount
+		{
+			get => _selectedWarningCount;
+			private set => SetProperty(ref _selectedWarningCount, value);
+		}
+
+		public int SelectedMessageCount
+		{
+			get => _selectedMessageCount;
+			private set => SetProperty(ref _selectedMessageCount, value);
+		}
+
+		public ObservableCollection<BuildDiagnostic> SelectedProjectDiagnostics { get; }
+
+		public ICollectionView FilteredDiagnostics { get; }
+
+		public ICommand ShowProjectDetailsCommand { get; }
+
+		public ICommand NavigateToDiagnosticCommand { get; }
+
 		public bool IsBuilding
 		{
 			get => _isBuilding;
@@ -162,7 +259,11 @@ namespace BuildVisualizer.ViewModels
 			set
 			{
 				if (SetProperty(ref _selectedProject, value))
+				{
 					CommandManager.InvalidateRequerySuggested();
+					RefreshSelectedProjectDiagnostics();
+					SyncGraphNodeSelection(value);
+				}
 			}
 		}
 
@@ -205,6 +306,11 @@ namespace BuildVisualizer.ViewModels
 			_userSettingsService = userSettingsService;
 			_showWindowOnBuildStart = userSettingsService?.GetString(Collections.Settings, Keys.ShowWindowOnBuildStart) != Values.Off;
 			_showTransitiveDependencies = userSettingsService?.GetString(Collections.Settings, Keys.ShowTransitiveDependencies) != Values.Off;
+			_showProjectDetails = userSettingsService?.GetString(Collections.Settings, Keys.ShowProjectDetails) == Values.On;
+			_showErrors = userSettingsService?.GetString(Collections.Settings, Keys.ShowErrors) != Values.Off;
+			_showWarnings = userSettingsService?.GetString(Collections.Settings, Keys.ShowWarnings) != Values.Off;
+			_showMessages = userSettingsService?.GetString(Collections.Settings, Keys.ShowMessages) != Values.Off;
+			_groupBySeverity = userSettingsService?.GetString(Collections.Settings, Keys.GroupBySeverity) == Values.On;
 			_isGraphView = userSettingsService?.GetString(Collections.Settings, Keys.LastView) == Values.GraphView;
 			Resources.Colors.IsDarkTheme = themeService.IsDarkTheme;
 			_layoutEngine = new GraphLayoutEngine();
@@ -216,6 +322,9 @@ namespace BuildVisualizer.ViewModels
 				liveShaping.IsLiveSorting = true;
 			GraphNodes = new ObservableCollection<ProjectNodeViewModel>();
 			GraphRowGroups = new ObservableCollection<GraphRowGroupViewModel>();
+			SelectedProjectDiagnostics = new ObservableCollection<BuildDiagnostic>();
+			FilteredDiagnostics = CollectionViewSource.GetDefaultView(SelectedProjectDiagnostics);
+			RefreshDiagnosticsFilter();
 			RefreshCommand = new RelayCommand(_ => ThreadingHelper.RunOnMainThread(LoadProjectsAsync));
 			ToggleViewCommand = new RelayCommand(_ => IsGraphView = !IsGraphView);
 			SortCommand = new RelayCommand(param =>
@@ -259,6 +368,13 @@ namespace BuildVisualizer.ViewModels
 			ContextRebuildCommand = new RelayCommand(p => ThreadingHelper.RunOnMainThread(() => BuildProject(VSSOLNBUILDUPDATEFLAGS.SBF_OPERATION_BUILD | VSSOLNBUILDUPDATEFLAGS.SBF_OPERATION_FORCE_UPDATE, (ProjectInfo)p)), canContextBuildProject);
 			ContextCleanCommand = new RelayCommand(p => ThreadingHelper.RunOnMainThread(() => BuildProject(VSSOLNBUILDUPDATEFLAGS.SBF_OPERATION_CLEAN, (ProjectInfo)p)), canContextBuildProject);
 			RevealInSolutionExplorerCommand = new RelayCommand(p => ThreadingHelper.RunOnMainThread(() => RevealInSolutionExplorer((ProjectInfo)p)), canContextBuildProject);
+			ShowProjectDetailsCommand = new RelayCommand(p =>
+				{
+					ShowProjectDetails = true;
+					if (p is ProjectInfo project)
+						SelectedProject = project;
+				});
+			NavigateToDiagnosticCommand = new RelayCommand(p => ThreadingHelper.RunOnMainThread(() => NavigateToDiagnostic((BuildDiagnostic)p)), p => p is BuildDiagnostic d && !string.IsNullOrEmpty(d.File));
 
 			// Subscribe to build events
 			_buildEventService.BuildBegin += OnBuildBegin;
@@ -610,6 +726,13 @@ namespace BuildVisualizer.ViewModels
 						project.WarningCount = warnings;
 						project.MessageCount = messages;
 					}
+
+					// Refresh details panel if this is the selected project
+					if (_selectedProject != null
+						&& string.Equals(_selectedProject.ProjectPath, projectFile, StringComparison.OrdinalIgnoreCase))
+					{
+						RefreshSelectedProjectDiagnostics();
+					}
 				}
 				else
 				{
@@ -620,6 +743,9 @@ namespace BuildVisualizer.ViewModels
 						project.WarningCount = 0;
 						project.MessageCount = 0;
 					}
+
+					// Clear details panel diagnostics
+					RefreshSelectedProjectDiagnostics();
 				}
 			});
 		}
@@ -686,8 +812,132 @@ namespace BuildVisualizer.ViewModels
 				Projects.Clear();
 				GraphNodes.Clear();
 				GraphRowGroups.Clear();
+				SelectedProjectDiagnostics.Clear();
+				_selectedGraphNode = null;
 				BuildStatusText = NoBuildInformationAvailableStatusText;
 			});
+		}
+
+		public void SelectGraphNode(ProjectNodeViewModel node)
+		{
+			if (_selectedGraphNode == node)
+				return;
+
+			if (_selectedGraphNode != null)
+				_selectedGraphNode.IsSelected = false;
+
+			_selectedGraphNode = node;
+
+			if (node != null)
+			{
+				node.IsSelected = true;
+				SelectedProject = node.ProjectInfo;
+			}
+			else
+			{
+				SelectedProject = null;
+			}
+		}
+
+		private void SyncGraphNodeSelection(ProjectInfo project)
+		{
+			// Find the matching graph node and update its visual state
+			// without re-entering SelectGraphNode -> SelectedProject loop
+			ProjectNodeViewModel matchingNode = project != null
+				? GraphNodes.FirstOrDefault(n => n.ProjectInfo == project)
+				: null;
+
+			if (_selectedGraphNode == matchingNode)
+				return;
+
+			if (_selectedGraphNode != null)
+				_selectedGraphNode.IsSelected = false;
+
+			_selectedGraphNode = matchingNode;
+
+			if (matchingNode != null)
+				matchingNode.IsSelected = true;
+		}
+
+		private void RefreshSelectedProjectDiagnostics()
+		{
+			SelectedProjectDiagnostics.Clear();
+
+			if (_selectedProject == null)
+			{
+				SelectedErrorCount = 0;
+				SelectedWarningCount = 0;
+				SelectedMessageCount = 0;
+				return;
+			}
+
+			IReadOnlyList<BuildDiagnostic> diagnostics = _diagnosticsService.GetDiagnosticsForProject(_selectedProject.ProjectPath);
+
+			int errors = 0;
+			int warnings = 0;
+			int messages = 0;
+
+			foreach (BuildDiagnostic diagnostic in diagnostics)
+			{
+				SelectedProjectDiagnostics.Add(diagnostic);
+				switch (diagnostic.Severity)
+				{
+					case DiagnosticSeverity.Error: errors++; break;
+					case DiagnosticSeverity.Warning: warnings++; break;
+					case DiagnosticSeverity.Message: messages++; break;
+				}
+			}
+
+			SelectedErrorCount = errors;
+			SelectedWarningCount = warnings;
+			SelectedMessageCount = messages;
+
+			RefreshDiagnosticsFilter();
+		}
+
+		private void RefreshDiagnosticsFilter()
+		{
+			if (FilteredDiagnostics == null)
+				return;
+
+			FilteredDiagnostics.Filter = item =>
+			{
+				if (!(item is BuildDiagnostic diagnostic))
+					return false;
+
+				switch (diagnostic.Severity)
+				{
+					case DiagnosticSeverity.Error: return _showErrors;
+					case DiagnosticSeverity.Warning: return _showWarnings;
+					case DiagnosticSeverity.Message: return _showMessages;
+					default: return true;
+				}
+			};
+
+			FilteredDiagnostics.GroupDescriptions.Clear();
+			if (_groupBySeverity)
+				FilteredDiagnostics.GroupDescriptions.Add(new PropertyGroupDescription(nameof(BuildDiagnostic.Severity)));
+
+			FilteredDiagnostics.Refresh();
+		}
+
+		private void NavigateToDiagnostic(BuildDiagnostic diagnostic)
+		{
+			ThreadHelper.ThrowIfNotOnUIThread();
+
+			if (diagnostic == null || string.IsNullOrEmpty(diagnostic.File))
+				return;
+
+			try
+			{
+				_dte.ItemOperations.OpenFile(diagnostic.File);
+				if (_dte.ActiveDocument?.Selection is EnvDTE.TextSelection selection)
+					selection.MoveToLineAndOffset(diagnostic.LineNumber, Math.Max(1, diagnostic.ColumnNumber));
+			}
+			catch (Exception ex)
+			{
+				Debug.WriteLine($"[Navigate] Failed to open {diagnostic.File}:{diagnostic.LineNumber}: {ex.Message}");
+			}
 		}
 
 		private void OnThemeChanged(object sender, EventArgs e)

@@ -13,6 +13,12 @@ namespace BuildVisualizer.Services
 			public const string ShowWindowOnBuildStart = "ShowWindowOnBuildStart";
 			public const string LastView = "LastView";
 			public const string ShowTransitiveDependencies = "ShowTransitiveDependencies";
+			public const string ShowProjectDetails = "ShowProjectDetails";
+			public const string DetailsPanelWidth = "DetailsPanelWidth";
+			public const string ShowErrors = "ShowErrors";
+			public const string ShowWarnings = "ShowWarnings";
+			public const string ShowMessages = "ShowMessages";
+			public const string GroupBySeverity = "GroupBySeverity";
 			public const string WidthPrefix = "Width_";
 			public const string ColumnOrder = "ColumnOrder";
 			public const string HiddenColumns = "HiddenColumns";

@@ -20,7 +20,13 @@ namespace BuildVisualizer.Resources
 		private static readonly WpfColor DarkFailedColor    = WpfColor.FromRgb(150,  20,  20);
 		private static readonly WpfColor DarkSkippedColor   = WpfColor.FromRgb( 75,  75,  80);
 
+		// Selection colors
+		private static readonly SolidColorBrush SelectionBrush = CreateFrozen(WpfColor.FromRgb(201, 222, 245));        // Light: soft blue
+		private static readonly SolidColorBrush DarkSelectionBrush = CreateFrozen(WpfColor.FromRgb(54, 52, 65));       // Dark: subtle purple (#363441)
+
 		public static bool IsDarkTheme { get; set; }
+
+		public static SolidColorBrush SelectionBackground => IsDarkTheme ? DarkSelectionBrush : SelectionBrush;
 
 		// Light mode brushes
 		private static readonly SolidColorBrush NotBuiltBrush;

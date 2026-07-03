@@ -12,6 +12,8 @@ namespace BuildVisualizer.Views
 			InitializeComponent();
 			MouseEnter += OnMouseEnter;
 			MouseLeave += OnMouseLeave;
+			MouseLeftButtonUp += OnMouseLeftButtonUp;
+			MouseDoubleClick += OnMouseDoubleClick;
 
 			if (ContextMenu != null)
 				ContextMenu.Closed += OnContextMenuClosed;
@@ -31,6 +33,18 @@ namespace BuildVisualizer.Views
 
 			if (DataContext is ProjectNodeViewModel vm)
 				vm.SetHovered(false);
+		}
+
+		private void OnMouseLeftButtonUp(object sender, MouseButtonEventArgs e)
+		{
+			if (DataContext is ProjectNodeViewModel nodeVm && Tag is BuildVisualizerViewModel mainVm)
+				mainVm.SelectGraphNode(nodeVm);
+		}
+
+		private void OnMouseDoubleClick(object sender, MouseButtonEventArgs e)
+		{
+			if (Tag is BuildVisualizerViewModel mainVm)
+				mainVm.ShowProjectDetails = true;
 		}
 
 		private void OnContextMenuClosed(object sender, RoutedEventArgs e)

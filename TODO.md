@@ -5,7 +5,7 @@
 # Improvements
 
 - [x] 1. Load projects when window is opened
-- [ ] 2. Add a metadata view (popup or sidebar?) for a hovered node
+- [x] 2. Add a metadata view (popup or sidebar?) for a hovered node
 - [ ] ~~3. Show which project the build was started for, if not entire solution?~~
 	- [ ] Revisit this - investigate if there is any way to find out for which project the build was started (could then be visualized in graph view)
 - [x] 4. Show overall build start time and duration, continuously updated

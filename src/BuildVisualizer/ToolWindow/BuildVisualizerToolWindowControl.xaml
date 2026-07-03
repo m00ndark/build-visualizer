@@ -7,6 +7,7 @@
 			 xmlns:imaging="clr-namespace:Microsoft.VisualStudio.Imaging;assembly=Microsoft.VisualStudio.Imaging"
 			 xmlns:catalog="clr-namespace:Microsoft.VisualStudio.Imaging;assembly=Microsoft.VisualStudio.ImageCatalog"
 			 xmlns:vm="clr-namespace:BuildVisualizer.ViewModels"
+			 xmlns:models="clr-namespace:BuildVisualizer.Models"
 			 xmlns:views="clr-namespace:BuildVisualizer.Views"
 			 xmlns:converters="clr-namespace:BuildVisualizer.Converters"
 			 Background="{DynamicResource {x:Static vsshell:VsBrushes.WindowKey}}"
@@ -21,6 +22,8 @@
 		<converters:SortIndicatorVisibilityConverter x:Key="SortIndicatorVisibilityConverter"/>
 		<converters:SortedCollectionConverter x:Key="SortByNameConverter" SortProperty="Name"/>
 		<converters:ZeroToEmptyConverter x:Key="ZeroToEmptyConverter"/>
+		<converters:DiagnosticSeverityToIconConverter x:Key="SeverityToIconConverter"/>
+		<SolidColorBrush x:Key="ListSelectionBrush" Color="#363441"/>
 
 		<!-- Menu separator: a non-interactive MenuItem that renders as a themed line -->
 		<Style x:Key="MenuSeparator" TargetType="MenuItem">
@@ -155,6 +158,12 @@
 						<MenuItem Header="Reveal in Solution Explorer"
 								  Command="{Binding PlacementTarget.Tag.RevealInSolutionExplorerCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
 								  CommandParameter="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
+						<MenuItem Style="{DynamicResource MenuSeparator}"
+								  Visibility="{Binding PlacementTarget.Tag.ShowProjectDetails, RelativeSource={RelativeSource AncestorType=ContextMenu}, Converter={StaticResource BoolToVisibilityInverseConverter}}"/>
+						<MenuItem Header="Show Details"
+								  Command="{Binding PlacementTarget.Tag.ShowProjectDetailsCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+								  CommandParameter="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+								  Visibility="{Binding PlacementTarget.Tag.ShowProjectDetails, RelativeSource={RelativeSource AncestorType=ContextMenu}, Converter={StaticResource BoolToVisibilityInverseConverter}}"/>
 					</ContextMenu>
 				</Setter.Value>
 			</Setter>
@@ -177,8 +186,7 @@
 								<Setter TargetName="Bd" Property="Background" Value="{DynamicResource {x:Static vsshell:VsBrushes.CommandBarHoverKey}}"/>
 							</Trigger>
 							<Trigger Property="IsSelected" Value="True">
-								<Setter TargetName="Bd" Property="Background" Value="{DynamicResource {x:Static vsshell:VsBrushes.HighlightKey}}"/>
-								<Setter Property="Foreground" Value="{DynamicResource {x:Static vsshell:VsBrushes.HighlightTextKey}}"/>
+								<Setter TargetName="Bd" Property="Background" Value="{DynamicResource ListSelectionBrush}"/>
 							</Trigger>
 						</ControlTemplate.Triggers>
 					</ControlTemplate>
@@ -452,6 +460,7 @@
 					<Button.ContextMenu>
 						<ContextMenu>
 							<MenuItem Header="Show window when build starts" IsCheckable="True" IsChecked="{Binding ShowWindowOnBuildStart}"/>
+							<MenuItem Header="Show project details" IsCheckable="True" IsChecked="{Binding ShowProjectDetails}"/>
 							<MenuItem Header="Graph view">
 								<MenuItem Header="Show transitive dependencies on hover" IsCheckable="True" IsChecked="{Binding ShowTransitiveDependencies}"/>
 							</MenuItem>
@@ -461,255 +470,552 @@
 			</StackPanel>
 		</Grid>
 
-		<!-- List View -->
-		<ListView x:Name="ProjectListView" Grid.Row="3" Margin="10,0,10,10"
-				  ItemsSource="{Binding SortedProjects}"
-				  SelectedItem="{Binding SelectedProject, Mode=TwoWay}"
-				  SelectionMode="Single"
-				  SizeChanged="ProjectListView_SizeChanged"
-				  PreviewMouseRightButtonUp="ProjectListView_PreviewMouseRightButtonUp"
-				  Visibility="{Binding IsGraphView, Converter={StaticResource BoolToVisibilityInverseConverter}}">
-			<ListView.View>
-				<GridView ColumnHeaderContainerStyle="{StaticResource SortableColumnHeaderStyle}" AllowsColumnReorder="True">
-					<GridViewColumn Header="Project Name" HeaderTemplate="{StaticResource ColumnHeaderTemplate}" Width="200" converters:GridViewColumnTag.Tag="Name">
-						<GridViewColumn.HeaderContainerStyle>
-							<Style TargetType="GridViewColumnHeader" BasedOn="{StaticResource SortableColumnHeaderStyle}">
-								<Setter Property="Command" Value="{Binding DataContext.SortCommand, RelativeSource={RelativeSource AncestorType=ListView}}"/>
-								<Setter Property="CommandParameter" Value="Name"/>
-							</Style>
-						</GridViewColumn.HeaderContainerStyle>
-						<GridViewColumn.CellTemplate>
-							<DataTemplate>
-								<TextBlock Text="{Binding Name}" TextTrimming="CharacterEllipsis"/>
-							</DataTemplate>
-						</GridViewColumn.CellTemplate>
-					</GridViewColumn>
+		<Grid Grid.Row="3" Margin="10,0,10,10">
+			<Grid.ColumnDefinitions>
+				<ColumnDefinition Width="*"/>
+				<ColumnDefinition Width="Auto"/>
+				<ColumnDefinition x:Name="DetailsPanelColumn" Width="300"/>
+			</Grid.ColumnDefinitions>
 
-					<GridViewColumn Header="Build Status" HeaderTemplate="{StaticResource ColumnHeaderTemplate}" Width="110" converters:GridViewColumnTag.Tag="Status">
-						<GridViewColumn.HeaderContainerStyle>
-							<Style TargetType="GridViewColumnHeader" BasedOn="{StaticResource SortableColumnHeaderStyle}">
-								<Setter Property="Command" Value="{Binding DataContext.SortCommand, RelativeSource={RelativeSource AncestorType=ListView}}"/>
-								<Setter Property="CommandParameter" Value="StatusText"/>
-							</Style>
-						</GridViewColumn.HeaderContainerStyle>
-						<GridViewColumn.CellTemplate>
-							<DataTemplate>
-								<Border Background="{Binding StatusColor}" CornerRadius="4" Padding="6,2" HorizontalAlignment="Left">
-									<TextBlock Text="{Binding StatusText}" Foreground="{Binding StatusTextColor}" FontSize="11" FontWeight="SemiBold"/>
-								</Border>
-							</DataTemplate>
-						</GridViewColumn.CellTemplate>
-					</GridViewColumn>
+			<!-- List View -->
+			<ListView x:Name="ProjectListView" Grid.Column="0"
+					  ItemsSource="{Binding SortedProjects}"
+					  SelectedItem="{Binding SelectedProject, Mode=TwoWay}"
+					  SelectionMode="Single"
+					  SizeChanged="ProjectListView_SizeChanged"
+					  PreviewMouseRightButtonUp="ProjectListView_PreviewMouseRightButtonUp"
+					  MouseDoubleClick="ProjectListView_MouseDoubleClick"
+					  Visibility="{Binding IsGraphView, Converter={StaticResource BoolToVisibilityInverseConverter}}">
+				<ListView.View>
+					<GridView ColumnHeaderContainerStyle="{StaticResource SortableColumnHeaderStyle}" AllowsColumnReorder="True">
+						<GridViewColumn Header="Project Name" HeaderTemplate="{StaticResource ColumnHeaderTemplate}" Width="200" converters:GridViewColumnTag.Tag="Name">
+							<GridViewColumn.HeaderContainerStyle>
+								<Style TargetType="GridViewColumnHeader" BasedOn="{StaticResource SortableColumnHeaderStyle}">
+									<Setter Property="Command" Value="{Binding DataContext.SortCommand, RelativeSource={RelativeSource AncestorType=ListView}}"/>
+									<Setter Property="CommandParameter" Value="Name"/>
+								</Style>
+							</GridViewColumn.HeaderContainerStyle>
+							<GridViewColumn.CellTemplate>
+								<DataTemplate>
+									<TextBlock Text="{Binding Name}" TextTrimming="CharacterEllipsis"/>
+								</DataTemplate>
+							</GridViewColumn.CellTemplate>
+						</GridViewColumn>
 
-					<GridViewColumn Width="30" converters:GridViewColumnTag.Tag="Errors">
-						<GridViewColumn.Header>
-							<imaging:CrispImage Moniker="{x:Static catalog:KnownMonikers.StatusError}" Width="16" Height="16" IsHitTestVisible="False"/>
-						</GridViewColumn.Header>
-						<GridViewColumn.HeaderContainerStyle>
-							<Style TargetType="GridViewColumnHeader" BasedOn="{StaticResource SortableColumnHeaderStyle}">
-								<Setter Property="Command" Value="{Binding DataContext.SortCommand, RelativeSource={RelativeSource AncestorType=ListView}}"/>
-								<Setter Property="CommandParameter" Value="ErrorCount"/>
-							</Style>
-						</GridViewColumn.HeaderContainerStyle>
-						<GridViewColumn.CellTemplate>
-							<DataTemplate>
-								<TextBlock Text="{Binding ErrorCount, Converter={StaticResource ZeroToEmptyConverter}}" TextAlignment="Right"/>
-							</DataTemplate>
-						</GridViewColumn.CellTemplate>
-					</GridViewColumn>
+						<GridViewColumn Header="Build Status" HeaderTemplate="{StaticResource ColumnHeaderTemplate}" Width="110" converters:GridViewColumnTag.Tag="Status">
+							<GridViewColumn.HeaderContainerStyle>
+								<Style TargetType="GridViewColumnHeader" BasedOn="{StaticResource SortableColumnHeaderStyle}">
+									<Setter Property="Command" Value="{Binding DataContext.SortCommand, RelativeSource={RelativeSource AncestorType=ListView}}"/>
+									<Setter Property="CommandParameter" Value="StatusText"/>
+								</Style>
+							</GridViewColumn.HeaderContainerStyle>
+							<GridViewColumn.CellTemplate>
+								<DataTemplate>
+									<Border Background="{Binding StatusColor}" CornerRadius="4" Padding="6,2" HorizontalAlignment="Left">
+										<TextBlock Text="{Binding StatusText}" Foreground="{Binding StatusTextColor}" FontSize="11" FontWeight="SemiBold"/>
+									</Border>
+								</DataTemplate>
+							</GridViewColumn.CellTemplate>
+						</GridViewColumn>
 
-					<GridViewColumn Width="30" converters:GridViewColumnTag.Tag="Warnings">
-						<GridViewColumn.Header>
-							<imaging:CrispImage Moniker="{x:Static catalog:KnownMonikers.StatusWarning}" Width="16" Height="16" IsHitTestVisible="False"/>
-						</GridViewColumn.Header>
-						<GridViewColumn.HeaderContainerStyle>
-							<Style TargetType="GridViewColumnHeader" BasedOn="{StaticResource SortableColumnHeaderStyle}">
-								<Setter Property="Command" Value="{Binding DataContext.SortCommand, RelativeSource={RelativeSource AncestorType=ListView}}"/>
-								<Setter Property="CommandParameter" Value="WarningCount"/>
-							</Style>
-						</GridViewColumn.HeaderContainerStyle>
-						<GridViewColumn.CellTemplate>
-							<DataTemplate>
-								<TextBlock Text="{Binding WarningCount, Converter={StaticResource ZeroToEmptyConverter}}" TextAlignment="Right"/>
-							</DataTemplate>
-						</GridViewColumn.CellTemplate>
-					</GridViewColumn>
+						<GridViewColumn Width="30" converters:GridViewColumnTag.Tag="Errors">
+							<GridViewColumn.Header>
+								<imaging:CrispImage Moniker="{x:Static catalog:KnownMonikers.StatusError}" Width="16" Height="16" IsHitTestVisible="False"/>
+							</GridViewColumn.Header>
+							<GridViewColumn.HeaderContainerStyle>
+								<Style TargetType="GridViewColumnHeader" BasedOn="{StaticResource SortableColumnHeaderStyle}">
+									<Setter Property="Command" Value="{Binding DataContext.SortCommand, RelativeSource={RelativeSource AncestorType=ListView}}"/>
+									<Setter Property="CommandParameter" Value="ErrorCount"/>
+								</Style>
+							</GridViewColumn.HeaderContainerStyle>
+							<GridViewColumn.CellTemplate>
+								<DataTemplate>
+									<TextBlock Text="{Binding ErrorCount, Converter={StaticResource ZeroToEmptyConverter}}" TextAlignment="Right"/>
+								</DataTemplate>
+							</GridViewColumn.CellTemplate>
+						</GridViewColumn>
 
-					<GridViewColumn Width="30" converters:GridViewColumnTag.Tag="Messages">
-						<GridViewColumn.Header>
-							<imaging:CrispImage Moniker="{x:Static catalog:KnownMonikers.StatusInformation}" Width="16" Height="16" IsHitTestVisible="False"/>
-						</GridViewColumn.Header>
-						<GridViewColumn.HeaderContainerStyle>
-							<Style TargetType="GridViewColumnHeader" BasedOn="{StaticResource SortableColumnHeaderStyle}">
-								<Setter Property="Command" Value="{Binding DataContext.SortCommand, RelativeSource={RelativeSource AncestorType=ListView}}"/>
-								<Setter Property="CommandParameter" Value="MessageCount"/>
-							</Style>
-						</GridViewColumn.HeaderContainerStyle>
-						<GridViewColumn.CellTemplate>
-							<DataTemplate>
-								<TextBlock Text="{Binding MessageCount, Converter={StaticResource ZeroToEmptyConverter}}" TextAlignment="Right"/>
-							</DataTemplate>
-						</GridViewColumn.CellTemplate>
-					</GridViewColumn>
+						<GridViewColumn Width="30" converters:GridViewColumnTag.Tag="Warnings">
+							<GridViewColumn.Header>
+								<imaging:CrispImage Moniker="{x:Static catalog:KnownMonikers.StatusWarning}" Width="16" Height="16" IsHitTestVisible="False"/>
+							</GridViewColumn.Header>
+							<GridViewColumn.HeaderContainerStyle>
+								<Style TargetType="GridViewColumnHeader" BasedOn="{StaticResource SortableColumnHeaderStyle}">
+									<Setter Property="Command" Value="{Binding DataContext.SortCommand, RelativeSource={RelativeSource AncestorType=ListView}}"/>
+									<Setter Property="CommandParameter" Value="WarningCount"/>
+								</Style>
+							</GridViewColumn.HeaderContainerStyle>
+							<GridViewColumn.CellTemplate>
+								<DataTemplate>
+									<TextBlock Text="{Binding WarningCount, Converter={StaticResource ZeroToEmptyConverter}}" TextAlignment="Right"/>
+								</DataTemplate>
+							</GridViewColumn.CellTemplate>
+						</GridViewColumn>
 
-					<GridViewColumn Header="Build Start" HeaderTemplate="{StaticResource ColumnHeaderTemplate}" Width="80" converters:GridViewColumnTag.Tag="BuildStart">
-						<GridViewColumn.HeaderContainerStyle>
-							<Style TargetType="GridViewColumnHeader" BasedOn="{StaticResource SortableColumnHeaderStyle}">
-								<Setter Property="Command" Value="{Binding DataContext.SortCommand, RelativeSource={RelativeSource AncestorType=ListView}}"/>
-								<Setter Property="CommandParameter" Value="BuildStart"/>
-							</Style>
-						</GridViewColumn.HeaderContainerStyle>
-						<GridViewColumn.CellTemplate>
-							<DataTemplate>
-								<TextBlock Text="{Binding BuildStart, TargetNullValue='', StringFormat=HH:mm:ss}"/>
-							</DataTemplate>
-						</GridViewColumn.CellTemplate>
-					</GridViewColumn>
+						<GridViewColumn Width="30" converters:GridViewColumnTag.Tag="Messages">
+							<GridViewColumn.Header>
+								<imaging:CrispImage Moniker="{x:Static catalog:KnownMonikers.StatusInformation}" Width="16" Height="16" IsHitTestVisible="False"/>
+							</GridViewColumn.Header>
+							<GridViewColumn.HeaderContainerStyle>
+								<Style TargetType="GridViewColumnHeader" BasedOn="{StaticResource SortableColumnHeaderStyle}">
+									<Setter Property="Command" Value="{Binding DataContext.SortCommand, RelativeSource={RelativeSource AncestorType=ListView}}"/>
+									<Setter Property="CommandParameter" Value="MessageCount"/>
+								</Style>
+							</GridViewColumn.HeaderContainerStyle>
+							<GridViewColumn.CellTemplate>
+								<DataTemplate>
+									<TextBlock Text="{Binding MessageCount, Converter={StaticResource ZeroToEmptyConverter}}" TextAlignment="Right"/>
+								</DataTemplate>
+							</GridViewColumn.CellTemplate>
+						</GridViewColumn>
 
-					<GridViewColumn Header="Build Finish" HeaderTemplate="{StaticResource ColumnHeaderTemplate}" Width="80" converters:GridViewColumnTag.Tag="BuildFinish">
-						<GridViewColumn.HeaderContainerStyle>
-							<Style TargetType="GridViewColumnHeader" BasedOn="{StaticResource SortableColumnHeaderStyle}">
-								<Setter Property="Command" Value="{Binding DataContext.SortCommand, RelativeSource={RelativeSource AncestorType=ListView}}"/>
-								<Setter Property="CommandParameter" Value="BuildFinish"/>
-							</Style>
-						</GridViewColumn.HeaderContainerStyle>
-						<GridViewColumn.CellTemplate>
-							<DataTemplate>
-								<TextBlock Text="{Binding BuildFinish, TargetNullValue='', StringFormat=HH:mm:ss}"/>
-							</DataTemplate>
-						</GridViewColumn.CellTemplate>
-					</GridViewColumn>
+						<GridViewColumn Header="Build Start" HeaderTemplate="{StaticResource ColumnHeaderTemplate}" Width="80" converters:GridViewColumnTag.Tag="BuildStart">
+							<GridViewColumn.HeaderContainerStyle>
+								<Style TargetType="GridViewColumnHeader" BasedOn="{StaticResource SortableColumnHeaderStyle}">
+									<Setter Property="Command" Value="{Binding DataContext.SortCommand, RelativeSource={RelativeSource AncestorType=ListView}}"/>
+									<Setter Property="CommandParameter" Value="BuildStart"/>
+								</Style>
+							</GridViewColumn.HeaderContainerStyle>
+							<GridViewColumn.CellTemplate>
+								<DataTemplate>
+									<TextBlock Text="{Binding BuildStart, TargetNullValue='', StringFormat=HH:mm:ss}"/>
+								</DataTemplate>
+							</GridViewColumn.CellTemplate>
+						</GridViewColumn>
 
-					<GridViewColumn Header="Duration" HeaderTemplate="{StaticResource ColumnHeaderTemplate}" Width="80" converters:GridViewColumnTag.Tag="Duration">
-						<GridViewColumn.HeaderContainerStyle>
-							<Style TargetType="GridViewColumnHeader" BasedOn="{StaticResource SortableColumnHeaderStyle}">
-								<Setter Property="Command" Value="{Binding DataContext.SortCommand, RelativeSource={RelativeSource AncestorType=ListView}}"/>
-								<Setter Property="CommandParameter" Value="BuildDuration"/>
-							</Style>
-						</GridViewColumn.HeaderContainerStyle>
-						<GridViewColumn.CellTemplate>
-							<DataTemplate>
-								<TextBlock Text="{Binding BuildDuration, Converter={StaticResource NullableTimeSpanConverter}}"/>
-							</DataTemplate>
-						</GridViewColumn.CellTemplate>
-					</GridViewColumn>
+						<GridViewColumn Header="Build Finish" HeaderTemplate="{StaticResource ColumnHeaderTemplate}" Width="80" converters:GridViewColumnTag.Tag="BuildFinish">
+							<GridViewColumn.HeaderContainerStyle>
+								<Style TargetType="GridViewColumnHeader" BasedOn="{StaticResource SortableColumnHeaderStyle}">
+									<Setter Property="Command" Value="{Binding DataContext.SortCommand, RelativeSource={RelativeSource AncestorType=ListView}}"/>
+									<Setter Property="CommandParameter" Value="BuildFinish"/>
+								</Style>
+							</GridViewColumn.HeaderContainerStyle>
+							<GridViewColumn.CellTemplate>
+								<DataTemplate>
+									<TextBlock Text="{Binding BuildFinish, TargetNullValue='', StringFormat=HH:mm:ss}"/>
+								</DataTemplate>
+							</GridViewColumn.CellTemplate>
+						</GridViewColumn>
 
-					<GridViewColumn Header="Configuration" HeaderTemplate="{StaticResource ColumnHeaderTemplate}" Width="90" converters:GridViewColumnTag.Tag="Configuration">
-						<GridViewColumn.HeaderContainerStyle>
-							<Style TargetType="GridViewColumnHeader" BasedOn="{StaticResource SortableColumnHeaderStyle}">
-								<Setter Property="Command" Value="{Binding DataContext.SortCommand, RelativeSource={RelativeSource AncestorType=ListView}}"/>
-								<Setter Property="CommandParameter" Value="Configuration"/>
-							</Style>
-						</GridViewColumn.HeaderContainerStyle>
-						<GridViewColumn.CellTemplate>
-							<DataTemplate>
-								<TextBlock Text="{Binding Configuration}" TextTrimming="CharacterEllipsis"/>
-							</DataTemplate>
-						</GridViewColumn.CellTemplate>
-					</GridViewColumn>
+						<GridViewColumn Header="Duration" HeaderTemplate="{StaticResource ColumnHeaderTemplate}" Width="80" converters:GridViewColumnTag.Tag="Duration">
+							<GridViewColumn.HeaderContainerStyle>
+								<Style TargetType="GridViewColumnHeader" BasedOn="{StaticResource SortableColumnHeaderStyle}">
+									<Setter Property="Command" Value="{Binding DataContext.SortCommand, RelativeSource={RelativeSource AncestorType=ListView}}"/>
+									<Setter Property="CommandParameter" Value="BuildDuration"/>
+								</Style>
+							</GridViewColumn.HeaderContainerStyle>
+							<GridViewColumn.CellTemplate>
+								<DataTemplate>
+									<TextBlock Text="{Binding BuildDuration, Converter={StaticResource NullableTimeSpanConverter}}"/>
+								</DataTemplate>
+							</GridViewColumn.CellTemplate>
+						</GridViewColumn>
 
-					<GridViewColumn Header="Platform" HeaderTemplate="{StaticResource ColumnHeaderTemplate}" Width="80" converters:GridViewColumnTag.Tag="Platform">
-						<GridViewColumn.HeaderContainerStyle>
-							<Style TargetType="GridViewColumnHeader" BasedOn="{StaticResource SortableColumnHeaderStyle}">
-								<Setter Property="Command" Value="{Binding DataContext.SortCommand, RelativeSource={RelativeSource AncestorType=ListView}}"/>
-								<Setter Property="CommandParameter" Value="Platform"/>
-							</Style>
-						</GridViewColumn.HeaderContainerStyle>
-						<GridViewColumn.CellTemplate>
-							<DataTemplate>
-								<TextBlock Text="{Binding Platform}" TextTrimming="CharacterEllipsis"/>
-							</DataTemplate>
-						</GridViewColumn.CellTemplate>
-					</GridViewColumn>
+						<GridViewColumn Header="Configuration" HeaderTemplate="{StaticResource ColumnHeaderTemplate}" Width="90" converters:GridViewColumnTag.Tag="Configuration">
+							<GridViewColumn.HeaderContainerStyle>
+								<Style TargetType="GridViewColumnHeader" BasedOn="{StaticResource SortableColumnHeaderStyle}">
+									<Setter Property="Command" Value="{Binding DataContext.SortCommand, RelativeSource={RelativeSource AncestorType=ListView}}"/>
+									<Setter Property="CommandParameter" Value="Configuration"/>
+								</Style>
+							</GridViewColumn.HeaderContainerStyle>
+							<GridViewColumn.CellTemplate>
+								<DataTemplate>
+									<TextBlock Text="{Binding Configuration}" TextTrimming="CharacterEllipsis"/>
+								</DataTemplate>
+							</GridViewColumn.CellTemplate>
+						</GridViewColumn>
 
-					<GridViewColumn Header="Project Type" HeaderTemplate="{StaticResource ColumnHeaderTemplate}" Width="90" converters:GridViewColumnTag.Tag="ProjectType">
-						<GridViewColumn.HeaderContainerStyle>
-							<Style TargetType="GridViewColumnHeader" BasedOn="{StaticResource SortableColumnHeaderStyle}">
-								<Setter Property="Command" Value="{Binding DataContext.SortCommand, RelativeSource={RelativeSource AncestorType=ListView}}"/>
-								<Setter Property="CommandParameter" Value="ProjectType"/>
-							</Style>
-						</GridViewColumn.HeaderContainerStyle>
-						<GridViewColumn.CellTemplate>
-							<DataTemplate>
-								<TextBlock Text="{Binding ProjectType}" TextTrimming="CharacterEllipsis"/>
-							</DataTemplate>
-						</GridViewColumn.CellTemplate>
-					</GridViewColumn>
+						<GridViewColumn Header="Platform" HeaderTemplate="{StaticResource ColumnHeaderTemplate}" Width="80" converters:GridViewColumnTag.Tag="Platform">
+							<GridViewColumn.HeaderContainerStyle>
+								<Style TargetType="GridViewColumnHeader" BasedOn="{StaticResource SortableColumnHeaderStyle}">
+									<Setter Property="Command" Value="{Binding DataContext.SortCommand, RelativeSource={RelativeSource AncestorType=ListView}}"/>
+									<Setter Property="CommandParameter" Value="Platform"/>
+								</Style>
+							</GridViewColumn.HeaderContainerStyle>
+							<GridViewColumn.CellTemplate>
+								<DataTemplate>
+									<TextBlock Text="{Binding Platform}" TextTrimming="CharacterEllipsis"/>
+								</DataTemplate>
+							</GridViewColumn.CellTemplate>
+						</GridViewColumn>
 
-					<GridViewColumn x:Name="DependenciesColumn" Header="Dependencies" HeaderTemplate="{StaticResource ColumnHeaderTemplate}" Width="200" converters:GridViewColumnTag.Tag="Dependencies">
-						<GridViewColumn.HeaderContainerStyle>
-							<Style TargetType="GridViewColumnHeader" BasedOn="{StaticResource SortableColumnHeaderStyle}">
-								<Setter Property="Command" Value="{Binding DataContext.SortCommand, RelativeSource={RelativeSource AncestorType=ListView}}"/>
-								<Setter Property="CommandParameter" Value="DependenciesText"/>
-							</Style>
-						</GridViewColumn.HeaderContainerStyle>
-						<GridViewColumn.CellTemplate>
-							<DataTemplate>
-								<ItemsControl ItemsSource="{Binding Dependencies, Converter={StaticResource SortByNameConverter}}">
+						<GridViewColumn Header="Project Type" HeaderTemplate="{StaticResource ColumnHeaderTemplate}" Width="90" converters:GridViewColumnTag.Tag="ProjectType">
+							<GridViewColumn.HeaderContainerStyle>
+								<Style TargetType="GridViewColumnHeader" BasedOn="{StaticResource SortableColumnHeaderStyle}">
+									<Setter Property="Command" Value="{Binding DataContext.SortCommand, RelativeSource={RelativeSource AncestorType=ListView}}"/>
+									<Setter Property="CommandParameter" Value="ProjectType"/>
+								</Style>
+							</GridViewColumn.HeaderContainerStyle>
+							<GridViewColumn.CellTemplate>
+								<DataTemplate>
+									<TextBlock Text="{Binding ProjectType}" TextTrimming="CharacterEllipsis"/>
+								</DataTemplate>
+							</GridViewColumn.CellTemplate>
+						</GridViewColumn>
+
+						<GridViewColumn x:Name="DependenciesColumn" Header="Dependencies" HeaderTemplate="{StaticResource ColumnHeaderTemplate}" Width="200" converters:GridViewColumnTag.Tag="Dependencies">
+							<GridViewColumn.HeaderContainerStyle>
+								<Style TargetType="GridViewColumnHeader" BasedOn="{StaticResource SortableColumnHeaderStyle}">
+									<Setter Property="Command" Value="{Binding DataContext.SortCommand, RelativeSource={RelativeSource AncestorType=ListView}}"/>
+									<Setter Property="CommandParameter" Value="DependenciesText"/>
+								</Style>
+							</GridViewColumn.HeaderContainerStyle>
+							<GridViewColumn.CellTemplate>
+								<DataTemplate>
+									<ItemsControl ItemsSource="{Binding Dependencies, Converter={StaticResource SortByNameConverter}}">
+										<ItemsControl.ItemsPanel>
+											<ItemsPanelTemplate>
+												<StackPanel Orientation="Horizontal"/>
+											</ItemsPanelTemplate>
+										</ItemsControl.ItemsPanel>
+										<ItemsControl.ItemTemplate>
+											<DataTemplate>
+												<Border Background="{DynamicResource {x:Static vsshell:VsBrushes.ToolWindowBackgroundKey}}"
+														BorderBrush="{DynamicResource {x:Static vsshell:VsBrushes.ToolWindowBorderKey}}"
+														BorderThickness="1"
+														CornerRadius="3"
+														Padding="4,1"
+														Margin="0,1,3,1">
+													<TextBlock Text="{Binding Name}" Foreground="{DynamicResource {x:Static vsshell:VsBrushes.GrayTextKey}}" FontSize="11"/>
+												</Border>
+											</DataTemplate>
+										</ItemsControl.ItemTemplate>
+									</ItemsControl>
+								</DataTemplate>
+							</GridViewColumn.CellTemplate>
+						</GridViewColumn>
+					</GridView>
+				</ListView.View>
+			</ListView>
+
+			<!-- Graph View -->
+			<Border Grid.Column="0" Height="1" Margin="0"
+					Background="{DynamicResource {x:Static vsshell:VsBrushes.ToolWindowBorderKey}}"
+					VerticalAlignment="Top"
+					Visibility="{Binding IsGraphView, Converter={StaticResource BoolToVisibilityConverter}}"/>
+
+			<ScrollViewer x:Name="GraphScrollViewer" Grid.Column="0" Margin="0,11,0,0"
+						  HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto"
+						  Background="Transparent"
+						  PreviewMouseLeftButtonDown="GraphScrollViewer_PreviewMouseLeftButtonDown"
+						  Visibility="{Binding IsGraphView, Converter={StaticResource BoolToVisibilityConverter}}">
+				<ItemsControl ItemsSource="{Binding GraphRowGroups}" Margin="0">
+					<ItemsControl.ItemsPanel>
+						<ItemsPanelTemplate>
+							<StackPanel Orientation="Vertical"/>
+						</ItemsPanelTemplate>
+					</ItemsControl.ItemsPanel>
+					<ItemsControl.ItemTemplate>
+						<DataTemplate>
+							<Border Background="{Binding BackgroundBrush}"
+									BorderBrush="Transparent"
+									BorderThickness="0"
+									CornerRadius="5"
+									Margin="0,0,0,10"
+									Padding="8">
+								<ItemsControl ItemsSource="{Binding Nodes}">
 									<ItemsControl.ItemsPanel>
 										<ItemsPanelTemplate>
-											<StackPanel Orientation="Horizontal"/>
+											<WrapPanel Orientation="Horizontal"/>
 										</ItemsPanelTemplate>
 									</ItemsControl.ItemsPanel>
 									<ItemsControl.ItemTemplate>
 										<DataTemplate>
-											<Border Background="{DynamicResource {x:Static vsshell:VsBrushes.ToolWindowBackgroundKey}}"
-													BorderBrush="{DynamicResource {x:Static vsshell:VsBrushes.ToolWindowBorderKey}}"
-													BorderThickness="1"
-													CornerRadius="3"
-													Padding="4,1"
-													Margin="0,1,3,1">
-												<TextBlock Text="{Binding Name}" Foreground="{DynamicResource {x:Static vsshell:VsBrushes.GrayTextKey}}" FontSize="11"/>
-											</Border>
+											<views:ProjectNodeControl Margin="5"/>
 										</DataTemplate>
 									</ItemsControl.ItemTemplate>
 								</ItemsControl>
-							</DataTemplate>
-						</GridViewColumn.CellTemplate>
-					</GridViewColumn>
-				</GridView>
-			</ListView.View>
-		</ListView>
+							</Border>
+						</DataTemplate>
+					</ItemsControl.ItemTemplate>
+				</ItemsControl>
+			</ScrollViewer>
 
-		<!-- Graph View -->
-		<Border Grid.Row="3" Height="1" Margin="10,0,10,10"
-				Background="{DynamicResource {x:Static vsshell:VsBrushes.ToolWindowBorderKey}}"
-				VerticalAlignment="Top"
-				Visibility="{Binding IsGraphView, Converter={StaticResource BoolToVisibilityConverter}}"/>
+			<!-- GridSplitter -->
+			<GridSplitter x:Name="DetailsSplitter" Grid.Column="1" Width="3" Margin="10,0"
+						  HorizontalAlignment="Center" VerticalAlignment="Stretch"
+						  Background="{DynamicResource {x:Static vsshell:VsBrushes.ToolWindowBorderKey}}"
+						  Visibility="{Binding ShowProjectDetails, Converter={StaticResource BoolToVisibilityConverter}}"
+						  DragCompleted="DetailsSplitter_DragCompleted"/>
 
-		<ScrollViewer Grid.Row="3" Margin="10,11,10,10"
-					  HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto"
-					  Visibility="{Binding IsGraphView, Converter={StaticResource BoolToVisibilityConverter}}">
-			<ItemsControl ItemsSource="{Binding GraphRowGroups}" Margin="0">
-				<ItemsControl.ItemsPanel>
-					<ItemsPanelTemplate>
-						<StackPanel Orientation="Vertical"/>
-					</ItemsPanelTemplate>
-				</ItemsControl.ItemsPanel>
-				<ItemsControl.ItemTemplate>
-					<DataTemplate>
-						<Border Background="{Binding BackgroundBrush}"
-								BorderBrush="Transparent"
-								BorderThickness="0"
-								CornerRadius="5"
-								Margin="0,0,0,10"
-								Padding="8">
-							<ItemsControl ItemsSource="{Binding Nodes}">
-								<ItemsControl.ItemsPanel>
-									<ItemsPanelTemplate>
-										<WrapPanel Orientation="Horizontal"/>
-									</ItemsPanelTemplate>
-								</ItemsControl.ItemsPanel>
-								<ItemsControl.ItemTemplate>
-									<DataTemplate>
-										<views:ProjectNodeControl Margin="5"/>
-									</DataTemplate>
-								</ItemsControl.ItemTemplate>
-							</ItemsControl>
-						</Border>
-					</DataTemplate>
-				</ItemsControl.ItemTemplate>
-			</ItemsControl>
-		</ScrollViewer>
+			<!-- Details Panel -->
+			<Border Grid.Column="2"
+					Background="{DynamicResource {x:Static vsshell:VsBrushes.ToolWindowBackgroundKey}}"
+					BorderBrush="{DynamicResource {x:Static vsshell:VsBrushes.ToolWindowBorderKey}}"
+					BorderThickness="1"
+					Visibility="{Binding ShowProjectDetails, Converter={StaticResource BoolToVisibilityConverter}}">
+				<Grid>
+				<!-- Empty state hint -->
+				<TextBlock Text="Select a project to view details"
+						   HorizontalAlignment="Center" VerticalAlignment="Center"
+						   Foreground="{DynamicResource {x:Static vsshell:VsBrushes.GrayTextKey}}"
+						   FontStyle="Italic">
+					<TextBlock.Style>
+						<Style TargetType="TextBlock">
+							<Setter Property="Visibility" Value="Collapsed"/>
+							<Style.Triggers>
+								<DataTrigger Binding="{Binding SelectedProject}" Value="{x:Null}">
+									<Setter Property="Visibility" Value="Visible"/>
+								</DataTrigger>
+							</Style.Triggers>
+						</Style>
+					</TextBlock.Style>
+				</TextBlock>
+
+				<!-- Project details content -->
+				<ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled"
+							  Margin="10,8,10,8">
+					<ScrollViewer.Style>
+						<Style TargetType="ScrollViewer">
+							<Setter Property="Visibility" Value="Visible"/>
+							<Style.Triggers>
+								<DataTrigger Binding="{Binding SelectedProject}" Value="{x:Null}">
+									<Setter Property="Visibility" Value="Collapsed"/>
+								</DataTrigger>
+							</Style.Triggers>
+						</Style>
+					</ScrollViewer.Style>
+					<StackPanel>
+						<!-- Project name header -->
+						<TextBlock Text="{Binding SelectedProject.Name}" FontSize="14" FontWeight="SemiBold"
+								   Foreground="{DynamicResource {x:Static vsshell:VsBrushes.ToolWindowTextKey}}"
+								   TextTrimming="CharacterEllipsis" Margin="0,0,0,8"/>
+
+						<!-- Metadata -->
+						<Grid>
+							<Grid.ColumnDefinitions>
+								<ColumnDefinition Width="*"/>
+								<ColumnDefinition Width="8"/>
+								<ColumnDefinition Width="*"/>
+							</Grid.ColumnDefinitions>
+
+							<!-- Left column: build-related -->
+							<Grid Grid.Column="0">
+								<Grid.ColumnDefinitions>
+									<ColumnDefinition Width="Auto"/>
+									<ColumnDefinition Width="*"/>
+								</Grid.ColumnDefinitions>
+								<Grid.RowDefinitions>
+									<RowDefinition Height="Auto"/>
+									<RowDefinition Height="Auto"/>
+									<RowDefinition Height="Auto"/>
+									<RowDefinition Height="Auto"/>
+								</Grid.RowDefinitions>
+
+								<TextBlock Grid.Row="0" Grid.Column="0" Text="Status:" Foreground="{DynamicResource {x:Static vsshell:VsBrushes.GrayTextKey}}" Margin="0,2,8,2"/>
+								<Border Grid.Row="0" Grid.Column="1" Background="{Binding SelectedProject.StatusColor}" CornerRadius="4" Padding="6,1" HorizontalAlignment="Left" Margin="0,2">
+									<TextBlock Text="{Binding SelectedProject.StatusText}" Foreground="{Binding SelectedProject.StatusTextColor}" FontSize="11" FontWeight="SemiBold"/>
+								</Border>
+
+								<TextBlock Grid.Row="1" Grid.Column="0" Text="Start:" Foreground="{DynamicResource {x:Static vsshell:VsBrushes.GrayTextKey}}" Margin="0,2,8,2"/>
+								<TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding SelectedProject.BuildStart, TargetNullValue='', StringFormat=HH:mm:ss}" Margin="0,2"/>
+
+								<TextBlock Grid.Row="2" Grid.Column="0" Text="Finish:" Foreground="{DynamicResource {x:Static vsshell:VsBrushes.GrayTextKey}}" Margin="0,2,8,2"/>
+								<TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding SelectedProject.BuildFinish, TargetNullValue='', StringFormat=HH:mm:ss}" Margin="0,2"/>
+
+								<TextBlock Grid.Row="3" Grid.Column="0" Text="Duration:" Foreground="{DynamicResource {x:Static vsshell:VsBrushes.GrayTextKey}}" Margin="0,2,8,2"/>
+								<TextBlock Grid.Row="3" Grid.Column="1" Text="{Binding SelectedProject.BuildDuration, Converter={StaticResource NullableTimeSpanConverter}}" Margin="0,2"/>
+							</Grid>
+
+							<!-- Right column: project info -->
+							<Grid Grid.Column="2">
+								<Grid.ColumnDefinitions>
+									<ColumnDefinition Width="Auto"/>
+									<ColumnDefinition Width="*"/>
+								</Grid.ColumnDefinitions>
+								<Grid.RowDefinitions>
+									<RowDefinition Height="Auto"/>
+									<RowDefinition Height="Auto"/>
+									<RowDefinition Height="Auto"/>
+								</Grid.RowDefinitions>
+
+								<TextBlock Grid.Row="0" Grid.Column="0" Text="Type:" Foreground="{DynamicResource {x:Static vsshell:VsBrushes.GrayTextKey}}" Margin="0,2,8,2"/>
+								<TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding SelectedProject.ProjectType}" Margin="0,2" TextTrimming="CharacterEllipsis"/>
+
+								<TextBlock Grid.Row="1" Grid.Column="0" Text="Configuration:" Foreground="{DynamicResource {x:Static vsshell:VsBrushes.GrayTextKey}}" Margin="0,2,8,2"/>
+								<TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding SelectedProject.Configuration}" Margin="0,2" TextTrimming="CharacterEllipsis"/>
+
+								<TextBlock Grid.Row="2" Grid.Column="0" Text="Platform:" Foreground="{DynamicResource {x:Static vsshell:VsBrushes.GrayTextKey}}" Margin="0,2,8,2"/>
+								<TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding SelectedProject.Platform}" Margin="0,2" TextTrimming="CharacterEllipsis"/>
+							</Grid>
+						</Grid>
+
+						<!-- Separator -->
+						<Border Height="1" Margin="0,8,0,8"
+								Background="{DynamicResource {x:Static vsshell:VsBrushes.ToolWindowBorderKey}}"/>
+
+						<!-- Diagnostics toolbar -->
+						<StackPanel Orientation="Horizontal" Margin="0,0,0,6">
+							<ToggleButton IsChecked="{Binding ShowErrors}" Padding="4,2" Margin="0,0,4,0"
+										  BorderBrush="#E51400" Cursor="Hand">
+								<ToggleButton.Template>
+									<ControlTemplate TargetType="ToggleButton">
+										<Border x:Name="Bd" Background="Transparent" CornerRadius="3"
+												BorderThickness="1" BorderBrush="Transparent"
+												Padding="{TemplateBinding Padding}">
+											<ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+										</Border>
+										<ControlTemplate.Triggers>
+											<Trigger Property="IsChecked" Value="True">
+												<Setter TargetName="Bd" Property="BorderBrush" Value="{Binding BorderBrush, RelativeSource={RelativeSource TemplatedParent}}"/>
+											</Trigger>
+											<Trigger Property="IsMouseOver" Value="True">
+												<Setter TargetName="Bd" Property="Background" Value="{DynamicResource {x:Static vsshell:VsBrushes.CommandBarMouseOverBackgroundBeginKey}}"/>
+											</Trigger>
+										</ControlTemplate.Triggers>
+									</ControlTemplate>
+								</ToggleButton.Template>
+								<StackPanel Orientation="Horizontal">
+									<imaging:CrispImage Moniker="{x:Static catalog:KnownMonikers.StatusError}" Width="16" Height="16"/>
+									<TextBlock Text="{Binding SelectedErrorCount}" Margin="3,0,0,0" VerticalAlignment="Center" FontSize="11"
+											   Foreground="{DynamicResource {x:Static vsshell:VsBrushes.ToolWindowTextKey}}"/>
+								</StackPanel>
+							</ToggleButton>
+
+							<ToggleButton IsChecked="{Binding ShowWarnings}" Padding="4,2" Margin="0,0,4,0"
+										  BorderBrush="#E5A000" Cursor="Hand">
+								<ToggleButton.Template>
+									<ControlTemplate TargetType="ToggleButton">
+										<Border x:Name="Bd" Background="Transparent" CornerRadius="3"
+												BorderThickness="1" BorderBrush="Transparent"
+												Padding="{TemplateBinding Padding}">
+											<ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+										</Border>
+										<ControlTemplate.Triggers>
+											<Trigger Property="IsChecked" Value="True">
+												<Setter TargetName="Bd" Property="BorderBrush" Value="{Binding BorderBrush, RelativeSource={RelativeSource TemplatedParent}}"/>
+											</Trigger>
+											<Trigger Property="IsMouseOver" Value="True">
+												<Setter TargetName="Bd" Property="Background" Value="{DynamicResource {x:Static vsshell:VsBrushes.CommandBarMouseOverBackgroundBeginKey}}"/>
+											</Trigger>
+										</ControlTemplate.Triggers>
+									</ControlTemplate>
+								</ToggleButton.Template>
+								<StackPanel Orientation="Horizontal">
+									<imaging:CrispImage Moniker="{x:Static catalog:KnownMonikers.StatusWarning}" Width="16" Height="16"/>
+									<TextBlock Text="{Binding SelectedWarningCount}" Margin="3,0,0,0" VerticalAlignment="Center" FontSize="11"
+											   Foreground="{DynamicResource {x:Static vsshell:VsBrushes.ToolWindowTextKey}}"/>
+								</StackPanel>
+							</ToggleButton>
+
+							<ToggleButton IsChecked="{Binding ShowMessages}" Padding="4,2" Margin="0,0,4,0"
+										  BorderBrush="#1BA1E2" Cursor="Hand">
+								<ToggleButton.Template>
+									<ControlTemplate TargetType="ToggleButton">
+										<Border x:Name="Bd" Background="Transparent" CornerRadius="3"
+												BorderThickness="1" BorderBrush="Transparent"
+												Padding="{TemplateBinding Padding}">
+											<ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+										</Border>
+										<ControlTemplate.Triggers>
+											<Trigger Property="IsChecked" Value="True">
+												<Setter TargetName="Bd" Property="BorderBrush" Value="{Binding BorderBrush, RelativeSource={RelativeSource TemplatedParent}}"/>
+											</Trigger>
+											<Trigger Property="IsMouseOver" Value="True">
+												<Setter TargetName="Bd" Property="Background" Value="{DynamicResource {x:Static vsshell:VsBrushes.CommandBarMouseOverBackgroundBeginKey}}"/>
+											</Trigger>
+										</ControlTemplate.Triggers>
+									</ControlTemplate>
+								</ToggleButton.Template>
+								<StackPanel Orientation="Horizontal">
+									<imaging:CrispImage Moniker="{x:Static catalog:KnownMonikers.StatusInformation}" Width="16" Height="16"/>
+									<TextBlock Text="{Binding SelectedMessageCount}" Margin="3,0,0,0" VerticalAlignment="Center" FontSize="11"
+											   Foreground="{DynamicResource {x:Static vsshell:VsBrushes.ToolWindowTextKey}}"/>
+								</StackPanel>
+							</ToggleButton>
+
+							<Border Width="1" Margin="4,2" Background="{DynamicResource {x:Static vsshell:VsBrushes.CommandBarBorderKey}}"/>
+
+							<ToggleButton IsChecked="{Binding GroupBySeverity}" Padding="4,2"
+										  Cursor="Hand" ToolTip="Group by severity">
+								<ToggleButton.Template>
+									<ControlTemplate TargetType="ToggleButton">
+										<Border x:Name="Bd" Background="Transparent" CornerRadius="3"
+												BorderThickness="1" BorderBrush="Transparent"
+												Padding="{TemplateBinding Padding}">
+											<ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+										</Border>
+										<ControlTemplate.Triggers>
+											<Trigger Property="IsChecked" Value="True">
+												<Setter TargetName="Bd" Property="BorderBrush" Value="{DynamicResource {x:Static vsshell:VsBrushes.ToolWindowBorderKey}}"/>
+											</Trigger>
+											<Trigger Property="IsMouseOver" Value="True">
+												<Setter TargetName="Bd" Property="Background" Value="{DynamicResource {x:Static vsshell:VsBrushes.CommandBarMouseOverBackgroundBeginKey}}"/>
+											</Trigger>
+										</ControlTemplate.Triggers>
+									</ControlTemplate>
+								</ToggleButton.Template>
+								<imaging:CrispImage Moniker="{x:Static catalog:KnownMonikers.GroupBy}" Width="16" Height="16"/>
+							</ToggleButton>
+						</StackPanel>
+
+						<!-- Diagnostics list -->
+						<ItemsControl ItemsSource="{Binding FilteredDiagnostics}">
+							<ItemsControl.GroupStyle>
+								<GroupStyle>
+									<GroupStyle.HeaderTemplate>
+										<DataTemplate>
+											<TextBlock Text="{Binding Name}" FontWeight="SemiBold" FontSize="11"
+													   Foreground="{DynamicResource {x:Static vsshell:VsBrushes.GrayTextKey}}"
+													   Margin="0,6,0,2"/>
+										</DataTemplate>
+									</GroupStyle.HeaderTemplate>
+								</GroupStyle>
+							</ItemsControl.GroupStyle>
+							<ItemsControl.ItemTemplate>
+								<DataTemplate>
+									<Border x:Name="DiagnosticRow" Padding="2,3" CornerRadius="3" Background="Transparent"
+											Cursor="Hand" MouseLeftButtonDown="DiagnosticRow_MouseLeftButtonDown">
+										<Grid>
+											<Grid.ColumnDefinitions>
+												<ColumnDefinition Width="20"/>
+												<ColumnDefinition Width="*"/>
+											</Grid.ColumnDefinitions>
+											<imaging:CrispImage Grid.Column="0" Width="14" Height="14" VerticalAlignment="Top" Margin="0,1,0,0"
+																Moniker="{Binding Severity, Converter={StaticResource SeverityToIconConverter}}"/>
+											<StackPanel Grid.Column="1">
+												<TextBlock TextWrapping="Wrap" FontSize="11">
+													<Run Text="{Binding Code, Mode=OneTime}" FontWeight="SemiBold"/>
+													<Run Text="{Binding Message, Mode=OneTime}"/>
+												</TextBlock>
+												<TextBlock FontSize="10"
+														   Foreground="{DynamicResource {x:Static vsshell:VsBrushes.GrayTextKey}}"
+														   TextTrimming="CharacterEllipsis">
+													<TextBlock.Style>
+														<Style TargetType="TextBlock">
+															<Setter Property="Visibility" Value="Visible"/>
+															<Style.Triggers>
+																<DataTrigger Binding="{Binding File}" Value="">
+																	<Setter Property="Visibility" Value="Collapsed"/>
+																</DataTrigger>
+																<DataTrigger Binding="{Binding File}" Value="{x:Null}">
+																	<Setter Property="Visibility" Value="Collapsed"/>
+																</DataTrigger>
+															</Style.Triggers>
+														</Style>
+													</TextBlock.Style>
+													<Run Text="{Binding File, Mode=OneTime}"/>
+													<Run Text=":"/>
+													<Run Text="{Binding LineNumber, Mode=OneTime}"/>
+												</TextBlock>
+											</StackPanel>
+										</Grid>
+										<Border.Triggers>
+											<!-- Hover effect handled via style trigger below -->
+										</Border.Triggers>
+									</Border>
+									<DataTemplate.Triggers>
+										<Trigger SourceName="DiagnosticRow" Property="IsMouseOver" Value="True">
+											<Setter TargetName="DiagnosticRow" Property="Background" Value="{DynamicResource {x:Static vsshell:VsBrushes.CommandBarHoverKey}}"/>
+										</Trigger>
+									</DataTemplate.Triggers>
+								</DataTemplate>
+							</ItemsControl.ItemTemplate>
+						</ItemsControl>
+					</StackPanel>
+				</ScrollViewer>
+				</Grid>
+			</Border>
+		</Grid>
 	</Grid>
 </UserControl>

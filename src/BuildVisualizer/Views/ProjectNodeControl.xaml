@@ -10,8 +10,12 @@
              mc:Ignorable="d"
              d:DataContext="{d:DesignInstance Type=vm:ProjectNodeViewModel}"
              Tag="{Binding DataContext, RelativeSource={RelativeSource AncestorType=UserControl, AncestorLevel=1}}"
+             xmlns:converters="clr-namespace:BuildVisualizer.Converters"
              Width="{Binding Width}"
              Height="{Binding Height}">
+    <UserControl.Resources>
+        <converters:InverseBooleanToVisibilityConverter x:Key="BoolToVisibilityInverseConverter"/>
+    </UserControl.Resources>
     <UserControl.Style>
         <Style TargetType="UserControl">
             <Setter Property="Opacity" Value="1"/>
@@ -26,6 +30,9 @@
                     <Setter Property="Opacity" Value="1"/>
                 </DataTrigger>
                 <DataTrigger Binding="{Binding IsHighlighted}" Value="True">
+                    <Setter Property="Opacity" Value="1"/>
+                </DataTrigger>
+                <DataTrigger Binding="{Binding IsSelected}" Value="True">
                     <Setter Property="Opacity" Value="1"/>
                 </DataTrigger>
             </Style.Triggers>
@@ -50,6 +57,12 @@
             <MenuItem Header="Reveal in Solution Explorer"
                       Command="{Binding PlacementTarget.Tag.RevealInSolutionExplorerCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
                       CommandParameter="{Binding PlacementTarget.DataContext.ProjectInfo, RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
+            <MenuItem Style="{DynamicResource MenuSeparator}"
+                      Visibility="{Binding PlacementTarget.Tag.ShowProjectDetails, RelativeSource={RelativeSource AncestorType=ContextMenu}, Converter={StaticResource BoolToVisibilityInverseConverter}}"/>
+            <MenuItem Header="Show Details"
+                      Command="{Binding PlacementTarget.Tag.ShowProjectDetailsCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                      CommandParameter="{Binding PlacementTarget.DataContext.ProjectInfo, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                      Visibility="{Binding PlacementTarget.Tag.ShowProjectDetails, RelativeSource={RelativeSource AncestorType=ContextMenu}, Converter={StaticResource BoolToVisibilityInverseConverter}}"/>
         </ContextMenu>
     </UserControl.ContextMenu>
     <Border CornerRadius="5">
@@ -66,6 +79,10 @@
                     <DataTrigger Binding="{Binding IsDependencyHighlighted}" Value="True">
                         <Setter Property="Background" Value="{Binding DependencyBackgroundColor}"/>
                         <Setter Property="BorderBrush" Value="{Binding DependencyBorderColor}"/>
+                    </DataTrigger>
+                    <DataTrigger Binding="{Binding IsSelected}" Value="True">
+                        <Setter Property="BorderBrush" Value="{Binding HighlightBorderColor}"/>
+                        <Setter Property="BorderThickness" Value="{Binding HighlightedBorderThickness}"/>
                     </DataTrigger>
                     <DataTrigger Binding="{Binding IsHighlighted}" Value="True">
                         <Setter Property="BorderBrush" Value="{Binding HighlightBorderColor}"/>

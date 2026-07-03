@@ -29,6 +29,7 @@ namespace BuildVisualizer.ViewModels
 		private bool _isTransitiveDependencyHighlighted;
 		private bool _isDimmed;
 		private bool _isHovered;
+		private bool _isSelected;
 		private bool _showTransitiveDependencies;
 
 		public ProjectInfo ProjectInfo { get; }
@@ -63,6 +64,12 @@ namespace BuildVisualizer.ViewModels
 		{
 			get => _isTransitiveDependencyHighlighted;
 			set => SetProperty(ref _isTransitiveDependencyHighlighted, value);
+		}
+
+		public bool IsSelected
+		{
+			get => _isSelected;
+			set => SetProperty(ref _isSelected, value);
 		}
 
 		public bool IsDimmed

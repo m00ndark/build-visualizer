@@ -48,6 +48,7 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="Commands\RelayCommand.cs" />
+    <Compile Include="Converters\DiagnosticSeverityToIconConverter.cs" />
     <Compile Include="Converters\GridViewColumnTag.cs" />
     <Compile Include="Converters\ZeroToEmptyConverter.cs" />
     <Compile Include="Converters\InverseBooleanToVisibilityConverter.cs" />
