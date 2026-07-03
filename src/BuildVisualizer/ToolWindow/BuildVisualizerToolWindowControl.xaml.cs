@@ -63,8 +63,12 @@ namespace BuildVisualizer.ToolWindow
 
 		private void SettingsButton_Click(object sender, RoutedEventArgs e)
 		{
-			SettingsButton.ContextMenu.DataContext = DataContext;
-			SettingsButton.ContextMenu.IsOpen = true;
+			ContextMenu menu = SettingsButton.ContextMenu;
+			menu.DataContext = DataContext;
+			menu.Style = TryFindResource(typeof(ContextMenu)) as Style;
+			foreach (MenuItem item in menu.Items.OfType<MenuItem>())
+				item.Style = TryFindResource(typeof(MenuItem)) as Style;
+			menu.IsOpen = true;
 		}
 
 		private void ProjectListView_PreviewMouseRightButtonUp(object sender, MouseButtonEventArgs e)
@@ -86,7 +90,12 @@ namespace BuildVisualizer.ToolWindow
 
 		private ContextMenu BuildColumnContextMenu(GridView gridView)
 		{
-			ContextMenu menu = new ContextMenu();
+			ContextMenu menu = new ContextMenu
+			{
+				Style = TryFindResource(typeof(ContextMenu)) as Style
+			};
+
+			Style menuItemStyle = TryFindResource(typeof(MenuItem)) as Style;
 
 			foreach (ListViewColumnDefinition def in ListViewStateService.AllColumns)
 			{
@@ -96,7 +105,8 @@ namespace BuildVisualizer.ToolWindow
 					Header = def.Header,
 					IsCheckable = true,
 					IsChecked = visible,
-					Tag = def.Key
+					Tag = def.Key,
+					Style = menuItemStyle
 				};
 				item.Click += ColumnMenuItem_Click;
 				menu.Items.Add(item);
